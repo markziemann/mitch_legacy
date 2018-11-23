@@ -60,7 +60,7 @@ GSTSets<-function(testset, setsTable) {
 
 # x - matrix of 2 columns to be tested
 # table of genesets
-EnDrichProject<-function(x, geneset, topfig=1) {
+EnDrichProject<-function(x, genesets, topfig=1) {
 	library(limma)
 	library(parallel)
 	library(plyr)
@@ -71,10 +71,10 @@ EnDrichProject<-function(x, geneset, topfig=1) {
 	medxCor<-median(xCor)
 	medxAntiCor<-median(xAntiCor)
 
-	sets<-unique(geneset[,1])
+	sets<-unique(genesets[,1])
 
 	res<-mclapply(sets,function(set) { 
-		lx<- row.names(x) %in% geneset[geneset[,1]==set,2]
+		lx<- row.names(x) %in% genesets[genesets[,1]==set,2]
 		#cat(sum(lx))
 		pCor      <- wilcoxGST(lx, xCor)
 		pAntiCor  <- wilcoxGST(lx, xAntiCor)
@@ -84,7 +84,7 @@ EnDrichProject<-function(x, geneset, topfig=1) {
 
 		return(data.frame(set,pCor,pAntiCor))
 	},
-	mc.cores=8 )
+	mc.cores=detectCores()-1 )
 
 	return(ldply(res, data.frame))
 	
@@ -94,7 +94,7 @@ EnDrichProject<-function(x, geneset, topfig=1) {
 
 # x - matrix of 2 columns to be tested
 # table of genesets
-EnDrichDist<-function(x, geneset) {
+EnDrichDist<-function(x, genesets) {
 	library(limma)
 	library(parallel)
 	library(plyr)
@@ -116,11 +116,11 @@ EnDrichDist<-function(x, geneset) {
 	xAntiCorUp  <- diffRankDistance2(x,p_1_n1,p_1_0)
 	xAntiCorDn  <- diffRankDistance2(x,p_n1_1,p_n1_0)
 
-	sets<-unique(as.character(geneset[,1]))
+	sets<-unique(as.character(genesets[,1]))
 	cat(sets)
 	res<-mclapply(sets,function(set) { 
 #		cat("FSADSS")
-		lx<- row.names(x) %in% geneset[geneset[,1]==set,2]
+		lx<- row.names(x) %in% genesets[genesets[,1]==set,2]
 #cat("FddddddSADSS")
 #		cat(sum(lx))
 #		pCorUp     <- wilcoxGST(lx, xCorUp,alternative="down")
@@ -139,7 +139,7 @@ EnDrichDist<-function(x, geneset) {
 #		cat("FFF")
 		return(data.frame(set,setSize=sum(lx),pCorUp, pCorDn, pAntiCorUp, pAntiCorDn))
 	},
-	mc.cores=8 )
+	mc.cores=detectCores()-1 )
 
 	return(ldply(res, data.frame))
 	
@@ -151,7 +151,7 @@ EnDrichDist<-function(x, geneset) {
 
 # x - matrix of 2 columns to be tested
 # table of genesets
-EnDrichDist3<-function(x, geneset, topfig=1) {
+EnDrichDist3<-function(x, genesets, topfig=1) {
 	library(limma)
 	library(parallel)
 	library(plyr)
@@ -173,10 +173,10 @@ EnDrichDist3<-function(x, geneset, topfig=1) {
 	xAntiCorUp  <- diffRankDistance2(x,p_1_n1,p_1_0)
 	xAntiCorDn  <- diffRankDistance2(x,p_n1_1,p_n1_0)
 
-	sets<-unique(geneset[,1])
+	sets<-unique(genesets[,1])
 
 	res<-mclapply(sets,function(set) { 
-		lx<- row.names(x) %in% geneset[geneset[,1]==set,2]
+		lx<- row.names(x) %in% genesets[genesets[,1]==set,2]
 		#cat(sum(lx))
 		pCorUp     <- wilcoxGST(lx, xCorUp)
 		pCorDn     <- wilcoxGST(lx, xCorDn)
@@ -184,7 +184,7 @@ EnDrichDist3<-function(x, geneset, topfig=1) {
 		pAntiCorDn <- wilcoxGST(lx, xAntiCorDn)
 		return(data.frame(set,setSize=sum(lx),pCorUp, pCorDn, pAntiCorUp, pAntiCorDn))
 	},
-	mc.cores=8 )
+	mc.cores=detectCores()-1 )
 
 	return(ldply(res, data.frame))
 	
@@ -193,86 +193,66 @@ EnDrichDist3<-function(x, geneset, topfig=1) {
 
 
 #TODO does not work with neg numbers !!
-EnDrichMANOVA<-function(x,geneset, minsetsize=10) {
+EnDrichMANOVA<-function(x,genesets, minsetsize=10) {
 	library(parallel)
 	library(plyr)
 
 	#Just in case you did not rank
 	x<-apply(x,2,rank)
 
-	sets<-unique(geneset[,1])
-
-	res<-mclapply(sets,function(set) { 
-
-		inset<- row.names(x) %in% geneset[geneset[,1]==set,2]
-
-		fit<- manova(x ~ inset)
-		sumMANOVA <- summary.manova(fit)
-		sumAOV    <- summary.aov(fit)
-		
-		pMANOVA <- sumMANOVA$stats[1,"Pr(>F)"]
-
-		raov<-sapply(sumAOV, function(zz) {zz[1,"Pr(>F)"]})
-		names(raov)<-gsub("^ Response ","p",names(raov))
-		
-		#S coordinates
-		scord<-apply(zdat,2,function(zz){2*(mean(zz[inset])-mean(zz[!inset]))/length(inset)})
-		#sDist<-dist(rbind(rep(0,length(scord)),scord))[1]
-		names(scord)<-paste0("s",names(scord))
+	sets<-unique(genesets[,1])
 
 
-		return(data.frame(set,setSize=sum(inset),pMANOVA,t(scord),t(raov) ))
-	},
-	mc.cores=8 )
+res<-mclapply(sets,function(set){
+	inset<- row.names(x) %in% genesets[genesets[,1]==set,2]
+        fit<- manova(x ~ inset)
+        sumMANOVA <- summary.manova(fit)
+        sumAOV    <- summary.aov(fit)
+        pMANOVA <- sumMANOVA$stats[1,"Pr(>F)"]
+        raov<-sapply(sumAOV, function(zz) {zz[1,"Pr(>F)"]})
+        names(raov)<-gsub("^ Response ","p",names(raov))
+        #S coordinates
+        scord<-apply(x,2,function(zz){2*(mean(zz[inset])-mean(zz[!inset]))/length(inset)})
+        #sDist<-dist(rbind(rep(0,length(scord)),scord))[1]
+        names(scord)<-paste0("s-",names(scord))
+        return(data.frame(set,setSize=sum(inset),pMANOVA,t(scord),t(raov) ))
+	},mc.cores=detectCores()-1 )
 	fres<-ldply(res, data.frame)
 	fres<-fres[fres$setSize >=minsetsize,]
 	return(fres)
-
 }
 
 
 
 
 
-plot2DSets <- function(dat, setdb, restable,  resrows=1:20) {
+plot2DSets <- function(dat, setdb, restable,  resrows=1:50) {
+  #palette <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan","#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+  palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
+  #Contour of all the data
+  ss<-as.data.frame(dat)
+  k<-MASS:::kde2d(ss[,1],ss[,2])
+  X_AXIS=paste("Rank in contrast",colnames(ss)[1])
+  Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
+  filled.contour(k, color = palette, plot.title={ title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
 
-	 jet.colors <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan","#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
-	#Contour of all the data
-	ss<-as.data.frame(dat)
-	k<-MASS:::kde2d(ss[,1],ss[,2])
-
-	filled.contour(k, color = jet.colors,
-
-# TODO fix 	
-#			plot.title={
-#				title(
-#					xlab=paste( colnames(ss)[1],"rank"),
-#					mtext(paste( colnames(ss)[2],"rank"),2,cex=2,line=3,las=1),
-#					main=paste("All Data"))
-#				)
-#			}
-	)
-
-	for(i in resrows) {
-		ll<-restable[i,]
-		size<-ll$setSize
-		ss<-as.data.frame(dat[rownames(dat) %in% setdb[setdb[,1]== ll$set,2],])
-		k<-MASS:::kde2d(ss[,1],ss[,2])
-
-		filled.contour(k, color = jet.colors,
-	
-			plot.title={
-				title(
-					xlab=paste( colnames(ss)[1],"rank"),
-					mtext(paste( colnames(ss)[2],"rank"),2,cex=2,line=3,las=1),
-					main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3))
-				)
-				   
-			}
-		)
-
-	}
+  for(i in resrows) {
+    ll<-restable[i,]
+    size<-ll$setSize
+    ss<-as.data.frame(dat[rownames(dat) %in% setdb[setdb[,1]== ll$set,2],])
+    k<-MASS:::kde2d(ss[,1],ss[,2])
+    filled.contour(
+      k, color = palette, plot.title={
+        title(
+          main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
+          xlab=X_AXIS,ylab=Y_AXIS
+        )
+      }
+    )
+  }
 }
+
+
 
 
 RankRankBinPlot<-function(x, binsize=500) {
