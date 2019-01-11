@@ -227,14 +227,17 @@ res<-mclapply(sets,function(set){
 
 
 plot2DSets <- function(dat, setdb, restable,  resrows=1:50) {
+#  library(viridis)
   #palette <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan","#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
+
+
   #Contour of all the data
   ss<-as.data.frame(dat)
   k<-MASS:::kde2d(ss[,1],ss[,2])
   X_AXIS=paste("Rank in contrast",colnames(ss)[1])
   Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
-  filled.contour(k, color = palette, plot.title={ title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
+  filled.contour(k, color=palette , plot.title={ title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
 
   for(i in resrows) {
     ll<-restable[i,]
