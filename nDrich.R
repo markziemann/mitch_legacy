@@ -147,12 +147,9 @@ EnDrichDist3<-function(x, genesets, topfig=1) {
 
 
 #TODO does not work with neg numbers !!
-EnDrichMANOVA<-function(x,genesets, minsetsize=10) {
+EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
 	library(parallel)
 	library(plyr)
-
-	#Just in case you did not rank
-	x<-apply(x,2,rank)
 
 	sets<-unique(genesets[,1])
 
@@ -166,27 +163,89 @@ EnDrichMANOVA<-function(x,genesets, minsetsize=10) {
         	names(raov)<-gsub("^ Response ","p",names(raov))
 	        #S coordinates
 	        scord<-apply(x,2,function(zz){2*(mean(zz[inset])-mean(zz[!inset]))/length(inset)})
-        	#sDist<-dist(rbind(rep(0,length(scord)),scord))[1]
 	        names(scord)<-paste0("s-",names(scord))
         	return(data.frame(set,setSize=sum(inset),pMANOVA,t(scord),t(raov) ))
-	},mc.cores=detectCores()-1 )
+	},mc.cores=cores )
 	fres<-ldply(res, data.frame)
 	fres<-fres[fres$setSize >=minsetsize,]
+        fres$p.adjustMANOVA<-p.adjust(fres$pMANOVA,"fdr")
+        fres$minAbsS<-apply(fres[,4:6],1, function(zz){min(abs(zz))})
+	fres<- fres[order(fres$pMANOVA),]
 	return(fres)
 }
 
 
+manova_analysis_metrics<-function(x,genesets, minsetsize=10) {
+	library(dplyr)
+	num_genesets=length(unique(genesets$V1))
+	included_genesets<-genesets[which ( genesets$V2 %in% rownames(x)),]
+        geneset_counts<-summarise(group_by(included_genesets, V1), count = n_distinct(V2))
+	geneset_counts$excluded<-geneset_counts$count<minsetsize
+	genesets_excluded=as.vector(unlist(geneset_counts[which(geneset_counts$excluded==T),1]))
+        genesets_included=as.vector(unlist(geneset_counts[which(geneset_counts$excluded==F),1]))
+        num_genesets_excluded=length(genesets_excluded)
+        num_genesets_included=length(genesets_included)
+	num_genes_in_genesets=length(unique(genesets$V2))
+	num_genes_in_profile=length(unique(rownames(x)))
+	duplicated_genes_present=length(rownames(x))>num_genes_in_profile
+	num_profile_genes_in_sets=length(which ( rownames(zdat) %in% genesets$V2 ))
+	num_profile_genes_not_in_sets=length(which (!( rownames(zdat) %in% genesets$V2 )))
+
+	dat <- list("num_genesets" = num_genesets, 
+		"num_genes_in_profile" = num_genes_in_profile,
+		"duplicated_genes_present" = duplicated_genes_present,
+		"num_profile_genes_in_sets" = num_profile_genes_in_sets,
+                "num_profile_genes_not_in_sets" = num_profile_genes_not_in_sets,
+		"num_genesets_excluded" = num_genesets_excluded,
+		"num_genesets_included" = num_genesets_included,
+                "num_genes_in_genesets" = num_genes_in_genesets,
+		"genesets_excluded" = genesets_excluded,
+		"genesets_included" = genesets_included)
+	dat
+}
+#hist(geneset_counts$count,200,xlim=c(0,500))
+
+
+endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
+	input_profile<-x
+        input_genesets<-genesets
+	ranked_profile<-apply(x,2,rank)
+	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores)
+	manova_analysis_metrics<-manova_analysis_metrics(x,genesets)
+
+	dat <- list("input_profile" = input_profile,
+		"input_genesets" = input_genesets,
+		"ranked_profile" = ranked_profile,
+		"manova_result" = manova_result,
+		"manova_analysis_metrics" = manova_analysis_metrics)
+	dat
+}
+
+
 plot2DSets <- function(dat, setdb, restable,  resrows=1:50) {
-#  library(viridis)
-  #palette <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan","#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   #Contour of all the data
   ss<-as.data.frame(dat)
   k<-MASS:::kde2d(ss[,1],ss[,2])
   X_AXIS=paste("Rank in contrast",colnames(ss)[1])
+
   Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
   filled.contour(k, color=palette , plot.title={ title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
+
+  #midpoint lines for X and Y axes
+  X_DOWN=length(which(zdat[,1]<0))
+  X_ZERO=length(which(zdat[,1]==0))
+  X_MIDPOINT=X_DOWN+X_ZERO
+  par(xpd = T)
+  abline(v=X_MIDPOINT,lty=2,col="blue",lwd=2)
+#  lines(x = c(X_MIDPOINT,X_MIDPOINT), y = c(1,nrow()), lty = 2,col="blue")
+
+  Y_DOWN=length(which(zdat[,2]<0))
+  Y_ZERO=length(which(zdat[,2]==0))
+  Y_MIDPOINT=Y_DOWN+Y_ZERO
+  par(xpd = T)
+  abline(h=Y_MIDPOINT,lty=2,col="blue",lwd=2)
 
   for(i in resrows) {
     ll<-restable[i,]
@@ -207,13 +266,13 @@ plot2DSets <- function(dat, setdb, restable,  resrows=1:50) {
 
 RankRankBinPlot<-function(x, binsize=500) {
 	library(ggplot2)
-	 bin=floor(x[,1]/binsize)
-	 yy<- aggregate(x[,2],list(bin), function(zz){quantile(zz,c(0.25,0.5,0.75))})
+	bin=floor(x[,1]/binsize)
+	yy<- aggregate(x[,2],list(bin), function(zz){quantile(zz,c(0.25,0.5,0.75))})
 	yy[,1]<-yy[,1]*binsize	
 	zz<-cbind(xpos=yy$Group.1,yy$x)
-	 colnames(zz)<-gsub("%","",colnames(zz))
-         zz<-data.frame(zz)
-	 ggplot(zz, aes(xpos)) + 
+	colnames(zz)<-gsub("%","",colnames(zz))
+        zz<-data.frame(zz)
+	ggplot(zz, aes(xpos)) + 
 	geom_line(aes(y=X50) , size=1.4) + 
 	theme_bw() + geom_ribbon(aes(ymin=X25, ymax=X75), alpha=0.2) +
 	xlab(colnames(x)[1]) + ylab(colnames(x)[2])
