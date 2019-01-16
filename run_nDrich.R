@@ -9,7 +9,7 @@ genesets<-GMT2DF("ReactomePathways.gmt")
 #run the analysis
 res<-endrich(x,genesets)
 write.table(res, "rna_LGHGvHGHGV_ReactomeResults.txt",sep="\t",col.names=T,row.names=F, quote=F)
-pdf("mRNA_LGvHGvHGV_ReactomeResults.pdf") ; plot2DSets(ss,reactome,res,resrows=1:200) ; dev.off()
+pdf("mRNA_LGvHGvHGV_ReactomeResults.pdf") ; plot2DSets(res,resrows=1:200) ; dev.off()
 save.image("EnDrichAnalysis.Rdata")
 
 

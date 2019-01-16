@@ -175,7 +175,7 @@ EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
 }
 
 
-manova_analysis_metrics<-function(x,genesets, minsetsize=10) {
+manova_analysis_metrics<-function(x, genesets, manova_result, minsetsize=10) {
 	library(dplyr)
 	num_genesets=length(unique(genesets$V1))
 	included_genesets<-genesets[which ( genesets$V2 %in% rownames(x)),]
@@ -188,8 +188,16 @@ manova_analysis_metrics<-function(x,genesets, minsetsize=10) {
 	num_genes_in_genesets=length(unique(genesets$V2))
 	num_genes_in_profile=length(unique(rownames(x)))
 	duplicated_genes_present=length(rownames(x))>num_genes_in_profile
-	num_profile_genes_in_sets=length(which ( rownames(zdat) %in% genesets$V2 ))
-	num_profile_genes_not_in_sets=length(which (!( rownames(zdat) %in% genesets$V2 )))
+	num_profile_genes_in_sets=length(which ( rownames(x) %in% genesets$V2 ))
+	num_profile_genes_not_in_sets=length(which (!( rownames(x) %in% genesets$V2 )))
+	profile_pearson_correl=cor(x,method="p")[2,1]
+	profile_spearman_correl=cor(x,method="s")[2,1]
+	num_sets_significant=nrow( manova_result[which(manova_result$p.adjustMANOVA<0.05),] )
+	ns1=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]>0 & res$manova_result[,5]>0) )
+        ns2=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]>0 & res$manova_result[,5]<0) )
+        ns3=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]<0 & res$manova_result[,5]<0) )
+        ns4=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]<0 & res$manova_result[,5]>0) )
+	num_sets_significant_by_quadrant=paste(ns1,ns2,ns3,ns4,sep=",")
 
 	dat <- list("num_genesets" = num_genesets, 
 		"num_genes_in_profile" = num_genes_in_profile,
@@ -200,7 +208,11 @@ manova_analysis_metrics<-function(x,genesets, minsetsize=10) {
 		"num_genesets_included" = num_genesets_included,
                 "num_genes_in_genesets" = num_genes_in_genesets,
 		"genesets_excluded" = genesets_excluded,
-		"genesets_included" = genesets_included)
+		"genesets_included" = genesets_included,
+		"profile_pearson_correl" = profile_pearson_correl,
+		"profile_spearman_correl" = profile_spearman_correl,
+		"num_sets_significant" = num_sets_significant,
+		"num_sets_significant_by_quadrant" = num_sets_significant_by_quadrant)
 	dat
 }
 #hist(geneset_counts$count,200,xlim=c(0,500))
@@ -211,7 +223,7 @@ endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
         input_genesets<-genesets
 	ranked_profile<-apply(x,2,rank)
 	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores)
-	manova_analysis_metrics<-manova_analysis_metrics(x,genesets)
+	manova_analysis_metrics<-manova_analysis_metrics(x,genesets,manova_result)
 
 	dat <- list("input_profile" = input_profile,
 		"input_genesets" = input_genesets,
@@ -222,36 +234,35 @@ endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
 }
 
 
-plot2DSets <- function(dat, setdb, restable,  resrows=1:50) {
+plot2DSets <- function(res,  resrows=1:50) {
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   #Contour of all the data
-  ss<-as.data.frame(dat)
+  ss<-res$ranked_profile
   k<-MASS:::kde2d(ss[,1],ss[,2])
   X_AXIS=paste("Rank in contrast",colnames(ss)[1])
-
   Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
   filled.contour(k, color=palette , plot.title={ title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
 
   #midpoint lines for X and Y axes
-  X_DOWN=length(which(zdat[,1]<0))
-  X_ZERO=length(which(zdat[,1]==0))
+  X_DOWN=length(which(res$input_profile[,1]<0))
+  X_ZERO=length(which(res$input_profile[,1]==0))
   X_MIDPOINT=X_DOWN+X_ZERO
   par(xpd = T)
   abline(v=X_MIDPOINT,lty=2,col="blue",lwd=2)
 #  lines(x = c(X_MIDPOINT,X_MIDPOINT), y = c(1,nrow()), lty = 2,col="blue")
 
-  Y_DOWN=length(which(zdat[,2]<0))
-  Y_ZERO=length(which(zdat[,2]==0))
+  Y_DOWN=length(which(res$input_profile[,2]<0))
+  Y_ZERO=length(which(res$input_profile[,2]==0))
   Y_MIDPOINT=Y_DOWN+Y_ZERO
   par(xpd = T)
   abline(h=Y_MIDPOINT,lty=2,col="blue",lwd=2)
 
   for(i in resrows) {
-    ll<-restable[i,]
+    ll<-res$manova_result[i,]
     size<-ll$setSize
-    ss<-as.data.frame(dat[rownames(dat) %in% setdb[setdb[,1]== ll$set,2],])
-    k<-MASS:::kde2d(ss[,1],ss[,2])
+    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
+    k<-MASS:::kde2d(sss[,1],sss[,2])
     filled.contour(
       k, color = palette, plot.title={
         title(
