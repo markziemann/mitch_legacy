@@ -221,7 +221,25 @@ manova_analysis_metrics<-function(x, genesets, manova_result, minsetsize=10) {
 endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
 	input_profile<-x
         input_genesets<-genesets
+
+
 	ranked_profile<-apply(x,2,rank)
+
+	x_num_neg=length( which( res$input_profile[,1]<0 ) )
+	x_num_zero=length( which( res$input_profile[,1]==0 ) )
+	x_num_adj=x_num_neg+(x_num_zero/2)
+
+        y_num_neg=length( which( res$input_profile[,2]<0 ) )
+        y_num_zero=length( which( res$input_profile[,2]==0 ) )
+        y_num_adj=y_num_neg+(y_num_zero/2)
+
+	adj_x<-ranked_profile[,1]-x_num_adj
+	adj_y<-ranked_profile[,2]-y_num_adj
+	adj<-cbind(adj_x,adj_y)
+
+	colnames(adj)=colnames(x)
+	ranked_profile<-adj
+
 	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores)
 	manova_analysis_metrics<-manova_analysis_metrics(x,genesets,manova_result)
 
@@ -239,34 +257,30 @@ plot2DSets <- function(res,  resrows=1:50) {
 
   #Contour of all the data
   ss<-res$ranked_profile
+
+  xmin=min(ss[,1])
+  xmax=max(ss[,1])
+  ymin=min(ss[,2])
+  ymax=max(ss[,2])
+
   k<-MASS:::kde2d(ss[,1],ss[,2])
   X_AXIS=paste("Rank in contrast",colnames(ss)[1])
   Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
-  filled.contour(k, color=palette , plot.title={ title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
-
-  #midpoint lines for X and Y axes
-  X_DOWN=length(which(res$input_profile[,1]<0))
-  X_ZERO=length(which(res$input_profile[,1]==0))
-  X_MIDPOINT=X_DOWN+X_ZERO
-  par(xpd = T)
-  abline(v=X_MIDPOINT,lty=2,col="blue",lwd=2)
-#  lines(x = c(X_MIDPOINT,X_MIDPOINT), y = c(1,nrow()), lty = 2,col="blue")
-
-  Y_DOWN=length(which(res$input_profile[,2]<0))
-  Y_ZERO=length(which(res$input_profile[,2]==0))
-  Y_MIDPOINT=Y_DOWN+Y_ZERO
-  par(xpd = T)
-  abline(h=Y_MIDPOINT,lty=2,col="blue",lwd=2)
+  filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+    color=palette , 
+    plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
+       title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS )
+    }
+  )
 
   for(i in resrows) {
     ll<-res$manova_result[i,]
     size<-ll$setSize
     sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
     k<-MASS:::kde2d(sss[,1],sss[,2])
-    filled.contour(
-      k, color = palette, plot.title={
-        title(
-          main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
+    filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+        plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
+        title( main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
           xlab=X_AXIS,ylab=Y_AXIS
         )
       }
