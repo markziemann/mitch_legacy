@@ -66,7 +66,16 @@ Here are some metrics about the gene sets used:
   colnames(formatted)="Gene sets metrics"
   kable( formatted , col.names = "Gene sets metrics" ,caption = "Gene sets metrics" )
 ```
+
 Quadrant order is top-right, bottom-right, bottom-left and top-left.
+
+```{r,results="asis",echo=FALSE}
+ a<-res$manova_analysis_metrics[14]
+ a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
+ rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
+ colnames(a)="a"
+ barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
+```
 
 More about the sizes of the gene sets evaluated.
 
@@ -78,6 +87,26 @@ More about the sizes of the gene sets evaluated.
   hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
 ```
+
+## Results table
+
+```{r,results="hide",echo=FALSE}
+#https://stackoverflow.com/questions/39362183/how-can-i-embed-a-plot-within-a-rmarkdown-table
+```
+
+```{r,results="asis",echo=FALSE}
+  myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
+  if ( nrow(myres)>100 ) { myres<-myres[1:100,] }
+  myres<-myres[,c(1:3,8,4:7)]
+
+  formatted<-myres
+  formatted[,1]<-gsub("_"," ",myres[,1])
+  formatted[,3:8]<-format(myres[,3:8],digits=3)
+#  formatted[,4:5]<-signif(myres[,5:6],digits=3)
+  kable( formatted , col.names = colnames(myres) , row.names=F, caption = "Top 100 gene sets" ,digits=100) 
+```
+
+
 
 
 By default, R will print the command that you entered and below that the output with comment characters preceeding it.
