@@ -193,6 +193,14 @@ manova_analysis_metrics<-function(x, genesets, manova_result, minsetsize=10) {
 	profile_pearson_correl=cor(x,method="p")[2,1]
 	profile_spearman_correl=cor(x,method="s")[2,1]
 	num_sets_significant=nrow( manova_result[which(manova_result$p.adjustMANOVA<0.05),] )
+
+	#genes in each quadrant
+        g1=length( which(x[,1]>0 & x[,2]>0) )
+	g2=length( which(x[,1]>0 & x[,2]<0) )
+        g3=length( which(x[,1]<0 & x[,2]<0) )
+        g2=length( which(x[,1]<0 & x[,2]>0) )
+
+	#genesets in each quadrant
 	ns1=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]>0 & manova_result[,5]>0) )
         ns2=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]>0 & manova_result[,5]<0) )
         ns3=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]<0 & manova_result[,5]<0) )
@@ -218,29 +226,38 @@ manova_analysis_metrics<-function(x, genesets, manova_result, minsetsize=10) {
 #hist(geneset_counts$count,200,xlim=c(0,500))
 
 
+endrichrank<-function(x) {
+  input_profile<-x
+  ranked_profile<-apply(x,2,rank)
+
+  x_num_neg=length( which( input_profile[,1]<0 ) )
+  x_num_zero=length( which( input_profile[,1]==0 ) )
+  x_num_adj=x_num_neg+(x_num_zero/2)
+
+  y_num_neg=length( which( input_profile[,2]<0 ) )
+  y_num_zero=length( which( input_profile[,2]==0 ) )
+  y_num_adj=y_num_neg+(y_num_zero/2)
+
+  adj_x<-ranked_profile[,1]-x_num_adj
+  adj_y<-ranked_profile[,2]-y_num_adj
+  adj<-cbind(adj_x,adj_y)
+
+  colnames(adj)=colnames(x)
+  adj
+}
+
+
+
+
 endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
 	input_profile<-x
+
         input_genesets<-genesets
 
-
-	ranked_profile<-apply(x,2,rank)
-
-	x_num_neg=length( which( input_profile[,1]<0 ) )
-	x_num_zero=length( which( input_profile[,1]==0 ) )
-	x_num_adj=x_num_neg+(x_num_zero/2)
-
-        y_num_neg=length( which( input_profile[,2]<0 ) )
-        y_num_zero=length( which( input_profile[,2]==0 ) )
-        y_num_adj=y_num_neg+(y_num_zero/2)
-
-	adj_x<-ranked_profile[,1]-x_num_adj
-	adj_y<-ranked_profile[,2]-y_num_adj
-	adj<-cbind(adj_x,adj_y)
-
-	colnames(adj)=colnames(x)
-	ranked_profile<-adj
+	ranked_profile<-endrichrank(input_profile)
 
 	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores)
+
 	manova_analysis_metrics<-manova_analysis_metrics(x,genesets,manova_result)
 
 	dat <- list("input_profile" = input_profile,
@@ -303,3 +320,19 @@ RankRankBinPlot<-function(x, binsize=500) {
 	xlab(colnames(x)[1]) + ylab(colnames(x)[2])
 }
 
+render_report<-function(res,out) {
+  library(knitr)
+  library(markdown)
+  TS=format(Sys.time(), "%s")
+  RAND=sample(1:1000,1)
+  DATANAME=paste("nDrich_dataset_",TS,"_",RAND,".RData",sep="")
+  save.image(DATANAME)
+  MYMESSAGE=paste("Dataset saved as \"",DATANAME,"\".")
+  message(MYMESSAGE)
+
+  knitrenv <- new.env()
+  assign("DATANAME", DATANAME, knitrenv)
+  assign("res",res,knitrenv)
+  knit2html("nDrich.Rmd", envir=knitrenv , output=out)
+
+}
