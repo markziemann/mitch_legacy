@@ -193,10 +193,10 @@ manova_analysis_metrics<-function(x, genesets, manova_result, minsetsize=10) {
 	profile_pearson_correl=cor(x,method="p")[2,1]
 	profile_spearman_correl=cor(x,method="s")[2,1]
 	num_sets_significant=nrow( manova_result[which(manova_result$p.adjustMANOVA<0.05),] )
-	ns1=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]>0 & res$manova_result[,5]>0) )
-        ns2=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]>0 & res$manova_result[,5]<0) )
-        ns3=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]<0 & res$manova_result[,5]<0) )
-        ns4=nrow( subset(res$manova_result,p.adjustMANOVA<0.05 & res$manova_result[,4]<0 & res$manova_result[,5]>0) )
+	ns1=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]>0 & manova_result[,5]>0) )
+        ns2=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]>0 & manova_result[,5]<0) )
+        ns3=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]<0 & manova_result[,5]<0) )
+        ns4=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]<0 & manova_result[,5]>0) )
 	num_sets_significant_by_quadrant=paste(ns1,ns2,ns3,ns4,sep=",")
 
 	dat <- list("num_genesets" = num_genesets, 
@@ -225,12 +225,12 @@ endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
 
 	ranked_profile<-apply(x,2,rank)
 
-	x_num_neg=length( which( res$input_profile[,1]<0 ) )
-	x_num_zero=length( which( res$input_profile[,1]==0 ) )
+	x_num_neg=length( which( input_profile[,1]<0 ) )
+	x_num_zero=length( which( input_profile[,1]==0 ) )
 	x_num_adj=x_num_neg+(x_num_zero/2)
 
-        y_num_neg=length( which( res$input_profile[,2]<0 ) )
-        y_num_zero=length( which( res$input_profile[,2]==0 ) )
+        y_num_neg=length( which( input_profile[,2]<0 ) )
+        y_num_zero=length( which( input_profile[,2]==0 ) )
         y_num_adj=y_num_neg+(y_num_zero/2)
 
 	adj_x<-ranked_profile[,1]-x_num_adj
