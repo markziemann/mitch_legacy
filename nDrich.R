@@ -220,7 +220,8 @@ manova_analysis_metrics<-function(x, genesets, manova_result, minsetsize=10) {
 		"profile_pearson_correl" = profile_pearson_correl,
 		"profile_spearman_correl" = profile_spearman_correl,
 		"num_sets_significant" = num_sets_significant,
-		"num_sets_significant_by_quadrant" = num_sets_significant_by_quadrant)
+		"num_sets_significant_by_quadrant" = num_sets_significant_by_quadrant,
+		"geneset_counts" = geneset_counts)
 	dat
 }
 #hist(geneset_counts$count,200,xlim=c(0,500))
@@ -323,9 +324,10 @@ RankRankBinPlot<-function(x, binsize=500) {
 render_report<-function(res,out) {
   library(knitr)
   library(markdown)
-  TS=format(Sys.time(), "%s")
-  RAND=sample(1:1000,1)
-  DATANAME=paste("nDrich_dataset_",TS,"_",RAND,".RData",sep="")
+
+  out<-gsub(".html$","",out)
+  out<-gsub(".RData$","",out)
+  DATANAME=paste(out,".RData",sep="")
   save.image(DATANAME)
   MYMESSAGE=paste("Dataset saved as \"",DATANAME,"\".")
   message(MYMESSAGE)
@@ -333,6 +335,7 @@ render_report<-function(res,out) {
   knitrenv <- new.env()
   assign("DATANAME", DATANAME, knitrenv)
   assign("res",res,knitrenv)
+  HTMLNAME=paste(out,".html",sep="")
   knit2html("nDrich.Rmd", envir=knitrenv , output=out)
 
 }

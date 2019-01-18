@@ -1,5 +1,9 @@
 # nDrichr Report
 
+```{r,echo=FALSE}
+date()
+```
+
 ## Background
 
 nDrich performs multidimensional gene set enrichment analysis. The concept behind this dates to work by Cox and 
@@ -67,7 +71,9 @@ Quadrant order is top-right, bottom-right, bottom-left and top-left.
 More about the sizes of the gene sets evaluated.
 
 ```{r,results="asis",echo=FALSE}
-  par(mfrow=c(2,1))
+  par(mfrow=c(3,1))
+  geneset_counts<-res$manova_analysis_metrics$geneset_counts
+  boxplot(geneset_counts[,2],horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
   hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
   hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
