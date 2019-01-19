@@ -324,10 +324,9 @@ RankRankBinPlot<-function(x, binsize=500) {
 render_report<-function(res,out) {
   library(knitr)
   library(markdown)
+  library(rmarkdown)
 
-  out<-gsub(".html$","",out)
-  out<-gsub(".RData$","",out)
-  DATANAME=paste(out,".RData",sep="")
+  DATANAME<-gsub(".html$",".RData",out)
   save.image(DATANAME)
   MYMESSAGE=paste("Dataset saved as \"",DATANAME,"\".")
   message(MYMESSAGE)
@@ -336,6 +335,6 @@ render_report<-function(res,out) {
   assign("DATANAME", DATANAME, knitrenv)
   assign("res",res,knitrenv)
   HTMLNAME=paste(out,".html",sep="")
-  knit2html("nDrich.Rmd", envir=knitrenv , output=out)
-
+#  knit2html("nDrich.Rmd", envir=knitrenv , output=out)
+  rmarkdown::render("nDrich.Rmd",output_file=out)
 }

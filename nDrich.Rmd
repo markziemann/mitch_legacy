@@ -1,6 +1,12 @@
-# nDrichr Report
+---
+title: "nDrichr Report"
+author: "Antony Kaspi & Mark Ziemann"
+output:
+  html_document:
+    theme: cosmo
+---
 
-```{r,echo=FALSE}
+```{r,,results="asis",echo=FALSE}
 date()
 ```
 
@@ -33,7 +39,7 @@ Here are some metrics about the input data profile:
 
 Here is the contour plot of the profile including all genes.
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,fig.height = 6, fig.width = 7}
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   #Contour of all the data
@@ -79,13 +85,33 @@ Quadrant order is top-right, bottom-right, bottom-left and top-left.
 
 More about the sizes of the gene sets evaluated.
 
-```{r,results="asis",echo=FALSE}
+```{r,results="asis",echo=FALSE,fig.height = 10, fig.width = 7}
   par(mfrow=c(3,1))
   geneset_counts<-res$manova_analysis_metrics$geneset_counts
   boxplot(geneset_counts[,2],horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
   hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
   hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
+```
+
+## Enrichment scatterplot
+
+All sets with p.adjustMANOVA<0.05. Try hovering over the points.
+
+```{r,results="asis",echo=F, fig.height = 7, fig.width = 7}
+library("taucharts")
+library(dplyr)
+  myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
+  myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
+  myres<-myres[,c(1,8,2,4,5)]
+  myres$set<-gsub("_"," ",as.character(myres$set))
+#  myres<-head(myres,n=100L)
+  colnames(myres)=gsub("\\.","_",colnames(myres))
+  my_x=colnames(myres)[4]
+  my_y=colnames(myres)[5]
+  tauchart(myres) %>% 
+    tau_point(my_x,my_y) %>% 
+    tau_tooltip() 
 ```
 
 ## Results table
