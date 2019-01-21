@@ -14,3 +14,20 @@ render_report(res,"outres.html")
 # run an example shiny document
 rmarkdown::run("test_shiny.Rmd")
 
+
+#randomise rownames test
+xx<-x
+rownames(xx)<-sample(rownames(x))
+head(xx)
+res<-endrich(xx,genesets)
+render_report(res,"randres_names.html")
+
+#randomise all data
+xx<-x
+xx[,1]<-sample(x[,1])
+xx[,2]<-sample(x[,2])
+head(xx)
+res<-endrich(xx,genesets)
+render_report(res,"randres_xy.html")
+
+
