@@ -40,6 +40,7 @@ Here are some metrics about the input data profile:
 Here we look at the dynamic range of differential signal in the two contrasts.
 
 ```{r,echo=FALSE,fig.height = 6, fig.width = 6.5}
+  library(vioplot)
   vioplot(res$input_profile[,1],res$input_profile[,2],col="gray",names=colnames(res$input_profile))
   title("Dynamic range of signal",ylab="signal", xlab="contrast")
 
