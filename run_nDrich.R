@@ -11,4 +11,6 @@ res<-endrich(x,genesets)
 pdf("mRNA_LGvHGvHGV_ReactomeResults.pdf") ; plot2DSets(res,resrows=1:10) ; dev.off()
 render_report(res,"outres.html")
 
+# run an example shiny document
+rmarkdown::run("test_shiny.Rmd")
 
