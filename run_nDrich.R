@@ -32,8 +32,8 @@ render_report(res,"randres_xy.html")
 
 
 #run some permutes
-PERMUTES=50
-numsig=NULL
+PERMUTES=100
+numsig1=NULL
 print(paste("Running",PERMUTES,"permutes"))
 for (i in 1:PERMUTES) {
 xx<-x
@@ -41,10 +41,30 @@ rownames(xx)<-sample(rownames(x))
 head(xx)
 res<-endrich(xx,genesets)
 n<-length(which(res$manova_result$p.adjustMANOVA<0.05))
-numsig=c(numsig,n)
+numsig1=c(numsig1,n)
 }
-numsig<-as.data.frame(numsig)
-numsig
+numsig1<-as.data.frame(numsig1)
+numsig1
+
+numsig2=NULL
+print(paste("Running",PERMUTES,"permutes"))
+for (i in 1:PERMUTES) {
+xx<-x
+xx[,1]<-sample(x[,1])
+xx[,2]<-sample(x[,2])
+res<-endrich(xx,genesets)
+n<-length(which(res$manova_result$p.adjustMANOVA<0.05))
+numsig2=c(numsig2,n)
+}
+numsig2<-as.data.frame(numsig2)
+numsig2
+
+MAX=max(c(max(numsig1),max(numsig2)))
+
 pdf("randres.pdf")
-plot(numsig$numsig,main="Number of significant gene sets after randomisation",ylab="No. gene sets found",xlab="Randomisation run")
+plot(numsig1$numsig1,main="Randomisation",ylab="No. gene sets found",xlab="Randomisation run",pch=19,ylim=c(0,MAX))
+points(numsig2$numsig2,col="red",pch=19)
+mtext("Gene name randomisation in black; profile randomisation in red")
 dev.off()
+
+
