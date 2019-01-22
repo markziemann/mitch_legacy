@@ -36,6 +36,7 @@ PERMUTES=100
 numsig1=NULL
 print(paste("Running",PERMUTES,"permutes"))
 for (i in 1:PERMUTES) {
+set.seed(i+100)
 xx<-x
 rownames(xx)<-sample(rownames(x))
 head(xx)
@@ -50,7 +51,9 @@ numsig2=NULL
 print(paste("Running",PERMUTES,"permutes"))
 for (i in 1:PERMUTES) {
 xx<-x
+set.seed(i+200)
 xx[,1]<-sample(x[,1])
+set.seed(i+300)
 xx[,2]<-sample(x[,2])
 res<-endrich(xx,genesets)
 n<-length(which(res$manova_result$p.adjustMANOVA<0.05))
@@ -62,9 +65,9 @@ numsig2
 MAX=max(c(max(numsig1),max(numsig2)))
 
 pdf("randres.pdf")
-plot(numsig1$numsig1,main="Randomisation",ylab="No. gene sets found",xlab="Randomisation run",pch=19,ylim=c(0,MAX))
-points(numsig2$numsig2,col="red",pch=19)
-mtext("Gene name randomisation in black; profile randomisation in red")
+par(mfrow=c(2,1))
+plot(numsig1$numsig1,main="Gene name randomisation",ylab="No. FDR MANOVA<0.05 sets",xlab="Run",pch=19,ylim=c(0,MAX))
+plot(numsig2$numsig2,main="Profile randomisation",ylab="No. FDR MANOVA<0.05 sets",xlab="Run",pch=19,ylim=c(0,MAX))
 dev.off()
 
 
