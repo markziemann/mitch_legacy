@@ -31,3 +31,20 @@ res<-endrich(xx,genesets)
 render_report(res,"randres_xy.html")
 
 
+#run some permutes
+PERMUTES=50
+numsig=NULL
+print(paste("Running",PERMUTES,"permutes"))
+for (i in 1:PERMUTES) {
+xx<-x
+rownames(xx)<-sample(rownames(x))
+head(xx)
+res<-endrich(xx,genesets)
+n<-length(which(res$manova_result$p.adjustMANOVA<0.05))
+numsig=c(numsig,n)
+}
+numsig<-as.data.frame(numsig)
+numsig
+pdf("randres.pdf")
+plot(numsig$numsig,main="Number of significant gene sets after randomisation",ylab="No. gene sets found",xlab="Randomisation run")
+dev.off()
