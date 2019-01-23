@@ -7,7 +7,7 @@ x<-as.matrix(read.table("rna_LGHGvHGHGV_jn.rnk",header=T))
 genesets<-GMT2DF("ReactomePathways.gmt")
 
 #run the analysis
-res<-endrich(x,genesets,resrows=100)
+res<-endrich(x,genesets,resrows=25)
 plot2DSets(res,outfile="outres.pdf")
 render_report(res,"outres.html")
 

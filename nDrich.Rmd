@@ -120,20 +120,38 @@ More about the sizes of the gene sets evaluated.
 
 ## Enrichment scatterplot with taucharts
 
-All sets with p.adjustMANOVA<0.05. Try hovering over the points.
+Sets with p.adjustMANOVA<0.05. Try hovering over the points.
 
 ```{r,results="asis",echo=F, fig.height = 7, fig.width = 7}
 library("taucharts")
 library(dplyr)
   numsets=nrow(subset(res$manova_result,p.adjustMANOVA<0.05))
-  if (numsets>10){
-    print("showing significant sets with p.adjust MANOVA<0.05") 
+  if (numsets>0){
     myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
+    myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
+    myres<-myres[,c(1,8,2,4,5)]
+    myres$set<-gsub("_"," ",as.character(myres$set))
+    colnames(myres)=gsub("\\.","_",colnames(myres))
+    my_x=colnames(myres)[4]
+    my_y=colnames(myres)[5]
+
+    tauchart(myres) %>%
+      tau_point(my_x,my_y) %>%
+      tau_tooltip()
+
   } else {
     message("No significant enrichments found, but here are the top results anyway")
     myres<-head(res$manova_result,20)
   }
+ 
+```
+Now showing the top sets ranked by p.adjustMANOVA but without a cut-off.
 
+```{r,results="asis",echo=F, fig.height = 7, fig.width = 7}
+library("taucharts")
+library(dplyr)
+  resrows=length(res$detailed_sets)
+  myres<-head(res$manova_result,resrows)
   myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
   myres<-myres[,c(1,8,2,4,5)]
   myres$set<-gsub("_"," ",as.character(myres$set))
@@ -141,13 +159,10 @@ library(dplyr)
   my_x=colnames(myres)[4]
   my_y=colnames(myres)[5]
 
-#mylink="<a href='www.dee2.io'>link</a>"
-#myres$link<-mylink
-
-  tauchart(myres) %>% 
-    tau_point(my_x,my_y) %>% 
+  tauchart(myres) %>%
+    tau_point(my_x,my_y) %>%
     tau_tooltip()
- 
+
 ```
 
 ## Results table
@@ -157,41 +172,20 @@ library(dplyr)
 ```
 
 ```{r,results="asis",echo=FALSE}
-  numsets=nrow(subset(res$manova_result,p.adjustMANOVA<0.05))
-  if (numsets>10){
-    print("showing significant sets with p.adjust MANOVA<0.05")
-    myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
-    if ( nrow(myres)>100 ) { myres<-myres[1:100,] }
-
-  } else {
-    message("No significant enrichments found, but here are the top results anyway")
-    myres<-head(res$manova_result,20)
-  }
-
+  myres<-head(res$manova_result,resrows)
   myres<-myres[,c(1:3,8,4:7)]
-  myres<-head(myres,n=10L)
   formatted<-myres
   formatted[,1]<-gsub("_"," ",myres[,1])
   formatted[,3:8]<-format(myres[,3:8],digits=3)
-  kable( formatted , col.names = colnames(myres) , row.names=F, caption = "Top 100 gene sets" ,digits=100) 
+  kable( formatted , col.names = colnames(myres) , row.names=F, caption = "Top gene sets" ,digits=100)
 ```
 
 ## Detailed Gene set reports 1
 
 ```{r,results="asis",echo=FALSE,fig.height=5, fig.width=6,out.width = '40%',comment=NA}
 
- numsets=nrow(subset(res$manova_result,p.adjustMANOVA<0.05))
-  if (numsets>10){
-    print("showing significant sets with p.adjust MANOVA<0.05")
-    myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
-    if ( nrow(myres)>100 ) { myres<-myres[1:100,] }
-  } else {
-    message("No significant enrichments found, but here are the top results anyway")
-    myres<-head(res$manova_result,20)
-  }
-
-
-for ( s in 1:10 ) {
+for ( s in 1:resrows ) {
+  myres<-head(res$manova_result,resrows)
   myset=gsub("_"," ",as.character(myres[s,1]))
   mysize=as.character(myres[s,2])
   mypadjmanova=as.character(signif(myres[s,8],3))
@@ -211,7 +205,8 @@ for ( s in 1:10 ) {
   i=s
   ll<-res$manova_result[i,]
   size<-ll$setSize
-  sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
+  sss<-res$detailed_sets[[i]]
+#  sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
   k<-MASS:::kde2d(sss[,1],sss[,2])
 
   par(mai=c(1.02,0.82,0.82,0.42))
@@ -277,7 +272,7 @@ for ( s in 1:10 ) {
     myres<-head(res$manova_result,20)
   }
 
-for ( s in 1:10 ) {
+for ( s in 1:resrows ) {
   myset=gsub("_"," ",as.character(myres[s,1]))
   mysize=myres[s,2]
   mypadjmanova=signif(myres[s,8],3)
@@ -299,7 +294,8 @@ for ( s in 1:10 ) {
   i=s
   ll<-res$manova_result[i,]
   size<-ll$setSize
-  sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
+  sss<-res$detailed_sets[[i]]
+#  sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
   k<-MASS:::kde2d(sss[,1],sss[,2])
 
   par(mai=c(1.02,0.82,0.82,0.42))
