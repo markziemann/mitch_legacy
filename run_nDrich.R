@@ -7,8 +7,8 @@ x<-as.matrix(read.table("rna_LGHGvHGHGV_jn.rnk",header=T))
 genesets<-GMT2DF("ReactomePathways.gmt")
 
 #run the analysis
-res<-endrich(x,genesets)
-pdf("mRNA_LGvHGvHGV_ReactomeResults.pdf") ; plot2DSets(res,resrows=1:10) ; dev.off()
+res<-endrich(x,genesets,resrows=100)
+plot2DSets(res,outfile="outres.pdf")
 render_report(res,"outres.html")
 
 # run an example shiny document

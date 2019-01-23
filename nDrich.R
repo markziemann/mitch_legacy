@@ -248,9 +248,24 @@ endrichrank<-function(x) {
 }
 
 
+detailed_sets<-function(res,  resrows=50) {
+  #collect ranked genelist of each genest
+  ss<-res$ranked_profile
+  mykeys <- as.character(res$manova_result[1:resrows,1])
+  dat <- vector(mode="list", length=resrows)
+  names(dat) <- mykeys
+
+  for(i in 1:resrows) {
+    ll<-res$manova_result[i,]
+    size<-ll$setSize
+    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
+    dat[[i]]<-sss
+  }
+  dat
+}
 
 
-endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
+endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50) {
 	input_profile<-x
 
         input_genesets<-genesets
@@ -266,13 +281,17 @@ endrich<-function(x,genesets, minsetsize=10,cores=detectCores()-1) {
 		"ranked_profile" = ranked_profile,
 		"manova_result" = manova_result,
 		"manova_analysis_metrics" = manova_analysis_metrics)
+
+        dat$detailed_sets<-detailed_sets(dat,resrows)
+
 	dat
 }
 
 
-plot2DSets <- function(res,  resrows=1:50) {
+plot2DSets <- function(res,outfile="Rplots.pdf") {
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
+  resrows=length(res$detailed_sets)
   #Contour of all the data
   ss<-res$ranked_profile
 
@@ -284,6 +303,8 @@ plot2DSets <- function(res,  resrows=1:50) {
   k<-MASS:::kde2d(ss[,1],ss[,2])
   X_AXIS=paste("Rank in contrast",colnames(ss)[1])
   Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
+
+  pdf(outfile)
   filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
     color=palette , 
     plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
@@ -291,10 +312,11 @@ plot2DSets <- function(res,  resrows=1:50) {
     }
   )
 
-  for(i in resrows) {
+  for(i in 1:resrows) {
     ll<-res$manova_result[i,]
     size<-ll$setSize
-    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
+    sss<-res$detailed_sets[[i]] 
+#    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
     k<-MASS:::kde2d(sss[,1],sss[,2])
     filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
         plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
@@ -304,6 +326,7 @@ plot2DSets <- function(res,  resrows=1:50) {
       }
     )
   }
+  dev.off()
 }
 
 
