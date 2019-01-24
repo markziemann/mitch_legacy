@@ -171,6 +171,7 @@ library(dplyr)
   formatted[,1]<-gsub("_"," ",myres[,1])
   formatted[,3:8]<-format(myres[,3:8],digits=3)
   kable( formatted , col.names = colnames(myres) , row.names=F, caption = "Top gene sets" ,digits=100)
+  cat("<hr><br>")
 ```
 
 ## Detailed Gene set reports 1
@@ -242,101 +243,20 @@ for ( s in 1:resrows ) {
     myquad<-sss[which(sss[,1]<0 & sss[,2]>0),]
     topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),]
   }
-  print("<br>")
+  cat("<br>")
   topgenes$Gene<-rownames(topgenes)
   topgenes<-topgenes[,c(3,1,2)]
+
   print(kable( head(topgenes,n=20L) , col.names = colnames(topgenes) , format="html",row.names=F, caption = "Top 20 genes" ,digits=100))
 
+  HEADER=paste("<br><details><summary><b>","Click HERE to show all gene set members","</b></summary><br><p>",sep=" " )
+  cat(HEADER)
+
+  print(kable( sss  , format="html",row.names=T, caption = "All member genes" ,digits=100))
+
+  cat("<br></p></details>")
 
   cat("<br><hr>")
 }
 ```
 
-## Detailed Gene set reports 2
-
-```{r,detailed_geneset_report2,results="asis",echo=FALSE,fig.height=5, fig.width=6,out.width = '40%',comment=NA}
- numsets=nrow(subset(res$manova_result,p.adjustMANOVA<0.05))
-  if (numsets>10){
-    print("showing significant sets with p.adjust MANOVA<0.05")
-    myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
-    if ( nrow(myres)>100 ) { myres<-myres[1:100,] }
-  } else {
-    message("No significant enrichments found, but here are the top results anyway")
-    myres<-head(res$manova_result,20)
-  }
-
-for ( s in 1:resrows ) {
-  myset=gsub("_"," ",as.character(myres[s,1]))
-  mysize=myres[s,2]
-  mypadjmanova=signif(myres[s,8],3)
-  mysx=signif(myres[s,4],3)
-  mysy=signif(myres[s,5],3)
-  mypx=signif(myres[s,6],3)
-  mypy=signif(myres[s,7],3)
-  HEADER=paste("\'<details><summary><b>",myset,"</b></summary>",sep=" " )
-  DETAILS=paste("<p> GeneSet:",myset,
-    "<br> SetSize:",mysize,
-    "<br> x-axis enrichment score:",mysx,
-    "<br> y-axis enrichment score:",mysy,
-    "<br> nom p-value for x-axis enrichment:",mypx,
-    "<br> nom p-value for y-axis enrichment:",mypy,
-    "<br> FDR MANOVA:",mypadjmanova,
-    "</p> ")
-  print(paste(HEADER,DETAILS),quote=F)
-
-  i=s
-  ll<-res$manova_result[i,]
-  size<-ll$setSize
-  sss<-res$detailed_sets[[i]]
-#  sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
-  k<-MASS:::kde2d(sss[,1],sss[,2])
-
-  par(mai=c(1.02,0.82,0.82,0.42))
-  filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
-      plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
-      title( main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
-        xlab=X_AXIS,ylab=Y_AXIS
-      )
-    }
-  )
-
-  par(mai=c(1.02,0.82,0.82,1.42))
-  plot(sss, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
-    xlim=c(xmin,xmax),ylim=c(ymin,ymax),
-    main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
-    xlab=X_AXIS,ylab=Y_AXIS
-  )
-  abline(v=0,h=0,lty=2,lwd=2,col="blue")
-
-  tl=bl=tr=br=0
-  if ( mysy>0 ) { tl=tl+1 ; tr=tr+1  } else { bl=bl+1 ; br=br+1 } 
-  if ( mysx>0 ) { tr=tr+1 ; br=br+1  } else { tl=tl+1 ; bl=bl+1 } 
-
-  if (bl==2) {
-    myquad<-sss[which(sss[,1]<0 & sss[,2]<0),]
-    topgenes<-head(myquad[order(-rank(myquad[,1]*myquad[,2])),],n=50)
-  }
-
-  if (tr==2) {
-    myquad<-sss[which(sss[,1]>0 & sss[,2]>0),]
-    topgenes<-head(myquad[order(-rank(myquad[,1]*myquad[,2])),],n=50)
-  }
-
-  if (br==2) {
-    myquad<-sss[which(sss[,1]>0 & sss[,2]<0),]
-    topgenes<-head(myquad[order(rank(myquad[,1]*myquad[,2])),],n=50)
-  }
-
-  if (tl==2) {
-    myquad<-sss[which(sss[,1]<0 & sss[,2]>0),]
-    topgenes<-head(myquad[order(rank(myquad[,1]*myquad[,2])),],n=50)
-  }
-  print("<br>")
-  topgenes$Gene<-rownames(topgenes)
-  topgenes<-topgenes[,c(3,1,2)]
-  print(kable( head(topgenes,n=20L) , col.names = colnames(topgenes) , format="html",row.names=F, caption = "Top 20 genes" ,digits=100))
-
-  print("</details>\'")
-
-}
-```
