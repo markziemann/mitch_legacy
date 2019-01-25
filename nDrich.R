@@ -21,6 +21,13 @@ GMT2DF<-function(gmtfile) {
 	return(rr)
 }
 
+gmt_import<-function(gmtfile){
+    pathwayLines <- strsplit(readLines(gmtfile), "\t")
+    pathways <- lapply(pathwayLines, utils::tail, -2)
+    names(pathways) <- sapply(pathwayLines, head, 1)
+    pathways
+}
+
 
 GSTSets<-function(testset, setsTable) {
 	#Remove items from set unkown by msigdb
@@ -151,10 +158,11 @@ EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
 	library(parallel)
 	library(plyr)
 
-	sets<-unique(genesets[,1])
+	sets<-names(genesets)
 
 	res<-mclapply(sets,function(set){
-		inset<- row.names(x) %in% genesets[genesets[,1]==set,2]
+		inset<-rownames(x) %in% as.character(unlist(genesets[set]))
+#		inset<- row.names(x) %in% genesets[genesets[,1]==set,2]
 	        fit<- manova(x ~ inset)
         	sumMANOVA <- summary.manova(fit)
 	        sumAOV    <- summary.aov(fit)
@@ -175,21 +183,25 @@ EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
 }
 
 
-manova_analysis_metrics<-function(x, genesets, manova_result, minsetsize=10) {
+
+
+
+manova_analysis_metrics_calc<-function(x, genesets, manova_result, minsetsize=10 ) {
 	library(dplyr)
-	num_genesets=length(unique(genesets$V1))
-	included_genesets<-genesets[which ( genesets$V2 %in% rownames(x)),]
-        geneset_counts<-summarise(group_by(included_genesets, V1), count = n_distinct(V2))
-	geneset_counts$excluded<-geneset_counts$count<minsetsize
-	genesets_excluded=as.vector(unlist(geneset_counts[which(geneset_counts$excluded==T),1]))
-        genesets_included=as.vector(unlist(geneset_counts[which(geneset_counts$excluded==F),1]))
+	num_genesets=length(genesets)
+	included_genesets<-nrow(manova_result)
+        geneset_counts<-as.data.frame(as.vector(unlist(lapply(genesets,function(set){ length(which(as.vector(unlist(set)) %in% rownames(x))) } ))))
+	rownames(geneset_counts)<-names(genesets)
+	colnames(geneset_counts)="count"
+	genesets_excluded=names(genesets)[which(geneset_counts$count<minsetsize)]
+        genesets_included=names(genesets)[which(geneset_counts$count>=minsetsize)]
         num_genesets_excluded=length(genesets_excluded)
         num_genesets_included=length(genesets_included)
-	num_genes_in_genesets=length(unique(genesets$V2))
+	num_genes_in_genesets=length(unique(as.vector(unlist(genesets))))
 	num_genes_in_profile=length(unique(rownames(x)))
 	duplicated_genes_present=length(rownames(x))>num_genes_in_profile
-	num_profile_genes_in_sets=length(which ( rownames(x) %in% genesets$V2 ))
-	num_profile_genes_not_in_sets=length(which (!( rownames(x) %in% genesets$V2 )))
+	num_profile_genes_in_sets=length(which(rownames(x) %in% as.vector(unlist(genesets))))
+	num_profile_genes_not_in_sets=num_genes_in_profile - num_profile_genes_in_sets
 	profile_pearson_correl=cor(x,method="p")[2,1]
 	profile_spearman_correl=cor(x,method="s")[2,1]
 	num_sets_significant=nrow( manova_result[which(manova_result$p.adjustMANOVA<0.05),] )
@@ -258,7 +270,9 @@ detailed_sets<-function(res,  resrows=50) {
   for(i in 1:resrows) {
     ll<-res$manova_result[i,]
     size<-ll$setSize
-    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
+    setindex=as.numeric(ll[1])
+    sss<-ss[which(rownames(ss) %in% genesets[[as.numeric(ll[1])]]),]
+
     dat[[i]]<-sss
   }
   dat
@@ -274,7 +288,7 @@ endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50)
 
 	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores)
 
-	manova_analysis_metrics<-manova_analysis_metrics(x,genesets,manova_result)
+	manova_analysis_metrics<-manova_analysis_metrics_calc(x,genesets,manova_result)
 
 	dat <- list("input_profile" = input_profile,
 		"input_genesets" = input_genesets,

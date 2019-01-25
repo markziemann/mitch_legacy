@@ -109,7 +109,7 @@ More about the sizes of the gene sets evaluated.
 ```{r,geneset_sizes,results="asis",echo=FALSE,fig.height = 10, fig.width = 7}
   par(mfrow=c(3,1))
   geneset_counts<-res$manova_analysis_metrics$geneset_counts
-  boxplot(geneset_counts[,2],horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+  boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
   hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
   hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
@@ -199,11 +199,12 @@ for ( s in 1:resrows ) {
   i=s
   ll<-res$manova_result[i,]
   size<-ll$setSize
-  sss<-res$detailed_sets[[i]]
+  sss<-as.data.frame(res$detailed_sets[[i]])
 #  sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
   k<-MASS:::kde2d(sss[,1],sss[,2])
 
   par(mai=c(1.02,0.82,0.82,0.42))
+  palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
   filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
       plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
       title( main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
@@ -244,7 +245,7 @@ for ( s in 1:resrows ) {
     topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),]
   }
   cat("<br>")
-  topgenes$Gene<-rownames(topgenes)
+  topgenes$Gene<-as.character(rownames(topgenes))
   topgenes<-topgenes[,c(3,1,2)]
 
   print(kable( head(topgenes,n=20L) , col.names = colnames(topgenes) , format="html",row.names=F, caption = "Top 20 genes" ,digits=100))
