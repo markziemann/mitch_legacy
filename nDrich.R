@@ -22,10 +22,11 @@ GMT2DF<-function(gmtfile) {
 }
 
 gmt_import<-function(gmtfile){
-    pathwayLines <- strsplit(readLines(gmtfile), "\t")
-    pathways <- lapply(pathwayLines, utils::tail, -2)
-    names(pathways) <- sapply(pathwayLines, head, 1)
-    pathways
+    genesetLines <- strsplit(readLines(gmtfile), "\t")
+    genesets <- lapply(genesetLines, utils::tail, -2)
+    names(genesets) <- sapply(genesetLines, head, 1)
+    attributes(genesets)$originfile<-gmtfile
+    genesets
 }
 
 

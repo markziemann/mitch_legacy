@@ -87,6 +87,8 @@ Here is the distribution of genes in the four quadrants
 Here are some metrics about the gene sets used:
 
 ```{r,input_geneset_metrics,results="asis",echo=FALSE}
+  ORIGINFILE=attributes(genesets)$originfile
+  print(paste("GMT file of genesets:",ORIGINFILE))
   unformatted<-t(as.data.frame(res$manova_analysis_metrics[ c(1,6,7,13,14  ) ]))
   formatted<-as.data.frame(as.character( unformatted[1:5]) )
   rownames(formatted)=rownames(unformatted)
