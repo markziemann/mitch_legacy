@@ -4,7 +4,6 @@ source("nDrich.R")
 x<-as.matrix(read.table("rna_LGHGvHGHGV_jn.rnk",header=T))
 
 #read in GMT file
-#genesets<-GMT2DF("ReactomePathways.gmt")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 #run the analysis

@@ -242,21 +242,15 @@ manova_analysis_metrics_calc<-function(x, genesets, manova_result, minsetsize=10
 
 endrichrank<-function(x) {
   input_profile<-x
-  ranked_profile<-apply(x,2,rank)
-
-  x_num_neg=length( which( input_profile[,1]<0 ) )
-  x_num_zero=length( which( input_profile[,1]==0 ) )
-  x_num_adj=x_num_neg+(x_num_zero/2)
-
-  y_num_neg=length( which( input_profile[,2]<0 ) )
-  y_num_zero=length( which( input_profile[,2]==0 ) )
-  y_num_adj=y_num_neg+(y_num_zero/2)
-
-  adj_x<-ranked_profile[,1]-x_num_adj
-  adj_y<-ranked_profile[,2]-y_num_adj
-  adj<-cbind(adj_x,adj_y)
-
-  colnames(adj)=colnames(x)
+  rank_adj<-function(x){
+    xx<-rank(x)
+    num_neg=length( which( x<0 ) )
+    num_zero=length( which( x==0 ) )
+    num_adj=num_neg+(num_zero/2)
+    adj<-xx-num_adj
+    adj
+}
+  adj<-apply(x,2,rank_adj)
   adj
 }
 
