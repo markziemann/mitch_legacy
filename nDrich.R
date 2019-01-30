@@ -314,12 +314,20 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
   Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
 
   pdf(outfile)
+
+
+  plot(res$input_profile , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+    main="Scatterplot of all genes",
+  )
+  abline(v=0,h=0,lty=2,lwd=2,col="blue")
+
   filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
     color=palette , 
     plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
        title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS )
     }
   )
+
 
   for(i in 1:resrows) {
     ll<-res$manova_result[i,]
@@ -334,6 +342,14 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
         )
       }
     )
+
+    plot(sss, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+      main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
+      xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+      xlab=X_AXIS,ylab=Y_AXIS
+    )
+  abline(v=0,h=0,lty=2,lwd=2,col="blue")
+
   }
   dev.off()
 }
