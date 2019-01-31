@@ -249,7 +249,7 @@ endrichrank<-function(x) {
     num_adj=num_neg+(num_zero/2)
     adj<-xx-num_adj
     adj
-}
+  }
   adj<-apply(x,2,rank_adj)
   adj
 }
@@ -298,6 +298,7 @@ endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50)
 
 
 plot2DSets <- function(res,outfile="Rplots.pdf") {
+  library("GGally")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   resrows=length(res$detailed_sets)
@@ -309,49 +310,148 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
   ymin=min(ss[,2])
   ymax=max(ss[,2])
 
-  k<-MASS:::kde2d(ss[,1],ss[,2])
-  X_AXIS=paste("Rank in contrast",colnames(ss)[1])
-  Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
-
   pdf(outfile)
 
+  if ( ncol(ss)<3 ) {
 
-  plot(res$input_profile , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
-    main="Scatterplot of all genes",
-  )
-  abline(v=0,h=0,lty=2,lwd=2,col="blue")
+    k<-MASS:::kde2d(ss[,1],ss[,2])
+    X_AXIS=paste("Rank in contrast",colnames(ss)[1])
+    Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
 
-  filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
-    color=palette , 
-    plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
-       title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS )
+    plot(res$input_profile , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+      main="Scatterplot of all genes",
+    )
+    abline(v=0,h=0,lty=2,lwd=2,col="blue")
+
+    filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+      color=palette , 
+      plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
+        title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS )
+      }
+    )
+
+    for(i in 1:resrows) {
+      ll<-res$manova_result[i,]
+      size<-ll$setSize
+      sss<-res$detailed_sets[[i]] 
+#    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
+      k<-MASS:::kde2d(sss[,1],sss[,2])
+      filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+          plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
+          title( main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
+            xlab=X_AXIS,ylab=Y_AXIS
+          )
+        }
+      )
+
+      plot(sss, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+        main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
+        xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+        xlab=X_AXIS,ylab=Y_AXIS
+      )
+    abline(v=0,h=0,lty=2,lwd=2,col="blue")
     }
-  )
+  } else {
 
+    #now proceed if more than 2 dimensions present
+    if ( ncol(ss)>2 ) {
+      zmin=min(ss[,3])
+      zmax=max(ss[,3])
+      mins<-c(xmin,ymin,zmin)
+      maxs<-c(xmax,ymax,zmax)
+    }
+
+    if ( ncol(ss)>3 ) {
+      wmin=min(ss[,4])
+      wmax=max(ss[,4])
+      mins<-c(mins,wmin)
+      maxs<-c(maxs,wmax)
+    }
+
+    if ( ncol(ss)>4 ) {
+      vmin=min(ss[,5])
+      vmax=max(ss[,5])
+      mins<-c(mins,vmin)
+      maxs<-c(maxs,vmax)
+    }
+
+    if ( ncol(ss)>5 ) {
+      umin=min(ss[,6])
+      umax=max(ss[,6])
+      mins<-c(mins,umin)
+      maxs<-c(maxs,umax)
+    }
+
+  #pairs points plot
+  ggpairs_points_plot <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      geom_point(alpha=0.05) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed")
+  }
+
+
+  p<-ggpairs(as.data.frame(x), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
+  print( p +  theme_bw() ) 
+
+  #pairs contour plot function
+  ggpairs_func <- function(data, mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      stat_density2d(aes(fill=..density..), geom="tile", contour = FALSE) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_fill_gradientn(colours=palette(25))
+    p
+  }
+
+  #pairs contour plot
+  p<-ggpairs(as.data.frame(ss), title="Contour plot of all genes after ranking" , lower=list(continuous=ggpairs_func),
+    diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/100)))
+  print( p + theme_bw() )
+
+
+  #subset contour plot
+  ggpairs_contour_limit_range <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      stat_density2d(aes(fill=..density..), geom="tile", contour = FALSE) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_fill_gradientn(colours=palette(25)) +
+      scale_x_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[1]))]),max(ss[,gsub("~","",as.character(mapping[1]))])) ) +
+      scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
+    p
+  }
+
+  #subset points plot
+  ggpairs_points_limit_range <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      geom_point(alpha=0.1) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_x_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[1]))]),max(ss[,gsub("~","",as.character(mapping[1]))])) ) +
+      scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
+    p
+  }
 
   for(i in 1:resrows) {
     ll<-res$manova_result[i,]
     size<-ll$setSize
-    sss<-res$detailed_sets[[i]] 
-#    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
-    k<-MASS:::kde2d(sss[,1],sss[,2])
-    filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
-        plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
-        title( main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
-          xlab=X_AXIS,ylab=Y_AXIS
-        )
-      }
-    )
+    sss<-res$detailed_sets[[i]]
+#   sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
 
-    plot(sss, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
-      main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
-      xlim=c(xmin,xmax),ylim=c(ymin,ymax),
-      xlab=X_AXIS,ylab=Y_AXIS
-    )
-  abline(v=0,h=0,lty=2,lwd=2,col="blue")
+    p<-ggpairs(as.data.frame(sss), title=ll[,1], lower=list(continuous=ggpairs_contour_limit_range),
+      diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)) )
+    print( p + theme_bw() )
+
+    p<-ggpairs(as.data.frame(sss), title=ll[,1], lower= list(continuous = ggpairs_points_limit_range ),
+          diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)))
+    print( p + theme_bw() )
 
   }
   dev.off()
+
+  }
+
 }
 
 
