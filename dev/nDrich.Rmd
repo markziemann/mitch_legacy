@@ -1,0 +1,163 @@
+---
+title: "nDrichr Report"
+author: "Antony Kaspi & Mark Ziemann"
+runtime: shiny
+output: html_document
+theme: cosmo
+---
+
+```{r,,results="asis",echo=FALSE}
+date()
+```
+
+## Background
+
+nDrich performs multidimensional gene set enrichment analysis. The concept behind this dates to work by Cox and 
+Mann (https://doi.org/10.1186/1471-2105-13-S16-S12). This implementation is suited to R based workflows of 
+multi-omics datasets. This software was developed by Antony Kaspi and Mark Ziemann.
+
+## Input profiles
+
+Here is the first few lines of the input profile.
+
+```{r,peek,echo=FALSE}
+load(DATANAME)
+head(x)
+```
+
+Here are some metrics about the input data profile:
+
+```{r, metrics, echo=FALSE}
+  unformatted<-t(as.data.frame(res$manova_analysis_metrics[ c(2,3,4,5,11,12 ) ])) 
+  formatted<-unformatted
+  formatted[1:4]<-as.character(round(as.numeric(unformatted[1:4]) , digits=0))
+  formatted[5:6]<-as.character(round(as.numeric(unformatted[5:6]) , digits=5))
+  colnames(formatted)="Profile metrics"
+  kable( formatted, caption = "Profile metrics" )
+
+```
+
+Here is a scatterplot of the input profiles. Note the dynamic ranges.
+
+```{r, scatterplot, echo=FALSE,fig.height = 6, fig.width = 6.5}
+  if ( ncol(x)<3 ) {
+    plot(x, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.15), main="Input profiles"  )
+  } else {
+     library("GGally")
+     library("vioplot")
+     ggpairs_points_plot <- function(data ,mapping, ...){
+      p <- ggplot(data = data, mapping = mapping) +
+      geom_point(alpha=0.05) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed")
+    }
+
+    p<-ggpairs(as.data.frame(x), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
+    print( p +  theme_bw() )
+  }
+
+```
+
+Here is the contour plot of the profile including all genes.
+
+```{r, contourplot, echo=FALSE,fig.height = 6, fig.width = 6.5}
+  palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
+
+  #Contour of all the data
+  ss<-res$ranked_profile
+
+  xmin=min(ss[,1])
+  xmax=max(ss[,1])
+  ymin=min(ss[,2])
+  ymax=max(ss[,2])
+
+  if ( ncol(ss)<3 ) {
+
+    k<-MASS:::kde2d(ss[,1],ss[,2])
+    X_AXIS=paste("Rank in contrast",colnames(ss)[1])
+    Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
+
+    filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+      color=palette ,
+      plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
+        title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
+
+  } else {
+
+  ggpairs_points_plot <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      geom_point(alpha=0.05) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") }
+
+  p<-ggpairs(as.data.frame(x), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
+  print( p +  theme_bw() )
+
+  #pairs contour plot function
+  ggpairs_func <- function(data, mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      stat_density2d(aes(fill=..density..), geom="tile", contour = FALSE) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_fill_gradientn(colours=palette(25))
+    p
+  }
+
+  #pairs contour plot
+  p<-ggpairs(as.data.frame(ss), title="Contour plot of all genes after ranking" , lower=list(continuous=ggpairs_func),
+    diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/100)))
+  print( p + theme_bw() )
+
+  #subset contour plot
+  ggpairs_contour_limit_range <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      stat_density2d(aes(fill=..density..), geom="tile", contour = FALSE) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_fill_gradientn(colours=palette(25)) +
+      scale_x_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[1]))]),max(ss[,gsub("~","",as.character(mapping[1]))])) ) +
+      scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
+    p
+  }
+
+  #subset points plot
+  ggpairs_points_limit_range <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      geom_point(alpha=0.1) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_x_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[1]))]),max(ss[,gsub("~","",as.character(mapping[1]))])) ) +
+      scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
+    p
+  }
+
+}
+
+```
+
+Here is the distribution of genes in the four quadrants
+
+```{r, quadrant_distribution, results="asis",echo=FALSE}
+if ( ncol(ss)<3 ) {
+  uu=length(which(res$input_profile[,1]>0 & res$input_profile[,2]>0))
+  ud=length(which(res$input_profile[,1]>0 & res$input_profile[,2]<0))
+  dd=length(which(res$input_profile[,1]<0 & res$input_profile[,2]<0))
+  du=length(which(res$input_profile[,1]<0 & res$input_profile[,2]>0))
+  a<-as.data.frame(c(uu,ud,dd,du))
+  rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
+  colnames(a)="a"
+  barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
+} else {
+  d=ncol(ss)
+  sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
+  sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+}
+
+```
+
+
+
+
+
+
+
