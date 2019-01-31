@@ -13,14 +13,6 @@ proj2DdirMag<-function(v,s=c(1,1) ) {
 	return((rrr[,1]^2 + rrr[,2]^2)^0.5  * sign(rrr[,2]))
 }
 
-# Load a GMT into dataframe
-GMT2DF<-function(gmtfile) {
-	rr<-read.table(pipe( paste(" cat ",gmtfile,
-	" | awk '{print \"#\"$0}'| tr '\\t' '\\n'|  awk ' /^#/{s=$0; getline;getline} !/^#/ {print s\"\\t\"$1}'|sed 's/^#//'")),
-	 header=F)
-	return(rr)
-}
-
 gmt_import<-function(gmtfile){
     genesetLines <- strsplit(readLines(gmtfile), "\t")
     genesets <- lapply(genesetLines, utils::tail, -2)
@@ -163,7 +155,6 @@ EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
 
 	res<-mclapply(sets,function(set){
 		inset<-rownames(x) %in% as.character(unlist(genesets[set]))
-#		inset<- row.names(x) %in% genesets[genesets[,1]==set,2]
 	        fit<- manova(x ~ inset)
         	sumMANOVA <- summary.manova(fit)
 	        sumAOV    <- summary.aov(fit)
@@ -182,9 +173,6 @@ EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
 	fres<- fres[order(fres$pMANOVA),]
 	return(fres)
 }
-
-
-
 
 
 manova_analysis_metrics_calc<-function(x, genesets, manova_result, minsetsize=10 ) {
@@ -310,17 +298,15 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
   ymin=min(ss[,2])
   ymax=max(ss[,2])
 
-  pdf(outfile)
-
   if ( ncol(ss)<3 ) {
 
+    pdf(outfile)
     k<-MASS:::kde2d(ss[,1],ss[,2])
     X_AXIS=paste("Rank in contrast",colnames(ss)[1])
     Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
 
     plot(res$input_profile , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
-      main="Scatterplot of all genes",
-    )
+      main="Scatterplot of all genes" )
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
 
     filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
@@ -334,7 +320,6 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
       ll<-res$manova_result[i,]
       size<-ll$setSize
       sss<-res$detailed_sets[[i]] 
-#    sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
       k<-MASS:::kde2d(sss[,1],sss[,2])
       filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
           plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
@@ -351,37 +336,10 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
       )
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
     }
+    dev.off()
   } else {
 
-    #now proceed if more than 2 dimensions present
-    if ( ncol(ss)>2 ) {
-      zmin=min(ss[,3])
-      zmax=max(ss[,3])
-      mins<-c(xmin,ymin,zmin)
-      maxs<-c(xmax,ymax,zmax)
-    }
-
-    if ( ncol(ss)>3 ) {
-      wmin=min(ss[,4])
-      wmax=max(ss[,4])
-      mins<-c(mins,wmin)
-      maxs<-c(maxs,wmax)
-    }
-
-    if ( ncol(ss)>4 ) {
-      vmin=min(ss[,5])
-      vmax=max(ss[,5])
-      mins<-c(mins,vmin)
-      maxs<-c(maxs,vmax)
-    }
-
-    if ( ncol(ss)>5 ) {
-      umin=min(ss[,6])
-      umax=max(ss[,6])
-      mins<-c(mins,umin)
-      maxs<-c(maxs,umax)
-    }
-
+  pdf(outfile)
   #pairs points plot
   ggpairs_points_plot <- function(data ,mapping, ...){
     p <- ggplot(data = data, mapping = mapping) +
@@ -408,7 +366,6 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
   p<-ggpairs(as.data.frame(ss), title="Contour plot of all genes after ranking" , lower=list(continuous=ggpairs_func),
     diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/100)))
   print( p + theme_bw() )
-
 
   #subset contour plot
   ggpairs_contour_limit_range <- function(data ,mapping, ...){
@@ -437,7 +394,6 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
     ll<-res$manova_result[i,]
     size<-ll$setSize
     sss<-res$detailed_sets[[i]]
-#   sss<-as.data.frame(ss[rownames(ss) %in% res$input_genesets[res$input_genesets[,1]== ll$set,2],])
 
     p<-ggpairs(as.data.frame(sss), title=ll[,1], lower=list(continuous=ggpairs_contour_limit_range),
       diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)) )
