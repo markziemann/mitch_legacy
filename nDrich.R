@@ -285,8 +285,10 @@ endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50)
 }
 
 
-plot2DSets <- function(res,outfile="Rplots.pdf") {
+plotSets <- function(res,outfile="Rplots.pdf") {
   library("GGally")
+  library(vioplot)
+
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   resrows=length(res$detailed_sets)
@@ -320,21 +322,26 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
       ll<-res$manova_result[i,]
       size<-ll$setSize
       sss<-res$detailed_sets[[i]] 
+
       k<-MASS:::kde2d(sss[,1],sss[,2])
       filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
           plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
-          title( main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
-            xlab=X_AXIS,ylab=Y_AXIS
-          )
+          title( main=ll$set , xlab=X_AXIS,ylab=Y_AXIS  )
         }
       )
 
       plot(sss, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
-        main=paste(ll$set,"\n(",size,")",ll$variable,format(ll$value,digits=3)),
+        main=ll$set ,
         xlim=c(xmin,xmax),ylim=c(ymin,ymax),
         xlab=X_AXIS,ylab=Y_AXIS
       )
-    abline(v=0,h=0,lty=2,lwd=2,col="blue")
+      abline(v=0,h=0,lty=2,lwd=2,col="blue")
+
+      do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
+      grid()
+      abline(h=0,lty=2,lwd=2,col="blue")
+      title(main = ll[,1] , ylab = "Position in rank")
+
     }
     dev.off()
   } else {
@@ -402,6 +409,11 @@ plot2DSets <- function(res,outfile="Rplots.pdf") {
     p<-ggpairs(as.data.frame(sss), title=ll[,1], lower= list(continuous = ggpairs_points_limit_range ),
           diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)))
     print( p + theme_bw() )
+
+    do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
+    grid()
+    abline(h=0,lty=2,lwd=2)
+    title(main = ll[,1] , ylab = "Position in rank")
 
   }
   dev.off()
