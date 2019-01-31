@@ -1,0 +1,278 @@
+---
+title: "nDrichr Report"
+author: "Antony Kaspi & Mark Ziemann"
+runtime: shiny
+output: html_document
+theme: cosmo
+---
+
+```{r,,results="asis",echo=FALSE}
+date()
+```
+
+## Background
+
+nDrich performs multidimensional gene set enrichment analysis. The concept behind this dates to work by Cox and 
+Mann (https://doi.org/10.1186/1471-2105-13-S16-S12). This implementation is suited to R based workflows of 
+multi-omics datasets. This software was developed by Antony Kaspi and Mark Ziemann.
+
+## Input profiles
+
+Here is the first few lines of the input profile.
+
+```{r,peek,echo=FALSE}
+load(DATANAME)
+head(x)
+```
+
+Here are some metrics about the input data profile:
+
+```{r, metrics, echo=FALSE}
+  unformatted<-t(as.data.frame(res$manova_analysis_metrics[ c(2,3,4,5,11,12 ) ])) 
+  formatted<-unformatted
+  formatted[1:4]<-as.character(round(as.numeric(unformatted[1:4]) , digits=0))
+  formatted[5:6]<-as.character(round(as.numeric(unformatted[5:6]) , digits=5))
+  colnames(formatted)="Profile metrics"
+  kable( formatted, caption = "Profile metrics" )
+
+```
+
+Here is a scatterplot of the input profiles. Note the dynamic ranges.
+
+```{r, scatterplot, echo=FALSE,fig.height = 6, fig.width = 6.5}
+  if ( ncol(x)<3 ) {
+    plot(x, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.15), main="Input profiles"  )
+  } else {
+     library("GGally")
+     library("vioplot")
+     ggpairs_points_plot <- function(data ,mapping, ...){
+      p <- ggplot(data = data, mapping = mapping) +
+      geom_point(alpha=0.05) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed")
+    }
+
+    p<-ggpairs(as.data.frame(x), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
+    print( p +  theme_bw() )
+  }
+
+```
+
+Here is the contour plot of the profile including all genes.
+
+```{r, contourplot, echo=FALSE,fig.height = 6, fig.width = 6.5}
+  palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
+
+  #Contour of all the data
+  ss<-res$ranked_profile
+
+  xmin=min(ss[,1])
+  xmax=max(ss[,1])
+  ymin=min(ss[,2])
+  ymax=max(ss[,2])
+
+  if ( ncol(ss)<3 ) {
+
+    k<-MASS:::kde2d(ss[,1],ss[,2])
+    X_AXIS=paste("Rank in contrast",colnames(ss)[1])
+    Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
+
+    filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+      color=palette ,
+      plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
+        title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS ) } )
+
+  } else {
+
+  #pairs contour plot function
+  ggpairs_func <- function(data, mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      stat_density2d(aes(fill=..density..), geom="tile", contour = FALSE) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_fill_gradientn(colours=palette(25))
+    p
+  }
+
+  #pairs contour plot
+  p<-ggpairs(as.data.frame(ss), title="Contour plot of all genes after ranking" , lower=list(continuous=ggpairs_func),
+    diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/100)))
+  print( p + theme_bw() )
+
+  #subset contour plot
+  ggpairs_contour_limit_range <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      stat_density2d(aes(fill=..density..), geom="tile", contour = FALSE) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_fill_gradientn(colours=palette(25)) +
+      scale_x_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[1]))]),max(ss[,gsub("~","",as.character(mapping[1]))])) ) +
+      scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
+    p
+  }
+
+  #subset points plot
+  ggpairs_points_limit_range <- function(data ,mapping, ...){
+    p <- ggplot(data = data, mapping = mapping) +
+      geom_point(alpha=0.1) +
+      geom_vline(xintercept=0,linetype="dashed") +
+      geom_hline(yintercept=0,linetype="dashed") +
+      scale_x_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[1]))]),max(ss[,gsub("~","",as.character(mapping[1]))])) ) +
+      scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
+    p
+  }
+
+}
+
+```
+
+Here is the distribution of genes in the four quadrants/sectors
+
+```{r, quadrant_distribution, results="asis",echo=FALSE}
+if ( ncol(ss)<3 ) {
+  uu=length(which(res$input_profile[,1]>0 & res$input_profile[,2]>0))
+  ud=length(which(res$input_profile[,1]>0 & res$input_profile[,2]<0))
+  dd=length(which(res$input_profile[,1]<0 & res$input_profile[,2]<0))
+  du=length(which(res$input_profile[,1]<0 & res$input_profile[,2]>0))
+  a<-as.data.frame(c(uu,ud,dd,du))
+  rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
+  colnames(a)="a"
+  barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
+} else {
+  d=ncol(ss)
+  sig<-sign(ss)
+  sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+  colnames(sector_count)[ncol(sector_count)]<-"Count"
+  kable(sector_count ,caption = "Genes by sector" ,row.names=T)
+}
+
+```
+
+
+## Input genesets
+Here are some metrics about the gene sets used:
+
+```{r,input_geneset_metrics,results="asis",echo=FALSE}
+  ORIGINFILE=attributes(genesets)$originfile
+  print(paste("GMT file of genesets:",ORIGINFILE))
+  unformatted<-t(as.data.frame(res$manova_analysis_metrics[ c(1,6,7,13  ) ]))
+  formatted<-as.data.frame(as.character( unformatted[1:4]) )
+  rownames(formatted)=rownames(unformatted)
+  colnames(formatted)="Gene sets metrics"
+  kable( formatted , col.names = "Gene sets metrics" ,caption = "Gene sets metrics" )
+
+if ( ncol(ss)<3 ) {
+ a<-res$manova_analysis_metrics[14]
+ a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
+ rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
+ colnames(a)="a"
+ barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
+} 
+  d=ncol(ss)
+  sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
+  sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+  colnames(sector_count)[ncol(sector_count)]<-"Count"
+  kable(sector_count ,caption = "Gene sets by sector" ,row.names=T)
+
+```
+
+
+More about the sizes of the gene sets evaluated.
+
+```{r,geneset_sizes,results="asis",echo=FALSE,fig.height = 10, fig.width = 7}
+  par(mfrow=c(3,1))
+  geneset_counts<-res$manova_analysis_metrics$geneset_counts
+  boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+  hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
+  hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
+
+```
+
+
+
+## Enrichment scatterplot with taucharts
+
+Sets with p.adjustMANOVA<0.05. Try hovering over the points.
+
+```{r,tauchart1,results="asis",echo=F, fig.height = 7, fig.width = 7 }
+library("taucharts")
+library(dplyr)
+library(gtools)
+  numsets=nrow(subset(res$manova_result,p.adjustMANOVA<0.05))
+  if (numsets>0){
+    myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
+    myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
+
+    if ( ncol(ss)<3 ) {
+      myres<-myres[,c(1,8,2,4,5)]
+      myres$set<-gsub("_"," ",as.character(myres$set))
+      colnames(myres)=gsub("\\.","_",colnames(myres))
+      my_x=colnames(myres)[4]
+      my_y=colnames(myres)[5]
+
+      tauchart(myres) %>%
+        tau_point(my_x,my_y) %>%
+        tau_tooltip()
+    } else {
+      print("generalised plot for N dimensions")
+      plan<-combinations(n = 3, r = 2, v = 1:d, repeats.allowed = FALSE)
+
+      myres<-myres[,c(1,ncol(myres)-1,2,4:(4+d-1))]
+
+#      for ( i in 1:nrow(plan) ) { 
+#        my_x=plan[i,1]
+#        my_y=plan[i,2]
+#        colnames(myres)=gsub("\\.","_",colnames(myres))
+#	my_x=colnames(myres)[3+my_x]
+#        my_y=colnames(myres)[3+my_y]
+#        myres$set<-gsub("_"," ",as.character(myres$set))
+#        plot.new() 
+#        getOption("device")
+#        tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+#      }
+
+      p<-list()
+      tauscatter<-function(i){
+        my_x=plan[i,1]
+        my_y=plan[i,2]
+        colnames(myres)=gsub("\\.","_",colnames(myres))
+        my_x=colnames(myres)[3+my_x]
+        my_y=colnames(myres)[3+my_y]
+        myres$set<-gsub("_"," ",as.character(myres$set))
+        tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip() 
+      }
+      p<-lapply( 1:nrow(plan) , tauscatter)
+#      par(mfrow=c(3,1))
+#      p[[1]]
+#      p[[2]]
+#      p[[3]]
+#      
+#      print( for (i in 1:d){ p[[i]] } )
+
+       lapply(p,print)
+    }
+  } else {
+    message("No significant enrichments found.")
+  }
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
