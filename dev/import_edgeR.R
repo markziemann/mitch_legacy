@@ -1,17 +1,24 @@
 
 edger2ndrich<-function(x) {
+library(plyr)
 
-  ndrichScore<-function(y) {
-    y<-y[order(y$Row.names),]
-    z<-as.data.frame(sign(y$logFC)*-log10(y$PValue))
-    row.names(z)=y$Row.names
-    
-  }
-  xx<-lapply(x,ndrichScore)
-  xxx<-as.data.frame(do.call(rbind, xx))
-  colnames(xxx)=names(x)
-  return(xxx) 
+ndrichScore<-function(y) {
+  z<-as.data.frame(sign(y$logFC)*-log10(y$PValue))
+  colnames(z)<-nm(y)
+  z$Row.names<-y$Row.names
+  z
 }
 
+mynames<-nm(x)         
+xx<-lapply(x,ndrichScore)
+names(xx)<-mynames
+xxx<-join_all(xx,by = 'Row.names', type = 'inner',match='first')
+rownames(xxx)<-xxx$Row.names
+xxx$Row.names=NULL
+colnames(xxx)<-names(x)
+return(xxx)
+}
 
-edger2ndrich(list("ami1_eder"=ami1_edger,"ami5_edger"=ami5_edger))
+x<-list("ami1_edger"=ami1_edger,"ami5_edger"=ami5_edger)
+
+yy<-edger2ndrich(x)
