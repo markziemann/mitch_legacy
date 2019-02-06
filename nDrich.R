@@ -1,3 +1,95 @@
+ndrich_import<-function(x , DEtype, geneIDcol=0) {
+library(plyr)
+
+#the geneIDcol should be an integer field number added to each list item
+for (i in 1:length(x) ) {
+  if ( geneIDcol != 0 ) {
+    attributes(x[[i]])$geneIDcol<-which(grepl(as.character(geneIDcol),colnames(x[[1]]),fixed=T))
+  } else {
+    attributes(x[[i]])$geneIDcol<-0
+  }
+}
+
+edger_score<-function(y) {
+  z<-as.data.frame(sign(y$logFC)*-log10(y$PValue))
+  colnames(z)<-"y"
+  COL<-attributes(y)$geneIDcol
+  if (COL !=0) {
+    z$geneidentifiers<-y[,COL]
+  } else {
+    z$geneidentifiers<-rownames(y)
+  }
+  z
+}
+
+deseq2_score<-function(y) {
+  z<-as.data.frame(sign(y$log2FoldChange)*-log10(y$pvalue))
+  colnames(z)<-"y"
+  COL<-attributes(y)$geneIDcol
+  if (COL !=0) {
+    z$geneidentifiers<-y[,COL]
+  } else {
+    z$geneidentifiers<-rownames(y)
+  }
+  z
+}
+
+limma_score<-function(y) {
+  z<-as.data.frame(sign(y$logFC)*-log10(y$P.Value))
+  colnames(z)<-"y"
+  COL<-attributes(y)$geneIDcol
+  if (COL !=0) {
+    z$geneidentifiers<-y[,COL]
+  } else {
+    z$geneidentifiers<-rownames(y)
+  }
+  z
+}
+
+absseq_score<-function(y) {
+  z<-as.data.frame(sign(y$foldChange)*-log10(y$pvalue))
+  colnames(z)<-"y"
+  COL<-attributes(y)$geneIDcol
+  if (COL !=0) {
+    z$geneidentifiers<-y[,COL]
+  } else {
+    z$geneidentifiers<-rownames(y)
+  }
+  z
+}
+
+sleuth_score<-function(y) {
+  z<-as.data.frame(sign(y$b)*-log10(y$pval))
+  colnames(z)<-"y"
+  COL<-attributes(y)$geneIDcol
+  if (COL !=0) {
+    z$geneidentifiers<-y[,COL]
+  } else {
+    z$geneidentifiers<-rownames(y)
+  }
+  z
+}
+
+if ( DEtype == "edger" ) {
+  xx<-lapply(x,edger_score)
+} else if ( DEtype == "deseq2" ) {
+  xx<-lapply(x,deseq2_score)
+} else if ( DEtype == "limma" ) {
+  xx<-lapply(x,limma_score)
+} else if ( DEtype == "absseq" ) {
+  xx<-lapply(x,absseq_score)
+} else if ( DEtype == "sleuth" ) {
+  xx<-lapply(x,sleuth_score)
+}
+
+xxx<-join_all(xx,by = 'geneidentifiers', type = 'inner',match='first')
+rownames(xxx)<-xxx$geneidentifiers
+xxx$geneidentifiers=NULL
+colnames(xxx)<-names(x)
+return(xxx)
+}
+
+
 # v - 2 value vector or 2 col matrix
 diffRankDistance2<-function(v, test, nh) {
 	#see stackoverflow.com/questions/22231773/
