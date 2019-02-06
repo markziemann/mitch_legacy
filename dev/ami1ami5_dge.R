@@ -10,6 +10,7 @@ samples$group<-factor(c("Ctrl","Ctrl","Ctrl","Ami1","Ami1","Ami1","Ami5","Ami5",
 samples$label<-c("Ctrl_1","Ctrl_2","Ctrl_3","Ami1_1","Ami1_2","Ami1_3","Ami5_1","Ami5_2","Ami5_3")
 SRRlist<-as.vector(samples$SRR_accession)
 x<-getDEE2("hsapiens",SRRlist)
+x<-Tx2Gene(x)
 y<-x$Tx2Gene
 y<-y[which(rowSums(y)/ncol(y)>=(10)),]
 
