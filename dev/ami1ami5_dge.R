@@ -15,12 +15,7 @@ x<-Tx2Gene(x)
 y<-x$Tx2Gene
 
 #here attach genenames
-genenames<-unique(x$TxInfo[,1:2])
-rownames(genenames)=genenames$GeneID
-genenames$GeneID=NULL
-y<-merge(y,genenames,by=0)
-rownames(y)<-paste(y$Row.names,y$GeneSymbol,sep="|")
-y$Row.names=y$GeneSymbol=NULL
+gt<-unique(x$TxInfo[,1:2])
 
 #filter very low genes
 y<-y[which(rowSums(y)/ncol(y)>=(10)),]
@@ -29,8 +24,8 @@ y<-y[which(rowSums(y)/ncol(y)>=(10)),]
 design<-model.matrix(~samples$group)
 rownames(design)<-samples$SRR_accession
 z<-DGEList(counts=y)
-z<-calcNormFactors(y)
-z <- estimateDisp(y, design,robust=TRUE)
+z<-calcNormFactors(z)
+z <- estimateDisp(z, design,robust=TRUE)
 
 #DE for AMI1
 dge=NULL
@@ -43,7 +38,6 @@ rownames(dge)=dge$Row.names
 dge$Row.names=NULL
 dge<-merge(dge,z$counts,by='row.names')
 ami1_edger<-dge[order(dge$PValue),]
-ami1_edger$GeneSymbol<-sapply((strsplit(ami1_edger$Row.names,"\\|")),"[[",2)
 
 #DE for AMI5
 dge=NULL
@@ -56,7 +50,6 @@ rownames(dge)=dge$Row.names
 dge$Row.names=NULL
 dge<-merge(dge,z$counts,by='row.names')
 ami5_edger<-dge[order(dge$PValue),]
-ami5_edger$GeneSymbol<-sapply((strsplit(ami5_edger$Row.names,"\\|")),"[[",2)
 
 save.image("ami1ami5_dge.RData")
 
@@ -75,7 +68,6 @@ zz<-cbind(z,assay(vsd))
 #sort by adjusted p-value
 zz<-as.data.frame(zz[order(zz$pvalue),])
 ami1_deseq2<-zz
-ami1_deseq2$GeneSymbol<-sapply((strsplit(rownames(ami1_deseq2),"\\|")),"[[",2)
 
 
 #AMI5
@@ -90,7 +82,6 @@ zz<-cbind(z,assay(vsd))
 #sort by adjusted p-value
 zz<-as.data.frame(zz[order(zz$pvalue),])
 ami5_deseq2<-zz
-ami5_deseq2$GeneSymbol<-sapply((strsplit(rownames(ami5_deseq2),"\\|")),"[[",2)
 
 save.image("ami1ami5_dge.RData")
 
@@ -99,16 +90,17 @@ genesets<-gmt_import("ReactomePathways.gmt")
 
 #edger analysis
 x1<-list("ami1_edger"=ami1_edger,"ami5_edger"=ami5_edger)
-y1<-ndrich_import(x1,"edger",geneIDcol="GeneSymbol")
-res<-endrich(y1,genesets,resrows=25)
+y1<-ndrich_import(x1,"edger",geneIDcol="Row.names",geneTable=gt)
+res<-endrich(y1,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_edger.pdf")
 render_report(res,"ami1ami5_edger.html")
 
 #deseq analysis
 x2<-list("ami1_deseq2"=ami1_deseq2,"ami5_deseq2"=ami5_deseq2)
-y2<-ndrich_import(x2,"deseq2",geneIDcol="GeneSymbol")
-res<-endrich(y2,genesets,resrows=25)
+y2<-ndrich_import(x2,"deseq2",geneTable=gt)
+res<-endrich(y2,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_deseq.pdf")
 render_report(res,"ami1ami5_deseq.html")
+
 
 

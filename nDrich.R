@@ -1,24 +1,53 @@
-ndrich_import<-function(x , DEtype, geneIDcol=0) {
+ndrich_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 library(plyr)
+
+#if ( is.null(names(x)) ){
+#  message("Input must be a list with named objects")
+#}
+
+#Accession number to gene ID mapping
+mapGeneIds<-function(y,z) {
+  if ( !is.null(attributes(y)$geneTable) ) {
+    gt<-attributes(y)$geneTable
+    col1<-length(which (z$geneidentifiers %in% gt[,1]))
+    col2<-length(which (z$geneidentifiers %in% gt[,2]))
+    if ( col1 > col2 ) {
+      colnames(gt)=c("geneidentifiers","GeneSymbol")
+      z<-merge(gt,z,by="geneidentifiers")
+    } else {
+      colnames(gt)=c("GeneSymbol","geneidentifiers")
+      z<-merge(gt,z,by="geneidentifiers")
+    }
+    z<-aggregate(. ~ GeneSymbol,z,sum)
+    z$geneidentifiers=NULL
+    colnames(z)=c("geneidentifiers","y")
+  }
+  z
+}
+
 
 #the geneIDcol should be an integer field number added to each list item
 for (i in 1:length(x) ) {
-  if ( geneIDcol != 0 ) {
+  if ( !is.null(geneIDcol) ) {
     attributes(x[[i]])$geneIDcol<-which(grepl(as.character(geneIDcol),colnames(x[[1]]),fixed=T))
   } else {
     attributes(x[[i]])$geneIDcol<-0
   }
+  if ( !is.null(geneTable) ) {
+    attributes(x[[i]])$geneTable<-geneTable
+  }
 }
+
 
 edger_score<-function(y) {
   z<-as.data.frame(sign(y$logFC)*-log10(y$PValue))
   colnames(z)<-"y"
-  COL<-attributes(y)$geneIDcol
-  if (COL !=0) {
-    z$geneidentifiers<-y[,COL]
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
   } else {
     z$geneidentifiers<-rownames(y)
   }
+  z<-mapGeneIds(y,z)
   z
 }
 
@@ -31,6 +60,7 @@ deseq2_score<-function(y) {
   } else {
     z$geneidentifiers<-rownames(y)
   }
+  z<-mapGeneIds(y,z)
   z
 }
 
@@ -43,6 +73,7 @@ limma_score<-function(y) {
   } else {
     z$geneidentifiers<-rownames(y)
   }
+  z<-mapGeneIds(y,z)
   z
 }
 
@@ -55,6 +86,7 @@ absseq_score<-function(y) {
   } else {
     z$geneidentifiers<-rownames(y)
   }
+  z<-mapGeneIds(y,z)
   z
 }
 
@@ -67,6 +99,7 @@ sleuth_score<-function(y) {
   } else {
     z$geneidentifiers<-rownames(y)
   }
+  z<-mapGeneIds(y,z)
   z
 }
 

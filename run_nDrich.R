@@ -2,7 +2,7 @@ source("nDrich.R")
 
 #in case the data have not been ranked, this function can 
 #v<-list("ami1_edger"=ami1_edger,"ami5_edger"=ami5_edger)
-#x<-ndrich_import(w,DEtype="edger",geneIDcol="Row.names")
+#x<-ndrich_import(w,DEtype="edger",geneIDcol="Row.names",geneTable=gt)
 
 
 #Read in tsv file
