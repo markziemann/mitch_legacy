@@ -20,7 +20,7 @@ Here is the first few lines of the input profile.
 
 ```{r,peek,echo=FALSE}
 load(DATANAME)
-head(x)
+head(res$input_profile)
 ```
 
 Here are some metrics about the input data profile:
@@ -36,9 +36,9 @@ kable( formatted, caption = "Profile metrics" )
 
 Here is a scatterplot of the input profiles. Note the dynamic ranges.
 
-```{r, scatterplot, echo=FALSE,fig.height = 6, fig.width = 6.5}
-if ( ncol(x)<3 ) {
-  plot(x, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.15), main="Input profiles"  )
+```{r, scatterplot, echo=FALSE,fig.height = 6, fig.width = 6.5, message=FALSE}
+if ( ncol(res$input_profile)<3 ) {
+  plot(res$input_profile, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.15), main="Input profiles"  )
 } else {
   library("GGally")
   library("vioplot")
@@ -48,7 +48,7 @@ if ( ncol(x)<3 ) {
     geom_vline(xintercept=0,linetype="dashed") +
     geom_hline(yintercept=0,linetype="dashed")
   }
-  p<-ggpairs(as.data.frame(x), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
+  p<-ggpairs(as.data.frame(res$input_profile), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
   print( p +  theme_bw() )
 }
 ```
@@ -63,7 +63,7 @@ xmin=min(ss[,1])
 xmax=max(ss[,1])
 ymin=min(ss[,2])
 ymax=max(ss[,2])
-
+ss<-res$ranked_profile
 if ( ncol(ss)<3 ) {
   k<-MASS:::kde2d(ss[,1],ss[,2])
   X_AXIS=paste("Rank in contrast",colnames(ss)[1])
@@ -169,7 +169,7 @@ hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed hi
 
 ## Enrichment scatterplot with taucharts
 Sets with p.adjustMANOVA<0.05. Try hovering over the points.
-```{r,tauchart1,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all"}
+```{r,tauchart1,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
 library("taucharts")
 library(dplyr)
 library(gtools)
@@ -243,7 +243,7 @@ cat("<hr><br>")
 
 ## Detailed Gene set reports
 
-```{r,detailed_geneset_reports1,results="asis",echo=FALSE,fig.height=5, fig.width=6,out.width = '40%',comment=NA}
+```{r,detailed_geneset_reports1,results="asis",echo=FALSE,fig.height=5, fig.width=6,out.width = '40%',comment=NA, message=FALSE}
 library("GGally")
 library(vioplot)
 resrows=length(res$detailed_sets)

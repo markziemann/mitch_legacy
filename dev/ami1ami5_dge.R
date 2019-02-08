@@ -23,13 +23,14 @@ y<-y[which(rowSums(y)/ncol(y)>=(10)),]
 #EdgeR analysis
 design<-model.matrix(~samples$group)
 rownames(design)<-samples$SRR_accession
-z<-DGEList(counts=y)
-z<-calcNormFactors(z)
-z <- estimateDisp(z, design,robust=TRUE)
 
 #DE for AMI1
-dge=NULL
-fit <- glmFit(z, design[,1:2])
+des<-design[1:6,1:2]
+counts<-y[,1:6]
+z<-DGEList(counts=counts)
+z<-calcNormFactors(z)
+z <- estimateDisp(z, des,robust=TRUE)
+fit <- glmFit(z, des)
 lrt <- glmLRT(fit)
 dge<-as.data.frame(topTags(lrt,n=Inf))
 dge$dispersion<-lrt$dispersion
@@ -40,8 +41,11 @@ dge<-merge(dge,z$counts,by='row.names')
 ami1_edger<-dge[order(dge$PValue),]
 
 #DE for AMI5
-dge=NULL
-fit <- glmFit(z, design[,c(1,3)])
+des<-design[c(1:3,7:9),c(1,3)]
+counts<-y[,c(1:3,7:9)]
+z<-DGEList(counts=counts)
+z <- estimateDisp(z, des,robust=TRUE)
+fit <- glmFit(z, des)
 lrt <- glmLRT(fit)
 dge<-as.data.frame(topTags(lrt,n=Inf))
 dge$dispersion<-lrt$dispersion
