@@ -168,7 +168,7 @@ hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed hi
 ```
 
 ## Enrichment scatterplot with taucharts
-Sets with p.adjustMANOVA<0.05. Try hovering over the points.
+All sets with p.adjustMANOVA<0.05. Try hovering over the points.
 ```{r,tauchart1,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
 library("taucharts")
 library(dplyr)
@@ -214,6 +214,52 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 ```
+
+## Enrichment scatterplot with taucharts
+Top N sets irrespective of FDR. Try hovering over the points.
+```{r,tauchart2,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+library("taucharts")
+library(dplyr)
+library(gtools)
+  resrows=length(res$detailed_sets)
+  myres<-head(res$manova_result,resrows)
+  myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
+  if ( ncol(ss)<3 ) {
+    myres<-myres[,c(1,8,2,4,5)]
+    myres$set<-gsub("_"," ",as.character(myres$set))
+    colnames(myres)=gsub("\\.","_",colnames(myres))
+    my_x=colnames(myres)[4]
+    my_y=colnames(myres)[5]
+    tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+  } else {
+    plan<-combinations(n = d, r = 2, v = 1:d, repeats.allowed = FALSE)
+    myres<-myres[,c(1,ncol(myres)-1,2,4:(4+d-1))]
+    p<-list()
+    tauscatter<-function(i){
+      my_x=plan[i,1]
+      my_y=plan[i,2]
+      colnames(myres)=gsub("\\.","_",colnames(myres))
+      my_x=colnames(myres)[3+my_x]
+      my_y=colnames(myres)[3+my_y]
+      myres$set<-gsub("_"," ",as.character(myres$set))
+      tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+    }
+    p<-lapply( 1:nrow(plan) , tauscatter)
+  }
+
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+```
+
+
 
 ## Results table
 ```{r,results_table,results="asis",echo=FALSE}
