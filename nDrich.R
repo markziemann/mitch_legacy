@@ -25,7 +25,6 @@ mapGeneIds<-function(y,z) {
   z
 }
 
-
 #the geneIDcol should be an integer field number added to each list item
 for (i in 1:length(x) ) {
   if ( !is.null(geneIDcol) ) {
@@ -37,7 +36,6 @@ for (i in 1:length(x) ) {
     attributes(x[[i]])$geneTable<-geneTable
   }
 }
-
 
 edger_score<-function(y) {
   z<-as.data.frame(sign(y$logFC)*-log10(y$PValue))
@@ -55,8 +53,8 @@ deseq2_score<-function(y) {
   z<-as.data.frame(sign(y$log2FoldChange)*-log10(y$pvalue))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
-  if (COL !=0) {
-    z$geneidentifiers<-y[,COL]
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
   } else {
     z$geneidentifiers<-rownames(y)
   }
@@ -68,8 +66,8 @@ limma_score<-function(y) {
   z<-as.data.frame(sign(y$logFC)*-log10(y$P.Value))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
-  if (COL !=0) {
-    z$geneidentifiers<-y[,COL]
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
   } else {
     z$geneidentifiers<-rownames(y)
   }
@@ -81,8 +79,8 @@ absseq_score<-function(y) {
   z<-as.data.frame(sign(y$foldChange)*-log10(y$pvalue))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
-  if (COL !=0) {
-    z$geneidentifiers<-y[,COL]
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
   } else {
     z$geneidentifiers<-rownames(y)
   }
@@ -94,8 +92,8 @@ sleuth_score<-function(y) {
   z<-as.data.frame(sign(y$b)*-log10(y$pval))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
-  if (COL !=0) {
-    z$geneidentifiers<-y[,COL]
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
   } else {
     z$geneidentifiers<-rownames(y)
   }

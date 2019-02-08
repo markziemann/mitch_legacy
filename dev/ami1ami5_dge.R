@@ -1,4 +1,5 @@
 library("getDEE2")
+library("limma")
 library("edgeR")
 library("DESeq2")
 source("nDrich.R")
@@ -20,7 +21,9 @@ gt<-unique(x$TxInfo[,1:2])
 #filter very low genes
 y<-y[which(rowSums(y)/ncol(y)>=(10)),]
 
+###########################################
 #EdgeR analysis
+###########################################
 design<-model.matrix(~samples$group)
 rownames(design)<-samples$SRR_accession
 
@@ -57,7 +60,37 @@ ami5_edger<-dge[order(dge$PValue),]
 
 save.image("ami1ami5_dge.RData")
 
+###########################################
+#now do limma 
+###########################################
+
+#AMI1
+des<-design[1:6,1:2]
+counts<-y[,1:6]
+z<-DGEList(counts=counts)
+z <- calcNormFactors(z)
+v <- voom(z,des,plot=F)
+fit <- lmFit(v, des)
+fit.de <- eBayes(fit, robust=TRUE)
+dge<-topTable(fit.de,n=Inf)
+ami1_limma<-dge[order(dge$P.Value),]
+
+#AMI5
+des<-design[c(1:3,7:9),c(1,3)]
+counts<-y[,c(1:3,7:9)]
+z<-DGEList(counts=counts)
+z <- calcNormFactors(z)
+v <- voom(z,des,plot=F)
+fit <- lmFit(v, des)
+fit.de <- eBayes(fit, robust=TRUE)
+dge<-topTable(fit.de,n=Inf)
+ami5_limma<-dge[order(dge$P.Value),]
+
+save.image("ami1ami5_dge.RData")
+
+###########################################
 #now do DESeq2
+###########################################
 y<-round(y)
 
 #ami1
@@ -98,6 +131,13 @@ y1<-ndrich_import(x1,"edger",geneIDcol="Row.names",geneTable=gt)
 res<-endrich(y1,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_edger.pdf")
 render_report(res,"ami1ami5_edger.html")
+
+#limma analysis
+x1<-list("ami1_limma"=ami1_limma,"ami5_limma"=ami5_limma)
+y1<-ndrich_import(x1,"limma",geneTable=gt)
+res<-endrich(y1,genesets,resrows=50)
+plotSets(res,outfile="ami1ami5_limma.pdf")
+render_report(res,"ami1ami5_limma.html")
 
 #deseq analysis
 x2<-list("ami1_deseq2"=ami1_deseq2,"ami5_deseq2"=ami5_deseq2)
