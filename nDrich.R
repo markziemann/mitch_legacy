@@ -30,7 +30,7 @@ for (i in 1:length(x) ) {
   if ( !is.null(geneIDcol) ) {
     attributes(x[[i]])$geneIDcol<-which(grepl(as.character(geneIDcol),colnames(x[[1]]),fixed=T))
   } else {
-    attributes(x[[i]])$geneIDcol<-0
+    attributes(x[[i]])$geneIDcol<-NULL
   }
   if ( !is.null(geneTable) ) {
     attributes(x[[i]])$geneTable<-geneTable
