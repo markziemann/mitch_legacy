@@ -89,6 +89,30 @@ ami5_limma<-dge[order(dge$P.Value),]
 save.image("ami1ami5_dge.RData")
 
 ###########################################
+#now do ABSSeq
+###########################################
+
+#AMI1
+des<-design[1:6,1:2]
+counts<-y[,1:6]
+obj<-ABSDataSet(counts, factor(des[,2]))  #default normalisation is qtotal
+obj<-ABSSeq(obj)
+dge<- as.data.frame(cbind(obj$Amean,obj$Bmean,obj$foldChange,obj$pvalue,obj$adj.pvalue))
+colnames(dge)=c("Amean","Bmean","foldChange","pvalue","adj.pvalue")
+ami1_absseq<-dge[order(dge$pvalue),]
+
+#AMI5
+des<-design[c(1:3,7:9),c(1,3)]
+counts<-y[,c(1:3,7:9)]
+obj<-ABSDataSet(counts, factor(des[,2]))  #default normalisation is qtotal
+obj<-ABSSeq(obj)
+dge<- as.data.frame(cbind(obj$Amean,obj$Bmean,obj$foldChange,obj$pvalue,obj$adj.pvalue))
+colnames(dge)=c("Amean","Bmean","foldChange","pvalue","adj.pvalue")
+ami5_absseq<-dge[order(dge$pvalue),]
+
+
+
+###########################################
 #now do DESeq2
 ###########################################
 y<-round(y)
@@ -122,6 +146,11 @@ ami5_deseq2<-zz
 
 save.image("ami1ami5_dge.RData")
 
+
+#########################################################
+# nDrich analysis
+#########################################################
+
 #read in GMT file
 genesets<-gmt_import("ReactomePathways.gmt")
 
@@ -139,7 +168,14 @@ res<-endrich(y1,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_limma.pdf")
 render_report(res,"ami1ami5_limma.html")
 
-#deseq analysis
+#absseq analysis
+x1<-list("ami1_absseq"=ami1_absseq,"ami5_absseq"=ami5_absseq)
+y1<-ndrich_import(x1,"absseq",geneTable=gt)
+res<-endrich(y1,genesets,resrows=50)
+plotSets(res,outfile="ami1ami5_absseq.pdf")
+render_report(res,"ami1ami5_absseq
+
+#deseq2 analysis
 x2<-list("ami1_deseq2"=ami1_deseq2,"ami5_deseq2"=ami5_deseq2)
 y2<-ndrich_import(x2,"deseq2",geneTable=gt)
 res<-endrich(y2,genesets,resrows=50)
