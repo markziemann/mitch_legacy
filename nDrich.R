@@ -1,5 +1,6 @@
 ndrich_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
-library(plyr)
+library("plyr")
+library("parallel")
 
 #if ( is.null(names(x)) ){
 #  message("Input must be a list with named objects")
@@ -101,6 +102,20 @@ sleuth_score<-function(y) {
   z
 }
 
+topconfect_score<-function(y) {
+  z<-as.data.frame(y$confect)
+  z[is.na(z)] <- 0
+  colnames(z)<-"y"
+  COL<-attributes(y)$geneIDcol
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+  } else {
+    z$geneidentifiers<-rownames(y)
+  }
+  z<-mapGeneIds(y,z)
+  z
+}
+
 if ( DEtype == "edger" ) {
   xx<-lapply(x,edger_score)
 } else if ( DEtype == "deseq2" ) {
@@ -111,6 +126,8 @@ if ( DEtype == "edger" ) {
   xx<-lapply(x,absseq_score)
 } else if ( DEtype == "sleuth" ) {
   xx<-lapply(x,sleuth_score)
+} else if ( DEtype == "topconfects" ) {
+  xx<-lapply(x,topconfect_score)
 }
 
 xxx<-join_all(xx,by = 'geneidentifiers', type = 'inner',match='first')
@@ -168,9 +185,7 @@ GSTSets<-function(testset, setsTable) {
 # x - matrix of 2 columns to be tested
 # table of genesets
 EnDrichProject<-function(x, genesets, topfig=1) {
-	library(limma)
-	library(parallel)
-	library(plyr)
+	library("limma")
 
 	xCor<-proj2DdirMag(x)
 	xAntiCor<-proj2DdirMag(x,c(1,-1))
@@ -194,9 +209,7 @@ EnDrichProject<-function(x, genesets, topfig=1) {
 # x - matrix of 2 columns to be tested
 # table of genesets
 EnDrichDist<-function(x, genesets) {
-	library(limma)
-	library(parallel)
-	library(plyr)
+	library("limma")
 
 	#y=x
 	p_1_1   = c( max(x[,1]), max(x[,2])        )
@@ -234,9 +247,7 @@ EnDrichDist<-function(x, genesets) {
 # x - matrix of 2 columns to be tested
 # table of genesets
 EnDrichDist3<-function(x, genesets, topfig=1) {
-	library(limma)
-	library(parallel)
-	library(plyr)
+	library("limma")
 
 	p_1_1   = c( max(x[,1]), max(x[,2]) ,max(x[,3])       )
 
@@ -271,12 +282,11 @@ EnDrichDist3<-function(x, genesets, topfig=1) {
 
 #TODO does not work with neg numbers !!
 EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
-	library(parallel)
-	library(plyr)
+        library("pbmcapply")
 
 	sets<-names(genesets)
 
-	res<-mclapply(sets,function(set){
+	res<-pbmclapply(sets,function(set){
 		inset<-rownames(x) %in% as.character(unlist(genesets[set]))
 	        fit<- manova(x ~ inset)
         	sumMANOVA <- summary.manova(fit)
@@ -299,7 +309,6 @@ EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
 
 
 manova_analysis_metrics_calc<-function(x, genesets, manova_result, minsetsize=10 ) {
-	library(dplyr)
 	num_genesets=length(genesets)
 	included_genesets<-nrow(manova_result)
         geneset_counts<-as.data.frame(as.vector(unlist(lapply(genesets,function(set){ length(which(as.vector(unlist(set)) %in% rownames(x))) } ))))
@@ -352,7 +361,13 @@ manova_analysis_metrics_calc<-function(x, genesets, manova_result, minsetsize=10
 
 
 endrichrank<-function(x) {
-  input_profile<-x
+# may implement some type of jitter in future
+#  jitter_df<-function(x){
+#    rand<-matrix(0.001*rnorm(ncol(x)*nrow(x), mean = 0, sd = 1),ncol=ncol(x))
+#    x+rand
+#  }
+#  x<-jitter_df(x)
+
   rank_adj<-function(x){
     xx<-rank(x)
     num_neg=length( which( x<0 ) )
@@ -410,12 +425,12 @@ endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50)
 
 plotSets <- function(res,outfile="Rplots.pdf") {
   library("GGally")
-  library(vioplot)
+  library("vioplot")
 
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   resrows=length(res$detailed_sets)
-  #Contour of all the data
+
   ss<-res$ranked_profile
 
   xmin=min(ss[,1])
@@ -547,7 +562,7 @@ plotSets <- function(res,outfile="Rplots.pdf") {
 
 
 RankRankBinPlot<-function(x, binsize=500) {
-	library(ggplot2)
+	library("ggplot2")
 	bin=floor(x[,1]/binsize)
 	yy<- aggregate(x[,2],list(bin), function(zz){quantile(zz,c(0.25,0.5,0.75))})
 	yy[,1]<-yy[,1]*binsize	
@@ -561,9 +576,9 @@ RankRankBinPlot<-function(x, binsize=500) {
 }
 
 render_report<-function(res,out) {
-  library(knitr)
-  library(markdown)
-  library(rmarkdown)
+  library("knitr")
+  library("markdown")
+  library("rmarkdown")
 
   DATANAME<-gsub(".html$",".RData",out)
   save.image(DATANAME)

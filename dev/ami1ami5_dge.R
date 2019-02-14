@@ -2,6 +2,8 @@ library("getDEE2")
 library("limma")
 library("edgeR")
 library("DESeq2")
+library("ABSSeq")
+library("topconfects")
 source("nDrich.R")
 
 mdat<-getDee2Metadata("hsapiens")
@@ -28,7 +30,8 @@ design<-model.matrix(~samples$group)
 rownames(design)<-samples$SRR_accession
 
 #DE for AMI1
-des<-design[1:6,1:2]
+des<-as.matrix(design[1:6,1:2])
+colnames(des)="samples$groupAmi1"
 counts<-y[,1:6]
 z<-DGEList(counts=counts)
 z<-calcNormFactors(z)
@@ -44,7 +47,7 @@ dge<-merge(dge,z$counts,by='row.names')
 ami1_edger<-dge[order(dge$PValue),]
 
 #DE for AMI5
-des<-design[c(1:3,7:9),c(1,3)]
+des<-as.matrix(design[c(1:3,7:9),c(1,3)])
 counts<-y[,c(1:3,7:9)]
 z<-DGEList(counts=counts)
 z <- estimateDisp(z, des,robust=TRUE)
@@ -65,7 +68,7 @@ save.image("ami1ami5_dge.RData")
 ###########################################
 
 #AMI1
-des<-design[1:6,1:2]
+des<-as.matrix(design[1:6,2])
 counts<-y[,1:6]
 z<-DGEList(counts=counts)
 z <- calcNormFactors(z)
@@ -76,7 +79,7 @@ dge<-topTable(fit.de,n=Inf)
 ami1_limma<-dge[order(dge$P.Value),]
 
 #AMI5
-des<-design[c(1:3,7:9),c(1,3)]
+des<-as.matrix(design[c(1:3,7:9),3])
 counts<-y[,c(1:3,7:9)]
 z<-DGEList(counts=counts)
 z <- calcNormFactors(z)
@@ -110,6 +113,7 @@ dge<- as.data.frame(cbind(obj$Amean,obj$Bmean,obj$foldChange,obj$pvalue,obj$adj.
 colnames(dge)=c("Amean","Bmean","foldChange","pvalue","adj.pvalue")
 ami5_absseq<-dge[order(dge$pvalue),]
 
+save.image("ami1ami5_dge.RData")
 
 
 ###########################################
@@ -127,9 +131,7 @@ vsd <- vst(dds, blind=FALSE)
 #stick on the normalised expression values to the table
 zz<-cbind(z,assay(vsd))
 #sort by adjusted p-value
-zz<-as.data.frame(zz[order(zz$pvalue),])
-ami1_deseq2<-zz
-
+ami1_deseq2<-as.data.frame(zz[order(zz$pvalue),])
 
 #AMI5
 des<-samples[c(1:3,7:9),]
@@ -141,11 +143,28 @@ vsd <- vst(dds, blind=FALSE)
 #stick on the normalised expression values to the table
 zz<-cbind(z,assay(vsd))
 #sort by adjusted p-value
-zz<-as.data.frame(zz[order(zz$pvalue),])
-ami5_deseq2<-zz
+ami5_deseq2<-as.data.frame(zz[order(zz$pvalue),])
 
 save.image("ami1ami5_dge.RData")
 
+###########################################
+# now do TopConfects of DeSeq2
+###########################################
+
+#ami1
+des<-samples[1:6,]
+des$grp<-as.numeric(grepl("Ami",des$group))
+dds <- DESeqDataSetFromMatrix(countData =y[,1:6], colData = des, design = ~ grp)
+res <- DESeq(dds)
+confects <- deseq2_confects(res, fdr=0.5)
+ami1_confects<-confects$table
+
+des<-samples[c(1:3,7:9),]
+des$grp<-as.numeric(grepl("Ami",des$group))
+dds <- DESeqDataSetFromMatrix(countData =y[,c(1:3,7:9)], colData = des, design = ~ grp)
+res <- DESeq(dds)
+confects <- deseq2_confects(res, fdr=0.5)
+ami5_confects<-confects$table
 
 #########################################################
 # nDrich analysis
@@ -182,5 +201,11 @@ res<-endrich(y2,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_deseq.pdf")
 render_report(res,"ami1ami5_deseq.html")
 
+#topconfects analysis
+x2<-list("ami1_confects"=ami1_confects,"ami5_confects"=ami5_confects)
+y2<-ndrich_import(x2,"topconfects",geneIDcol="name",geneTable=gt)
+res<-endrich(y2,genesets,resrows=50)
+plotSets(res,outfile="ami1ami5_confects.pdf")
+render_report(res,"ami1ami5_confects.html")
 
 
