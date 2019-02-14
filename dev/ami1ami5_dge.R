@@ -31,7 +31,6 @@ rownames(design)<-samples$SRR_accession
 
 #DE for AMI1
 des<-as.matrix(design[1:6,1:2])
-colnames(des)="samples$groupAmi1"
 counts<-y[,1:6]
 z<-DGEList(counts=counts)
 z<-calcNormFactors(z)
@@ -125,8 +124,8 @@ y<-round(y)
 des<-samples[1:6,]
 des$grp<-as.numeric(grepl("Ami",des$group))
 dds <- DESeqDataSetFromMatrix(countData =y[,1:6], colData = des, design = ~ grp)
-res <- DESeq(dds)
-z<- results(res)
+dds <- DESeq(dds)
+z<- DESeq2::results(dds)
 vsd <- vst(dds, blind=FALSE)
 #stick on the normalised expression values to the table
 zz<-cbind(z,assay(vsd))
@@ -137,8 +136,8 @@ ami1_deseq2<-as.data.frame(zz[order(zz$pvalue),])
 des<-samples[c(1:3,7:9),]
 des$grp<-as.numeric(grepl("Ami",des$group))
 dds <- DESeqDataSetFromMatrix(countData =y[,c(1:3,7:9)], colData = des, design = ~ grp)
-res <- DESeq(dds)
-z<- results(res)
+dds <- DESeq(dds)
+z<- DESeq2::results(dds)
 vsd <- vst(dds, blind=FALSE)
 #stick on the normalised expression values to the table
 zz<-cbind(z,assay(vsd))
@@ -155,15 +154,15 @@ save.image("ami1ami5_dge.RData")
 des<-samples[1:6,]
 des$grp<-as.numeric(grepl("Ami",des$group))
 dds <- DESeqDataSetFromMatrix(countData =y[,1:6], colData = des, design = ~ grp)
-res <- DESeq(dds)
-confects <- deseq2_confects(res, fdr=0.5)
+dds <- DESeq(dds)
+confects <- deseq2_confects(dds, fdr=0.5)
 ami1_confects<-confects$table
 
 des<-samples[c(1:3,7:9),]
 des$grp<-as.numeric(grepl("Ami",des$group))
 dds <- DESeqDataSetFromMatrix(countData =y[,c(1:3,7:9)], colData = des, design = ~ grp)
-res <- DESeq(dds)
-confects <- deseq2_confects(res, fdr=0.5)
+dds <- DESeq(dds)
+confects <- deseq2_confects(dds, fdr=0.5)
 ami5_confects<-confects$table
 
 #########################################################
@@ -181,30 +180,30 @@ plotSets(res,outfile="ami1ami5_edger.pdf")
 render_report(res,"ami1ami5_edger.html")
 
 #limma analysis
-x1<-list("ami1_limma"=ami1_limma,"ami5_limma"=ami5_limma)
-y1<-ndrich_import(x1,"limma",geneTable=gt)
-res<-endrich(y1,genesets,resrows=50)
+x2<-list("ami1_limma"=ami1_limma,"ami5_limma"=ami5_limma)
+y2<-ndrich_import(x2,"limma",geneTable=gt)
+res<-endrich(y2,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_limma.pdf")
 render_report(res,"ami1ami5_limma.html")
 
 #absseq analysis
-x1<-list("ami1_absseq"=ami1_absseq,"ami5_absseq"=ami5_absseq)
-y1<-ndrich_import(x1,"absseq",geneTable=gt)
-res<-endrich(y1,genesets,resrows=50)
+x3<-list("ami1_absseq"=ami1_absseq,"ami5_absseq"=ami5_absseq)
+y3<-ndrich_import(x3,"absseq",geneTable=gt)
+res<-endrich(y3,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_absseq.pdf")
-render_report(res,"ami1ami5_absseq
+render_report(res3,"ami1ami5_absseq.html")
 
 #deseq2 analysis
-x2<-list("ami1_deseq2"=ami1_deseq2,"ami5_deseq2"=ami5_deseq2)
-y2<-ndrich_import(x2,"deseq2",geneTable=gt)
-res<-endrich(y2,genesets,resrows=50)
+x4<-list("ami1_deseq2"=ami1_deseq2,"ami5_deseq2"=ami5_deseq2)
+y4<-ndrich_import(x4,"deseq2",geneTable=gt)
+res<-endrich(y4,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_deseq.pdf")
 render_report(res,"ami1ami5_deseq.html")
 
 #topconfects analysis
-x2<-list("ami1_confects"=ami1_confects,"ami5_confects"=ami5_confects)
-y2<-ndrich_import(x2,"topconfects",geneIDcol="name",geneTable=gt)
-res<-endrich(y2,genesets,resrows=50)
+x5<-list("ami1_confects"=ami1_confects,"ami5_confects"=ami5_confects)
+y5<-ndrich_import(x5,"topconfects",geneIDcol="name",geneTable=gt)
+res<-endrich(y5,genesets,resrows=50)
 plotSets(res,outfile="ami1ami5_confects.pdf")
 render_report(res,"ami1ami5_confects.html")
 

@@ -1,10 +1,29 @@
-ndrich_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 library("plyr")
 library("parallel")
+library("pbmcapply")
 
-#if ( is.null(names(x)) ){
-#  message("Input must be a list with named objects")
-#}
+
+ndrich_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
+
+if ( !is.list(x) ){
+  stop("Error: Input (x) must be a LIST of dataframes.")
+}
+
+if ( is.null(names(x)) ){
+  stop("Error: Input (x) must be a NAMED list of dataframes.")
+}
+
+if (length(which(FALSE==unname(unlist(lapply(x,is.data.frame))))) >0 ) {
+  stop("Error: Input (x) must be a named list of DATAFRAMES only.")
+}
+
+if ( !is.null(geneTable) && !is.data.frame(geneTable) ) {
+  stop("Error: the geneTable needs to be a dataframe.")
+}
+
+if ( !is.null(geneTable) &&  (ncol(geneTable)<2 || ncol(geneTable)>2 ) ) {
+  stop("Error: the geneTable needs to be a dataframe of 2 columns.")
+}
 
 #Accession number to gene ID mapping
 mapGeneIds<-function(y,z) {
@@ -12,6 +31,11 @@ mapGeneIds<-function(y,z) {
     gt<-attributes(y)$geneTable
     col1<-length(which (z$geneidentifiers %in% gt[,1]))
     col2<-length(which (z$geneidentifiers %in% gt[,2]))
+
+    if ( col1 + col2 < (nrow(y)/2) ) {
+      stop("Error it looks as if the Gene IDs in the profile don't match the ")
+    }
+
     if ( col1 > col2 ) {
       colnames(gt)=c("geneidentifiers","GeneSymbol")
       z<-merge(gt,z,by="geneidentifiers")
@@ -39,6 +63,18 @@ for (i in 1:length(x) ) {
 }
 
 edger_score<-function(y) {
+
+  NCOL=ncol(y)
+  if (NCOL<2){ stop("Error: there are <2 columns in the input, 'PValue' and 'logFC' are required ") }
+
+  PCOL=length(which(names(y)=="PValue"))
+  if (PCOL>1){ stop("Error, there is more than 1 column named 'PValue' in the input") }
+  if (PCOL<1){ stop("Error, there is no column named 'PValue' in the input") }
+
+  FCCOL=length(which(names(y)=="logFC"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'logFC' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
+
   z<-as.data.frame(sign(y$logFC)*-log10(y$PValue))
   colnames(z)<-"y"
   if ( !is.null(attributes(y)$geneIDcol) ) {
@@ -282,8 +318,6 @@ EnDrichDist3<-function(x, genesets, topfig=1) {
 
 #TODO does not work with neg numbers !!
 EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
-        library("pbmcapply")
-
 	sets<-names(genesets)
 
 	res<-pbmclapply(sets,function(set){
