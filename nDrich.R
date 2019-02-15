@@ -33,7 +33,7 @@ mapGeneIds<-function(y,z) {
     col2<-length(which (z$geneidentifiers %in% gt[,2]))
 
     if ( col1 + col2 < (nrow(y)/2) ) {
-      stop("Error it looks as if the Gene IDs in the profile don't match the ")
+      stop("Error it looks as if the Gene IDs in the profile don't match the geneTable")
     }
 
     if ( col1 > col2 ) {
@@ -50,14 +50,19 @@ mapGeneIds<-function(y,z) {
   z
 }
 
-#the geneIDcol should be an integer field number added to each list item
+#the geneIDcol should be an attribute added to each list item
 for (i in 1:length(x) ) {
   if ( !is.null(geneIDcol) ) {
-    attributes(x[[i]])$geneIDcol<-which(grepl(as.character(geneIDcol),colnames(x[[1]]),fixed=T))
+    LEN=length( which(names(x1[[i]]) %in% geneIDcol) )
+    if (LEN<1) { stop("Error: the specified geneIDcol doesn't seem to exist") }
+    if (LEN>1) { stop("Error: there are multiple matches for the  specified geneIDcol") }
+    attributes(x[[i]])$geneIDcol<-which( names(x1[[i]]) %in% geneIDcol )
   } else {
     attributes(x[[i]])$geneIDcol<-NULL
   }
   if ( !is.null(geneTable) ) {
+    if ( !is.data.frame(geneTable) ) { stop("Error: geneTable is not a data frame.") }
+    if ( ncol(geneTable)!=2 ) { stop("Error: geneTable must be a 2 column dataframe.") }
     attributes(x[[i]])$geneTable<-geneTable
   }
 }
@@ -87,6 +92,18 @@ edger_score<-function(y) {
 }
 
 deseq2_score<-function(y) {
+
+  NCOL=ncol(y)
+  if (NCOL<2){ stop("Error: there are <2 columns in the input, 'pvalue' and 'log2FoldChange' are required ") }
+
+  PCOL=length(which(names(y)=="pvalue"))
+  if (PCOL>1){ stop("Error, there is more than 1 column named 'pvalue' in the input") }
+  if (PCOL<1){ stop("Error, there is no column named 'pvalue' in the input") }
+
+  FCCOL=length(which(names(y)=="log2FoldChange"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'log2FoldChange' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'log2FoldChange' in the input") }
+
   z<-as.data.frame(sign(y$log2FoldChange)*-log10(y$pvalue))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
@@ -100,6 +117,18 @@ deseq2_score<-function(y) {
 }
 
 limma_score<-function(y) {
+
+  NCOL=ncol(y)
+  if (NCOL<2){ stop("Error: there are <2 columns in the input, 'P.Value' and 'logFC' are required ") }
+
+  PCOL=length(which(names(y)=="P.Value"))
+  if (PCOL>1){ stop("Error, there is more than 1 column named 'P.Value' in the input") }
+  if (PCOL<1){ stop("Error, there is no column named 'P.Value' in the input") }
+
+  FCCOL=length(which(names(y)=="logFC"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'logFC' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
+
   z<-as.data.frame(sign(y$logFC)*-log10(y$P.Value))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
@@ -113,6 +142,18 @@ limma_score<-function(y) {
 }
 
 absseq_score<-function(y) {
+
+  NCOL=ncol(y)
+  if (NCOL<2){ stop("Error: there are <2 columns in the input, 'pvalue' and 'foldChange' are required ") }
+
+  PCOL=length(which(names(y)=="pvalue"))
+  if (PCOL>1){ stop("Error, there is more than 1 column named 'pvalue' in the input") }
+  if (PCOL<1){ stop("Error, there is no column named 'pvalue' in the input") }
+
+  FCCOL=length(which(names(y)=="foldChange"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'foldChange' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'foldChange' in the input") }
+
   z<-as.data.frame(sign(y$foldChange)*-log10(y$pvalue))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
@@ -126,6 +167,18 @@ absseq_score<-function(y) {
 }
 
 sleuth_score<-function(y) {
+
+  NCOL=ncol(y)
+  if (NCOL<2){ stop("Error: there are <2 columns in the input, 'pval' and 'b' are required ") }
+
+  PCOL=length(which(names(y)=="pval"))
+  if (PCOL>1){ stop("Error, there is more than 1 column named 'pval' in the input") }
+  if (PCOL<1){ stop("Error, there is no column named 'pval' in the input") }
+
+  FCCOL=length(which(names(y)=="b"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'b' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'b' in the input") }
+
   z<-as.data.frame(sign(y$b)*-log10(y$pval))
   colnames(z)<-"y"
   COL<-attributes(y)$geneIDcol
@@ -139,6 +192,11 @@ sleuth_score<-function(y) {
 }
 
 topconfect_score<-function(y) {
+
+  FCCOL=length(which(names(y)=="confect"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'confect' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'confect' in the input") }
+
   z<-as.data.frame(y$confect)
   z[is.na(z)] <- 0
   colnames(z)<-"y"
@@ -170,6 +228,17 @@ xxx<-join_all(xx,by = 'geneidentifiers', type = 'inner',match='first')
 rownames(xxx)<-xxx$geneidentifiers
 xxx$geneidentifiers=NULL
 colnames(xxx)<-names(x)
+
+MEAN_N_GENES_IN=mean(unlist(lapply(x,nrow)))
+N_GENES_OUT=nrow(xxx)
+PROP=signif(N_GENES_OUT/MEAN_N_GENES_IN,3)
+message(paste("Note: Mean no. genes in input =",MEAN_N_GENES_IN))
+message(paste("Note: no. genes in output =",N_GENES_OUT))
+if (PROP<0.05) {
+  warning("Warning: less than half of the input genes are also in the output")
+} else {
+  message(paste("Note: estimated proportion of input genes in output =",PROP))
+}
 return(xxx)
 }
 
@@ -196,7 +265,6 @@ gmt_import<-function(gmtfile){
     attributes(genesets)$originfile<-gmtfile
     genesets
 }
-
 
 GSTSets<-function(testset, setsTable) {
 	#Remove items from set unkown by msigdb
@@ -318,7 +386,8 @@ EnDrichDist3<-function(x, genesets, topfig=1) {
 
 #TODO does not work with neg numbers !!
 EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL) {
-	sets<-names(genesets)
+
+sets<-names(genesets)
 
 if (  is.null(priority) ) {
   priority="confidence"
@@ -336,7 +405,7 @@ HYPOT=hypotenuse(apply(x,2,length))
 res<-pbmclapply(sets,function(set){
   inset<-rownames(x) %in% as.character(unlist(genesets[set]))
 
-  if ( length(which(inset)) > 0 ) {
+  if ( length(which(inset)) >= minsetsize ) {
     fit<- manova(x ~ inset)
     sumMANOVA <- summary.manova(fit)
     sumAOV    <- summary.aov(fit)
@@ -352,7 +421,7 @@ res<-pbmclapply(sets,function(set){
     #calculate the hypotenuse length of
     DISTS=NULL
     for ( DIM in 1:ncol(x) ) { 
-      CONFINT<-confint(aov(x[,DIM] ~ inset),level=0.95)
+      CONFINT<-confint(aov(x[,DIM] ~ inset),level=0.90)
       MAX=max(x[,DIM])
       MIN=min(x[,DIM])
       C1=CONFINT[2,1]-MIN
@@ -367,22 +436,22 @@ res<-pbmclapply(sets,function(set){
 
 },mc.cores=cores )
 fres<-ldply(res, data.frame)
-fres<-fres[fres$setSize >=minsetsize,]
+#fres<-fres[fres$setSize >=minsetsize,]
 fres$p.adjustMANOVA<-p.adjust(fres$pMANOVA,"fdr")
 #fres$minAbsS<-apply(fres[,4:6],1, function(zz){min(abs(zz))})
 
 #prioritisation
 if (priority=="significance") {
-  fres<- fres[order(fres$pMANOVA),]
+  fres<-fres[order(fres$pMANOVA),]
   message("Note: When prioritising by significance (ie: small p-values), large effect sizes might be missed.")
 }
 if (priority=="effect") {
-  fres<- fres[order(-fres$s.dist),]
+  fres<-fres[order(-fres$s.dist),]
   message("Note: Enrichments with large effect sizes may not be statistically significant.")
 }
 if (priority=="confidence") {
-  fres<- fres[order(-fres$confES),]
-  message("Note: default gene set prioritisation is by confidence interval. Alternatives are 'significance' and 'effect'.")
+  fres<-fres[order(-fres$confES),]
+  message("Note: default gene set prioritisation is by confidence interval (confES). Alternatives are 'significance' and 'effect'.")
 }
 return(fres)
 }
@@ -448,6 +517,13 @@ endrichrank<-function(x) {
 #  }
 #  x<-jitter_df(x)
 
+for ( i in 1:ncol(x)) {
+  LEN=length(x[,i])
+  UNIQLEN=length(unique(x[,i]))
+  if ( UNIQLEN/LEN<0.99 ) { stop("Error: >99% of genes have the same score. More granular measurements needed for rank based enrichment analysis.") }
+  if ( UNIQLEN/LEN<0.4 ) { warning("Warning: >60% of genes have the same score. This isn't optimal for rank based enrichment analysis.") }
+}
+
   rank_adj<-function(x){
     xx<-rank(x)
     num_neg=length( which( x<0 ) )
@@ -469,11 +545,7 @@ detailed_sets<-function(res,  resrows=50) {
   names(dat) <- mykeys
 
   for(i in 1:resrows) {
-    ll<-res$manova_result[i,]
-    size<-ll$setSize
-    setindex=as.numeric(ll[1])
-    sss<-ss[which(rownames(ss) %in% genesets[[as.numeric(ll[1])]]),]
-
+    sss<-ss[which(rownames(ss) %in% genesets[[which(names(genesets) %in% as.character(res$manova_result[i,1]))]]),]
     dat[[i]]<-sss
   }
   dat
@@ -536,6 +608,18 @@ plotSets <- function(res,outfile="Rplots.pdf") {
       }
     )
 
+    sig<-subset(res$manova_result , p.adjustMANOVA<0.05)
+    plot(res$manova_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+      main="Scatterplot of all gene sets; FDR<0.05 in red" )
+    abline(v=0,h=0,lty=2,lwd=2,col="blue")
+    points(sig[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+
+    top<-head(res$manova_result ,resrows)
+    plot(res$manova_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+      main=paste("Scatterplot of all gene sets; top",resrows,"in red") )
+    abline(v=0,h=0,lty=2,lwd=2,col="blue")
+    points(top[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+
     for(i in 1:resrows) {
       ll<-res$manova_result[i,]
       size<-ll$setSize
@@ -565,14 +649,13 @@ plotSets <- function(res,outfile="Rplots.pdf") {
   } else {
 
   pdf(outfile)
-  #pairs points plot
+  #pairs points plot for genes
   ggpairs_points_plot <- function(data ,mapping, ...){
     p <- ggplot(data = data, mapping = mapping) +
       geom_point(alpha=0.05) +
       geom_vline(xintercept=0,linetype="dashed") +
       geom_hline(yintercept=0,linetype="dashed")
   }
-
 
   p<-ggpairs(as.data.frame(x), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
   print( p +  theme_bw() ) 
@@ -604,7 +687,12 @@ plotSets <- function(res,outfile="Rplots.pdf") {
     p
   }
 
-  #subset points plot
+  DIMS=ncol(ss)
+  #pairs points plot for gene sets
+  p<-ggpairs(res$manova_result[,4:(3+DIMS)] , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
+  print( p +  theme_bw() )
+
+  #subset points plot function
   ggpairs_points_limit_range <- function(data ,mapping, ...){
     p <- ggplot(data = data, mapping = mapping) +
       geom_point(alpha=0.1) +
