@@ -317,28 +317,74 @@ EnDrichDist3<-function(x, genesets, topfig=1) {
 
 
 #TODO does not work with neg numbers !!
-EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1) {
+EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL) {
 	sets<-names(genesets)
 
-	res<-pbmclapply(sets,function(set){
-		inset<-rownames(x) %in% as.character(unlist(genesets[set]))
-	        fit<- manova(x ~ inset)
-        	sumMANOVA <- summary.manova(fit)
-	        sumAOV    <- summary.aov(fit)
-        	pMANOVA <- sumMANOVA$stats[1,"Pr(>F)"]
-	        raov<-sapply(sumAOV, function(zz) {zz[1,"Pr(>F)"]})
-        	names(raov)<-gsub("^ Response ","p",names(raov))
-	        #S coordinates
-	        scord<-apply(x,2,function(zz){2*(mean(zz[inset])-mean(zz[!inset]))/length(inset)})
-	        names(scord)<-paste0("s-",names(scord))
-        	return(data.frame(set,setSize=sum(inset),pMANOVA,t(scord),t(raov) ))
-	},mc.cores=cores )
-	fres<-ldply(res, data.frame)
-	fres<-fres[fres$setSize >=minsetsize,]
-        fres$p.adjustMANOVA<-p.adjust(fres$pMANOVA,"fdr")
-        fres$minAbsS<-apply(fres[,4:6],1, function(zz){min(abs(zz))})
-	fres<- fres[order(fres$pMANOVA),]
-	return(fres)
+if (  is.null(priority) ) {
+  priority="confidence"
+}
+
+if (priority!="significance" && priority!="effect" && priority!="confidence") {
+  stop("Error: Parameter 'priority' must be either 'confidence'(the default),'significance' or 'effect'.")
+} 
+
+hypotenuse <- function(x){ sqrt(sum(unlist(lapply(x,function(x) {x^2} )))) }
+
+#calculate the hypotenuse for downstream use
+HYPOT=hypotenuse(apply(x,2,length))
+
+res<-pbmclapply(sets,function(set){
+  inset<-rownames(x) %in% as.character(unlist(genesets[set]))
+
+  if ( length(which(inset)) > 0 ) {
+    fit<- manova(x ~ inset)
+    sumMANOVA <- summary.manova(fit)
+    sumAOV    <- summary.aov(fit)
+    pMANOVA <- sumMANOVA$stats[1,"Pr(>F)"]
+    raov<-sapply(sumAOV, function(zz) {zz[1,"Pr(>F)"]})
+    names(raov)<-gsub("^ Response ","p.",names(raov))
+    #S coordinates
+    scord<-apply(x,2,function(zz){2*(mean(zz[inset])-mean(zz[!inset]))/length(inset)})
+    names(scord)<-paste0("s-",names(scord))
+    sdist<-hypotenuse(scord)
+    names(sdist)="s.dist"
+
+    #calculate the hypotenuse length of
+    DISTS=NULL
+    for ( DIM in 1:ncol(x) ) { 
+      CONFINT<-confint(aov(x[,DIM] ~ inset),level=0.95)
+      MAX=max(x[,DIM])
+      MIN=min(x[,DIM])
+      C1=CONFINT[2,1]-MIN
+      C2=MAX-CONFINT[2,2]
+      CONFDIST=max(c(C1,C2))
+      DISTS=c(DISTS,CONFDIST)
+    }
+    confES<-hypotenuse(DISTS)/HYPOT
+    names(confES)="confES"
+    return(data.frame(set,setSize=sum(inset),pMANOVA,t(scord), t(raov),  t(confES), t(sdist) ))
+  }
+
+},mc.cores=cores )
+fres<-ldply(res, data.frame)
+fres<-fres[fres$setSize >=minsetsize,]
+fres$p.adjustMANOVA<-p.adjust(fres$pMANOVA,"fdr")
+#fres$minAbsS<-apply(fres[,4:6],1, function(zz){min(abs(zz))})
+
+#prioritisation
+if (priority=="significance") {
+  fres<- fres[order(fres$pMANOVA),]
+  message("Note: When prioritising by significance (ie: small p-values), large effect sizes might be missed.")
+}
+if (priority=="effect") {
+  fres<- fres[order(-fres$s.dist),]
+  message("Note: Enrichments with large effect sizes may not be statistically significant.")
+}
+if (priority=="confidence") {
+  fres<- fres[order(-fres$confES),]
+  message("Note: default gene set prioritisation is by confidence interval. Alternatives are 'significance' and 'effect'.")
+}
+return(fres)
 }
 
 
@@ -434,14 +480,14 @@ detailed_sets<-function(res,  resrows=50) {
 }
 
 
-endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50) {
+endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL) {
 	input_profile<-x
 
         input_genesets<-genesets
 
 	ranked_profile<-endrichrank(input_profile)
 
-	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores)
+	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority)
 
 	manova_analysis_metrics<-manova_analysis_metrics_calc(x,genesets,manova_result)
 
