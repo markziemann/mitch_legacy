@@ -620,7 +620,15 @@ plotSets <- function(res,outfile="Rplots.pdf") {
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
     points(top[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
 
-    for(i in 1:resrows) {
+    # plot effect size versus significance 
+    plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
+      xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
+      pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
+      main="effect size versus statistical significance")
+
+
+
+   for(i in 1:resrows) {
       ll<-res$manova_result[i,]
       size<-ll$setSize
       sss<-res$detailed_sets[[i]] 
@@ -702,6 +710,13 @@ plotSets <- function(res,outfile="Rplots.pdf") {
       scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
     p
   }
+
+  # plot effect size versus significance 
+  plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
+    xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
+    pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
+    main="effect size versus statistical significance")
+
 
   for(i in 1:resrows) {
     ll<-res$manova_result[i,]

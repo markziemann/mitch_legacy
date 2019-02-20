@@ -225,7 +225,7 @@ library(gtools)
   myres<-head(res$manova_result,resrows)
   myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
   if ( ncol(ss)<3 ) {
-    myres<-myres[,c(1,8,2,4,5)]
+    myres<-myres[,c(1,10,2,4,5)]
     myres$set<-gsub("_"," ",as.character(myres$set))
     colnames(myres)=gsub("\\.","_",colnames(myres))
     my_x=colnames(myres)[4]
@@ -233,7 +233,7 @@ library(gtools)
     tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
   } else {
     plan<-combinations(n = d, r = 2, v = 1:d, repeats.allowed = FALSE)
-    myres<-myres[,c(1,ncol(myres)-1,2,4:(4+d-1))]
+    myres<-myres[,c(1,ncol(myres),2,4:(4+d-1))]
     p<-list()
     tauscatter<-function(i){
       my_x=plan[i,1]
@@ -257,6 +257,19 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+```
+
+# A plot of effect size versus significance
+Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist which is the hypotenuse of the s scores.
+```{r,effectsize,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+  myres<-res$manova_result
+  myres$significance<--log2(myres$p.adjustMANOVA)
+  myres$set<-gsub("_"," ",as.character(myres$set))
+  colnames(myres)=gsub("\\.","_",colnames(myres))
+  my_x=colnames(myres)[ncol(myres)-2]
+  my_y=colnames(myres)[ncol(myres)]
+  tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+
 ```
 
 
