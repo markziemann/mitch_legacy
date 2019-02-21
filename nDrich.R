@@ -2,7 +2,6 @@ library("plyr")
 library("parallel")
 library("pbmcapply")
 
-
 ndrich_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
 if ( !is.list(x) ){
@@ -385,7 +384,7 @@ EnDrichDist3<-function(x, genesets, topfig=1) {
 
 
 #TODO does not work with neg numbers !!
-EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL) {
+EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
 
 sets<-names(genesets)
 
@@ -402,8 +401,25 @@ hypotenuse <- function(x){ sqrt(sum(unlist(lapply(x,function(x) {x^2} )))) }
 #calculate the hypotenuse for downstream use
 HYPOT=hypotenuse(apply(x,2,length))
 
+resample<-function(x,set){
+  sss<-x[which (rownames(x) %in% as.character(unlist(genesets[set]))),]
+  mysample<-sss[sample(nrow(sss),nrow(sss),replace=T),]
+  colMeans(mysample)
+}  
+
+bootstrap<-function(n,set){
+  xx<-as.data.frame(t(replicate(n,resample(x,set))))
+  NOTINSET<-colMeans(x[!inset,])
+  NROW=nrow(x)
+  xxx<- ( 2* (xx - NOTINSET ) ) / NROW
+  b<-apply(xxx,1,hypotenuse)
+  return(b)
+}
+
 res<-pbmclapply(sets,function(set){
   inset<-rownames(x) %in% as.character(unlist(genesets[set]))
+
+  NROW=nrow(x)
 
   if ( length(which(inset)) >= minsetsize ) {
     fit<- manova(x ~ inset)
@@ -413,12 +429,26 @@ res<-pbmclapply(sets,function(set){
     raov<-sapply(sumAOV, function(zz) {zz[1,"Pr(>F)"]})
     names(raov)<-gsub("^ Response ","p.",names(raov))
     #S coordinates
-    scord<-apply(x,2,function(zz){2*(mean(zz[inset])-mean(zz[!inset]))/length(inset)})
+    #scord<-apply(x,2,function(zz){ 2 * ( mean(zz[inset]) - mean(zz[!inset]) ) / length(inset) } )
+
+    NOTINSET<-colMeans(x[!inset,])
+    scord<- ( 2*( colMeans(x[inset,]) - NOTINSET ) ) / NROW 
     names(scord)<-paste0("s-",names(scord))
+    #calculate the hypotenuse length of s scores
     sdist<-hypotenuse(scord)
     names(sdist)="s.dist"
 
-    #calculate the hypotenuse length of
+    #confidence interval calc by resampling
+    if (bootstraps > 0) {
+      b<-bootstrap(bootstraps,set)
+      confESp<-quantile(b,0.05)
+      names(confESp)="confESp"
+    } else {
+      confESp<-NA
+      names(confESp)="confESp"
+    }
+
+    #calculate the confidence intervals
     DISTS=NULL
     for ( DIM in 1:ncol(x) ) { 
       CONFINT<-confint(aov(x[,DIM] ~ inset),level=0.90)
@@ -431,7 +461,7 @@ res<-pbmclapply(sets,function(set){
     }
     confES<-hypotenuse(DISTS)/HYPOT
     names(confES)="confES"
-    return(data.frame(set,setSize=sum(inset),pMANOVA,t(scord), t(raov),  t(confES), t(sdist) ))
+    return(data.frame(set,setSize=sum(inset), pMANOVA, t(scord), t(raov), t(sdist), t(confES), t(confESp) ))
   }
 
 },mc.cores=cores )
@@ -552,14 +582,14 @@ detailed_sets<-function(res,  resrows=50) {
 }
 
 
-endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL) {
+endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL, bootstraps=0) {
 	input_profile<-x
 
         input_genesets<-genesets
 
 	ranked_profile<-endrichrank(input_profile)
 
-	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority)
+	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
 
 	manova_analysis_metrics<-manova_analysis_metrics_calc(x,genesets,manova_result)
 
