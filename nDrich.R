@@ -1,6 +1,8 @@
 library("plyr")
 library("parallel")
 library("pbmcapply")
+library("Rmisc")
+
 
 ndrich_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
@@ -441,8 +443,20 @@ res<-pbmclapply(sets,function(set){
 
     #confidence interval calc by resampling
     if (bootstraps > 0) {
-      b<-bootstrap(x,bootstraps,set)
-      confESp<-quantile(b,0.05)
+
+      STRAPSDONE=0
+      BAND_SIZE=1
+      CHUNK=50
+      b=NULL
+      # use an approach to stop bootstrapping un
+      while ( BAND_SIZE>0.1 && STRAPSDONE<bootstraps) {
+        bb<-bootstrap(x,CHUNK,set)
+        b<-c(b,bb)
+        STRAPSDONE=STRAPSDONE+CHUNK
+        BAND_SIZE<-unname((CI(b)[1]-CI(b)[3] ) /CI(b)[2])
+      }
+      #b<-bootstrap(x,bootstraps,set)
+      confESp<-sdist-quantile(abs(sdist-b),0.05)
       names(confESp)="confESp"
     } else {
       confESp<-NA
