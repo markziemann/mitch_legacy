@@ -401,22 +401,23 @@ hypotenuse <- function(x){ sqrt(sum(unlist(lapply(x,function(x) {x^2} )))) }
 #calculate the hypotenuse for downstream use
 HYPOT=hypotenuse(apply(x,2,length))
 
-resample<-function(x,set){
-  sss<-x[which (rownames(x) %in% as.character(unlist(genesets[set]))),]
-  mysample<-sss[sample(nrow(sss),nrow(sss),replace=T),]
-  colMeans(mysample)
-}  
-
-bootstrap<-function(n,set){
-  xx<-as.data.frame(t(replicate(n,resample(x,set))))
-  NOTINSET<-colMeans(x[!inset,])
-  NROW=nrow(x)
-  xxx<- ( 2* (xx - NOTINSET ) ) / NROW
-  b<-apply(xxx,1,hypotenuse)
-  return(b)
-}
-
 res<-pbmclapply(sets,function(set){
+
+  resample<-function(x,set){
+    sss<-x[which (rownames(x) %in% as.character(unlist(genesets[set]))),]
+    mysample<-sss[sample(nrow(sss),nrow(sss),replace=T),]
+    colMeans(mysample)
+  }
+
+  bootstrap<-function(x,n,set){
+    xx<-as.data.frame(t(replicate(n,resample(x,set))),stringsAsFactors=F)
+    NOTINSET<-colMeans(x[!inset,])
+    NROW=nrow(x)
+    xxx<- ( 2* (xx - NOTINSET ) ) / NROW
+    b<-apply(xxx,1,hypotenuse)
+    return(b)
+  }
+
   inset<-rownames(x) %in% as.character(unlist(genesets[set]))
 
   NROW=nrow(x)
@@ -440,7 +441,7 @@ res<-pbmclapply(sets,function(set){
 
     #confidence interval calc by resampling
     if (bootstraps > 0) {
-      b<-bootstrap(bootstraps,set)
+      b<-bootstrap(x,bootstraps,set)
       confESp<-quantile(b,0.05)
       names(confESp)="confESp"
     } else {
@@ -448,20 +449,7 @@ res<-pbmclapply(sets,function(set){
       names(confESp)="confESp"
     }
 
-    #calculate the confidence intervals
-    DISTS=NULL
-    for ( DIM in 1:ncol(x) ) { 
-      CONFINT<-confint(aov(x[,DIM] ~ inset),level=0.90)
-      MAX=max(x[,DIM])
-      MIN=min(x[,DIM])
-      C1=CONFINT[2,1]-MIN
-      C2=MAX-CONFINT[2,2]
-      CONFDIST=max(c(C1,C2))
-      DISTS=c(DISTS,CONFDIST)
-    }
-    confES<-hypotenuse(DISTS)/HYPOT
-    names(confES)="confES"
-    return(data.frame(set,setSize=sum(inset), pMANOVA, t(scord), t(raov), t(sdist), t(confES), t(confESp) ))
+    return(data.frame(set,setSize=sum(inset), pMANOVA, t(scord), t(raov), t(sdist), t(confESp) , stringsAsFactors=F ))
   }
 
 },mc.cores=cores )
