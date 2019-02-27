@@ -443,8 +443,19 @@ res<-pbmclapply(sets,function(set){
 
     #confidence interval calc by resampling
     if (bootstraps > 0) {
-      # bootstrap to estimate confidence bounds
-      b<-bootstrap(x,bootstraps,set)
+
+      STRAPSDONE=0
+      BAND_SIZE=1
+      CHUNK=50
+      b=NULL
+      # use an approach to stop bootstrapping un
+      while ( BAND_SIZE>0.1 && STRAPSDONE<bootstraps) {
+        bb<-bootstrap(x,CHUNK,set)
+        b<-c(b,bb)
+        STRAPSDONE=STRAPSDONE+CHUNK
+        BAND_SIZE<-unname((CI(b)[1]-CI(b)[3] ) /CI(b)[2])
+      }
+      #b<-bootstrap(x,bootstraps,set)
       confESp<-sdist-quantile(abs(sdist-b),0.05)
       names(confESp)="confESp"
     } else {
@@ -599,7 +610,7 @@ endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50,
 plotSets <- function(res,outfile="Rplots.pdf") {
   library("GGally")
   library("vioplot")
-
+  library("gridExtra")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   resrows=length(res$detailed_sets)
@@ -629,6 +640,29 @@ plotSets <- function(res,outfile="Rplots.pdf") {
       }
     )
 
+    #barcghart of gene locations by quadrant
+    uu=length(which(res$input_profile[,1]>0 & res$input_profile[,2]>0))
+    ud=length(which(res$input_profile[,1]>0 & res$input_profile[,2]<0))
+    dd=length(which(res$input_profile[,1]<0 & res$input_profile[,2]<0))
+    du=length(which(res$input_profile[,1]<0 & res$input_profile[,2]>0))
+    a<-as.data.frame(c(uu,ud,dd,du))
+    rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
+    colnames(a)="a"
+    barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
+
+    #histograms of gene set counts
+    geneset_counts<-res$manova_analysis_metrics$geneset_counts
+    boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+    hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
+    hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
+
+    #barcghart of gene set locations by quadrant
+    a<-res$manova_analysis_metrics[14]
+    a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
+    rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
+    colnames(a)="a"
+    barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
+
     sig<-subset(res$manova_result , p.adjustMANOVA<0.05)
     plot(res$manova_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
       main="Scatterplot of all gene sets; FDR<0.05 in red" )
@@ -646,7 +680,6 @@ plotSets <- function(res,outfile="Rplots.pdf") {
       xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
       pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
       main="effect size versus statistical significance")
-
 
 
    for(i in 1:resrows) {
@@ -715,6 +748,33 @@ plotSets <- function(res,outfile="Rplots.pdf") {
       scale_y_continuous( limits = range(min(ss[,gsub("~","",as.character(mapping[2]))]),max(ss[,gsub("~","",as.character(mapping[2]))])) )
     p
   }
+
+  #a table of gene location by sector
+  d=ncol(ss)
+  sig<-sign(ss)
+  sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+  colnames(sector_count)[ncol(sector_count)]<-"Number of genes in each sector"
+  grid.table(sector_count)
+
+  #histograms of gene set counts
+  par(mfrow=c(3,1))
+  geneset_counts<-res$manova_analysis_metrics$geneset_counts
+  boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+  hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
+  hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
+
+  #a table of geneset location by sector
+  sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
+  sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+  colnames(sector_count)[ncol(sector_count)]<-"Number of gene sets in each sector"
+  grid.table(sector_count)
+
+
+
+
+
+
+
 
   DIMS=ncol(ss)
   #pairs points plot for gene sets
