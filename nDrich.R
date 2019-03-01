@@ -396,7 +396,7 @@ if (  is.null(priority) ) {
 
 if (priority!="significance" && priority!="effect" && priority!="confidence") {
   stop("Error: Parameter 'priority' must be either 'confidence'(the default),'significance' or 'effect'.")
-} 
+}
 
 hypotenuse <- function(x){ sqrt(sum(unlist(lapply(x,function(x) {x^2} )))) }
 
@@ -485,6 +485,7 @@ if (priority=="confidence") {
   fres<-fres[order(-fres$confES),]
   message("Note: default gene set prioritisation is by confidence interval (confES). Alternatives are 'significance' and 'effect'.")
 }
+attributes(fres)$priority<-priority
 return(fres)
 }
 

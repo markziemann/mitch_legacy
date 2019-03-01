@@ -135,7 +135,7 @@ if ( ncol(ss)<3 ) {
 
 ## Input genesets
 Here are some metrics about the gene sets used:
-```{r,input_geneset_metrics,results="asis",echo=FALSE}
+```{r,input_geneset_metrics1,results="asis",echo=FALSE}
 ORIGINFILE=attributes(genesets)$originfile
 print(paste("GMT file of genesets:",ORIGINFILE))
 unformatted<-t(as.data.frame(res$manova_analysis_metrics[ c(1,6,7,13  ) ]))
@@ -144,6 +144,18 @@ rownames(formatted)=rownames(unformatted)
 colnames(formatted)="Gene sets metrics"
 kable( formatted , col.names = "Gene sets metrics" ,caption = "Gene sets metrics" )
 
+```
+
+```{r,input_geneset_metrics2,results="asis",echo=FALSE ,fig.height = 7, fig.width = 7 ,fig.show="all"}
+par(mfrow=c(3,1))
+geneset_counts<-res$manova_analysis_metrics$geneset_counts
+boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
+hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
+
+```
+
+```{r,input_geneset_metrics3,results="asis",echo=FALSE}
 if ( ncol(ss)<3 ) {
   a<-res$manova_analysis_metrics[14]
   a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
@@ -158,15 +170,6 @@ colnames(sector_count)[ncol(sector_count)]<-"Count"
 kable(sector_count ,caption = "Gene sets by sector" ,row.names=T)
 ```
 
-More about the sizes of the gene sets evaluated.
-```{r,geneset_sizes,results="asis",echo=FALSE,fig.height = 10, fig.width = 7, fig.show="all"}
-par(mfrow=c(3,1))
-geneset_counts<-res$manova_analysis_metrics$geneset_counts
-boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
-hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
-hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
-```
-
 ## Enrichment scatterplot with taucharts
 All sets with p.adjustMANOVA<0.05. Try hovering over the points.
 ```{r,tauchart1,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
@@ -177,9 +180,9 @@ library(gtools)
   p=NULL
   if (numsets>0){
     myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
-    myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
+    myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
     if ( ncol(ss)<3 ) {
-      myres<-myres[,c(1,8,2,4,5)]
+      myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
       myres$set<-gsub("_"," ",as.character(myres$set))
       colnames(myres)=gsub("\\.","_",colnames(myres))
       my_x=colnames(myres)[4]
@@ -187,7 +190,7 @@ library(gtools)
       tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
     } else {
       plan<-combinations(n = d, r = 2, v = 1:d, repeats.allowed = FALSE)
-      myres<-myres[,c(1,ncol(myres)-1,2,4:(4+d-1))]
+      myres<-myres[,c(1, which(names(myres) %in% "p.adjustMANOVA") ,2,4:(4+d-1), which(names(myres) %in% "s.dist") )]
       p<-list()
       tauscatter<-function(i){
         my_x=plan[i,1]
@@ -217,15 +220,18 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 
 ## Enrichment scatterplot with taucharts
 Top N sets irrespective of FDR. Try hovering over the points.
-```{r,tauchart2,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+```{r,tauchart2,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=T}
 library("taucharts")
 library(dplyr)
 library(gtools)
+  message(paste("Prioritisation done by" , attributes(res$manova_result)$priority ))
   resrows=length(res$detailed_sets)
   myres<-head(res$manova_result,resrows)
-  myres$p.adjustMANOVA<-signif(myres$p.adjustMANOVA,3)
+  myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
+
   if ( ncol(ss)<3 ) {
-    myres<-myres[,c(1,10,2,4,5)]
+    myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
+    myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
     myres$set<-gsub("_"," ",as.character(myres$set))
     colnames(myres)=gsub("\\.","_",colnames(myres))
     my_x=colnames(myres)[4]
@@ -233,7 +239,7 @@ library(gtools)
     tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
   } else {
     plan<-combinations(n = d, r = 2, v = 1:d, repeats.allowed = FALSE)
-    myres<-myres[,c(1,ncol(myres),2,4:(4+d-1))]
+    myres<-myres[,c(1, which(names(myres) %in% "p.adjustMANOVA") ,2,4:(4+d-1), which(names(myres) %in% "s.dist") )]
     p<-list()
     tauscatter<-function(i){
       my_x=plan[i,1]
@@ -263,6 +269,7 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist which is the hypotenuse of the s scores.
 ```{r,effectsize,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
   myres<-res$manova_result
+  myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
   myres$significance<--log2(myres$p.adjustMANOVA)
   myres$set<-gsub("_"," ",as.character(myres$set))
   colnames(myres)=gsub("\\.","_",colnames(myres))
@@ -278,10 +285,10 @@ Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist which is
 ```{r,results_table,results="asis",echo=FALSE}
 resrows=length(res$detailed_sets)
 myres<-head(res$manova_result,resrows)
-myres<-myres[,c(1:3,ncol(myres)-1,4:((d*2)+3))]
+myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 formatted<-myres
 formatted[,1]<-gsub("_"," ",myres[,1])
-formatted[,3:ncol(myres)]<-format(myres[,3:ncol(myres)],digits=3)
 kable( formatted , col.names = colnames(formatted) , row.names=F, caption = "Top gene sets" ,digits=100)
 cat("<hr><br>")
 ```
@@ -289,7 +296,8 @@ cat("<hr><br>")
 ## Results (complete table)
 ```{r,results_table_complete,results="asis",echo=FALSE}
 myres<-res$manova_result
-myres<-myres[,c(1:3,ncol(myres)-1,4:((d*2)+3))]
+myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 formatted<-myres
 formatted[,1]<-gsub("_"," ",myres[,1])
 formatted[,3:ncol(myres)]<-format(myres[,3:ncol(myres)],digits=3)
@@ -308,7 +316,8 @@ library(vioplot)
 resrows=length(res$detailed_sets)
 ss<-res$ranked_profile
 myres<-head(res$manova_result,resrows)
-myres<-myres[,c(1:3,ncol(myres)-1,4:((d*2)+3))]
+myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
 twodimplot<-function(i) {
@@ -376,6 +385,9 @@ ndplot<-function(i) {
 topgenelist<-function(i) {
   sss<-res$detailed_sets[[i]]
   tl=bl=tr=br=0
+  myres<-head(res$manova_result,resrows)
+  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+  myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 
   d=ncol(ss)
   #select 2 strongest columns to highlight genes
@@ -386,7 +398,7 @@ topgenelist<-function(i) {
     mysx=signif(myres[i,cols[1]],3)
     mysy=signif(myres[i,cols[2]],3)
   } else {
-    cols=c(5,6)
+    cols=c(ncol(myres)-3,ncol(myres)-2)
     mysx=signif(myres[i,cols[1]],3)
     mysy=signif(myres[i,cols[2]],3)
   }
@@ -431,12 +443,17 @@ if ( ncol(ss)<3 ) {
   ymin=min(ss[,2])
   ymax=max(ss[,2])
   for ( i in 1:resrows ) {
+  myres<-head(res$manova_result,resrows)
+  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+  myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
+  myres<-as.data.frame(apply(myres,2,as.character))
+
     mydat<-as.data.frame(t(myres[i,2:ncol(myres)]))
     mydat$' '<-" "
 #    mydat$rowname<-rownames(mydat)
 #    mydat<-mydat[,c(2,1)]
     cat(paste("<b>",as.character(myres[i,1]) ,"</b><br>"))
-    print(kable(mydat,format='markdown',digits=5,caption=as.character(t(myres[i,1]))) )
+    print(kable(mydat,format='markdown',caption=as.character(t(myres[i,1]))) )
     cat('\n')
     cat("<br>")
     twodimplot(i)
