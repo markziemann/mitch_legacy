@@ -7,9 +7,9 @@ x<-as.matrix(read.table("rna_LGHGvHGHGV_jn.rnk",header=T))
 genesets<-gmt_import("ReactomePathways.gmt")
 
 #run the analysis
-res<-endrich(x,genesets,resrows=25)
-plot2DSets(res,outfile="outres.pdf")
-render_report(res,"outres.html")
+res<-mitch_calc(x,genesets,resrows=25)
+mitch_plots(res,outfile="outres.pdf")
+mitch_report(res,"outres.html")
 
 # run an example shiny document
 rmarkdown::run("test_shiny.Rmd")
@@ -19,16 +19,16 @@ rmarkdown::run("test_shiny.Rmd")
 xx<-x
 rownames(xx)<-sample(rownames(x))
 head(xx)
-res<-endrich(xx,genesets)
-render_report(res,"randres_names.html")
+res<-mitch_calc(xx,genesets)
+mitch_report(res,"randres_names.html")
 
 #randomise all data
 xx<-x
 xx[,1]<-sample(x[,1])
 xx[,2]<-sample(x[,2])
 head(xx)
-res<-endrich(xx,genesets)
-render_report(res,"randres_xy.html")
+res<-mitch_calc(xx,genesets)
+mitch_report(res,"randres_xy.html")
 
 
 #run some permutes
@@ -40,7 +40,7 @@ set.seed(i+100)
 xx<-x
 rownames(xx)<-sample(rownames(x))
 head(xx)
-res<-endrich(xx,genesets)
+res<-mitch_calc(xx,genesets)
 n<-length(which(res$manova_result$p.adjustMANOVA<0.05))
 numsig1=c(numsig1,n)
 }
@@ -55,7 +55,7 @@ set.seed(i+200)
 xx[,1]<-sample(x[,1])
 set.seed(i+300)
 xx[,2]<-sample(x[,2])
-res<-endrich(xx,genesets)
+res<-mitch_calc(xx,genesets)
 n<-length(which(res$manova_result$p.adjustMANOVA<0.05))
 numsig2=c(numsig2,n)
 }
