@@ -602,6 +602,8 @@ endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50,
 		"manova_result" = manova_result,
 		"manova_analysis_metrics" = manova_analysis_metrics)
 
+        if ( nrow(manova_result) < resrows ) { resrows<-nrow(manova_result) }
+
         dat$detailed_sets<-detailed_sets(dat,resrows)
 
 	dat
