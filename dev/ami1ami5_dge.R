@@ -174,37 +174,37 @@ genesets<-gmt_import("ReactomePathways.gmt")
 
 #edger analysis
 x1<-list("ami1_edger"=ami1_edger,"ami5_edger"=ami5_edger)
-y1<-ndrich_import(x1,"edger",geneIDcol="Row.names",geneTable=gt)
-res<-endrich(y1,genesets,resrows=50)
-plotSets(res,outfile="ami1ami5_edger.pdf")
-render_report(res,"ami1ami5_edger.html")
+y1<-mitch_import(x1,"edger",geneIDcol="Row.names",geneTable=gt)
+res<-mitch_calc(y1,genesets,resrows=50)
+mitch_plots(res,outfile="ami1ami5_edger.pdf")
+mitch_report(res,"ami1ami5_edger.html")
 
 #limma analysis
 x2<-list("ami1_limma"=ami1_limma,"ami5_limma"=ami5_limma)
-y2<-ndrich_import(x2,"limma",geneTable=gt)
-res<-endrich(y2,genesets,resrows=50)
-plotSets(res,outfile="ami1ami5_limma.pdf")
-render_report(res,"ami1ami5_limma.html")
+y2<-mitch_import(x2,"limma",geneTable=gt)
+res<-mitch_calc(y2,genesets,resrows=50)
+mitch_plots(res,outfile="ami1ami5_limma.pdf")
+mitch_report(res,"ami1ami5_limma.html")
 
 #absseq analysis
 x3<-list("ami1_absseq"=ami1_absseq,"ami5_absseq"=ami5_absseq)
-y3<-ndrich_import(x3,"absseq",geneTable=gt)
-res<-endrich(y3,genesets,resrows=50)
-plotSets(res,outfile="ami1ami5_absseq.pdf")
-render_report(res3,"ami1ami5_absseq.html")
+y3<-mitch_import(x3,"absseq",geneTable=gt)
+res<-mitch_calc(y3,genesets,resrows=50)
+mitch_plots(res,outfile="ami1ami5_absseq.pdf")
+mitch_report(res3,"ami1ami5_absseq.html")
 
 #deseq2 analysis
 x4<-list("ami1_deseq2"=ami1_deseq2,"ami5_deseq2"=ami5_deseq2)
-y4<-ndrich_import(x4,"deseq2",geneTable=gt)
-res<-endrich(y4,genesets,resrows=50)
-plotSets(res,outfile="ami1ami5_deseq.pdf")
-render_report(res,"ami1ami5_deseq.html")
+y4<-mitch_import(x4,"deseq2",geneTable=gt)
+res<-mitch_calc(y4,genesets,resrows=50)
+mitch_plots(res,outfile="ami1ami5_deseq.pdf")
+mitch_report(res,"ami1ami5_deseq.html")
 
 #topconfects analysis
 x5<-list("ami1_confects"=ami1_confects,"ami5_confects"=ami5_confects)
-y5<-ndrich_import(x5,"topconfects",geneIDcol="name",geneTable=gt)
-res<-endrich(y5,genesets,resrows=50)
-plotSets(res,outfile="ami1ami5_confects.pdf")
-render_report(res,"ami1ami5_confects.html")
+y5<-mitch_import(x5,"topconfects",geneIDcol="name",geneTable=gt)
+res<-mitch_calc(y5,genesets,resrows=50)
+mitch_plots(res,outfile="ami1ami5_confects.pdf")
+mitch_report(res,"ami1ami5_confects.html")
 
 

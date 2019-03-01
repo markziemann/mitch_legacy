@@ -4,7 +4,7 @@ library("pbmcapply")
 library("Rmisc")
 
 
-ndrich_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
+mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
 if ( !is.list(x) ){
   stop("Error: Input (x) must be a LIST of dataframes.")
@@ -386,7 +386,7 @@ EnDrichDist3<-function(x, genesets, topfig=1) {
 
 
 #TODO does not work with neg numbers !!
-EnDrichMANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
+MANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
 
 sets<-names(genesets)
 
@@ -432,7 +432,6 @@ res<-pbmclapply(sets,function(set){
     raov<-sapply(sumAOV, function(zz) {zz[1,"Pr(>F)"]})
     names(raov)<-gsub("^ Response ","p.",names(raov))
     #S coordinates
-    #scord<-apply(x,2,function(zz){ 2 * ( mean(zz[inset]) - mean(zz[!inset]) ) / length(inset) } )
 
     NOTINSET<-colMeans(x[!inset,])
     scord<- ( 2*( colMeans(x[inset,]) - NOTINSET ) ) / NROW 
@@ -467,30 +466,39 @@ res<-pbmclapply(sets,function(set){
   }
 
 },mc.cores=cores )
+
 fres<-ldply(res, data.frame)
-#fres<-fres[fres$setSize >=minsetsize,]
-fres$p.adjustMANOVA<-p.adjust(fres$pMANOVA,"fdr")
-#fres$minAbsS<-apply(fres[,4:6],1, function(zz){min(abs(zz))})
 
-#prioritisation
-if (priority=="significance") {
-  fres<-fres[order(fres$pMANOVA),]
-  message("Note: When prioritising by significance (ie: small p-values), large effect sizes might be missed.")
+if (nrow(fres)<1) {
+
+  message("Warning: No results found. Check that the gene names in the profile match the gene sets and consider loosening the minsetsize parameter.")
+
+  } else {
+  fres$p.adjustMANOVA<-p.adjust(fres$pMANOVA,"fdr")
+
+  #prioritisation
+  if (priority=="significance") {
+    fres<-fres[order(fres$pMANOVA),]
+    message("Note: When prioritising by significance (ie: small p-values), large effect sizes might be missed.")
+  }
+  if (priority=="effect") {
+    fres<-fres[order(-fres$s.dist),]
+    message("Note: Enrichments with large effect sizes may not be statistically significant.")
+  }
+  if (priority=="confidence") {
+    fres<-fres[order(-fres$confES),]
+    message("Note: default gene set prioritisation is by confidence interval (confES). Alternatives are 'significance' and 'effect'.")
+  }
+  attributes(fres)$priority<-priority
+  return(fres)
 }
-if (priority=="effect") {
-  fres<-fres[order(-fres$s.dist),]
-  message("Note: Enrichments with large effect sizes may not be statistically significant.")
-}
-if (priority=="confidence") {
-  fres<-fres[order(-fres$confES),]
-  message("Note: default gene set prioritisation is by confidence interval (confES). Alternatives are 'significance' and 'effect'.")
-}
-attributes(fres)$priority<-priority
-return(fres)
 }
 
 
-manova_analysis_metrics_calc<-function(x, genesets, manova_result, minsetsize=10 ) {
+mitch_metrics_calc<-function(x, genesets, manova_result, minsetsize=10 ) {
+
+if (!is.null(manova_result)){
+
 	num_genesets=length(genesets)
 	included_genesets<-nrow(manova_result)
         geneset_counts<-as.data.frame(as.vector(unlist(lapply(genesets,function(set){ length(which(as.vector(unlist(set)) %in% rownames(x))) } ))))
@@ -539,16 +547,10 @@ manova_analysis_metrics_calc<-function(x, genesets, manova_result, minsetsize=10
 		"geneset_counts" = geneset_counts)
 	dat
 }
-#hist(geneset_counts$count,200,xlim=c(0,500))
+}
 
 
-endrichrank<-function(x) {
-# may implement some type of jitter in future
-#  jitter_df<-function(x){
-#    rand<-matrix(0.001*rnorm(ncol(x)*nrow(x), mean = 0, sd = 1),ncol=ncol(x))
-#    x+rand
-#  }
-#  x<-jitter_df(x)
+mitch_rank<-function(x) {
 
 for ( i in 1:ncol(x)) {
   LEN=length(x[,i])
@@ -585,32 +587,36 @@ detailed_sets<-function(res,  resrows=50) {
 }
 
 
-endrich<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL, bootstraps=0) {
+mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL, bootstraps=0) {
 	input_profile<-x
 
         input_genesets<-genesets
 
-	ranked_profile<-endrichrank(input_profile)
+	ranked_profile<-mitch_rank(input_profile)
 
-	manova_result<-EnDrichMANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
+	manova_result<-MANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
 
-	manova_analysis_metrics<-manova_analysis_metrics_calc(x,genesets,manova_result)
+	if (!is.null(manova_result)) {
+		mitch_metrics <-mitch_metrics_calc(x,genesets,manova_result)
 
-	dat <- list("input_profile" = input_profile,
-		"input_genesets" = input_genesets,
-		"ranked_profile" = ranked_profile,
-		"manova_result" = manova_result,
-		"manova_analysis_metrics" = manova_analysis_metrics)
+		dat <- list("input_profile" = input_profile,
+			"input_genesets" = input_genesets,
+			"ranked_profile" = ranked_profile,
+			"manova_result" = manova_result,
+			"manova_analysis_metrics" = mitch_metrics)
 
-        if ( nrow(manova_result) < resrows ) { resrows<-nrow(manova_result) }
+	        if ( nrow(manova_result) < resrows ) { resrows<-nrow(manova_result) }
 
-        dat$detailed_sets<-detailed_sets(dat,resrows)
+	        dat$detailed_sets<-detailed_sets(dat,resrows)
+	
+		dat
 
-	dat
+	}
+
 }
 
 
-plotSets <- function(res,outfile="Rplots.pdf") {
+mitch_plots <- function(res,outfile="Rplots.pdf") {
   library("GGally")
   library("vioplot")
   library("gridExtra")
@@ -772,13 +778,6 @@ plotSets <- function(res,outfile="Rplots.pdf") {
   colnames(sector_count)[ncol(sector_count)]<-"Number of gene sets in each sector"
   grid.table(sector_count)
 
-
-
-
-
-
-
-
   DIMS=ncol(ss)
   #pairs points plot for gene sets
   p<-ggpairs(res$manova_result[,4:(3+DIMS)] , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
@@ -842,7 +841,7 @@ RankRankBinPlot<-function(x, binsize=500) {
 	xlab(colnames(x)[1]) + ylab(colnames(x)[2])
 }
 
-render_report<-function(res,out) {
+mitch_report<-function(res,out) {
   library("knitr")
   library("markdown")
   library("rmarkdown")
