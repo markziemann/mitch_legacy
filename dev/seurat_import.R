@@ -1,0 +1,13 @@
+COLDUCT<-read.table("COLDUCT.WCvWD.tsv")
+MACROPHAGE<-read.table("MACROPHAGE.WCvWD.tsv")
+MESANGIAL<-read.table("MESANGIAL.WCvWD.tsv")
+NK_TLYMPH<-read.table("NK_TLYMPH.WCvWD.tsv")
+
+
+COLDUCT$Score<-sign(COLDUCT$avg_logFC)*-log10(COLDUCT$p_val)
+MACROPHAGE$Score<-sign(MACROPHAGE$avg_logFC)*-log10(MACROPHAGE$p_val)
+MESANGIAL$Score<-sign(MESANGIAL$avg_logFC)*-log10(MESANGIAL$p_val)
+NK_TLYMPH$Score<-sign(NK_TLYMPH$avg_logFC)*-log10(NK_TLYMPH$p_val)
+
+x<-list("COLDUCT"=COLDUCT,"MACROPHAGE"=MACROPHAGE,"MESANGIAL"=MESANGIAL,"NK_TLYMPH"=NK_TLYMPH)
+
