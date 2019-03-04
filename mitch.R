@@ -619,8 +619,14 @@ mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=
 mitch_plots <- function(res,outfile="Rplots.pdf") {
   library("GGally")
   library("vioplot")
+  library("grid")
   library("gridExtra")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
+
+  mytheme <- gridExtra::ttheme_default(
+    core = list(fg_params=list(cex = 0.5)),
+    colhead = list(fg_params=list(cex = 0.7)),
+    rowhead = list(fg_params=list(cex = 0.7)))
 
   resrows=length(res$detailed_sets)
 
@@ -728,7 +734,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
       geom_hline(yintercept=0,linetype="dashed")
   }
 
-  p<-ggpairs(as.data.frame(x), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
+  p<-ggpairs(as.data.frame(res$input_profile), title="Scatterplot of all genes" , lower  = list(continuous = ggpairs_points_plot ))
   print( p +  theme_bw() ) 
 
   #pairs contour plot function
@@ -763,7 +769,8 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   sig<-sign(ss)
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Number of genes in each sector"
-  grid.table(sector_count)
+  grid.newpage()
+  grid.table(sector_count,theme=mytheme)
 
   #histograms of gene set counts
   par(mfrow=c(3,1))
@@ -776,7 +783,8 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Number of gene sets in each sector"
-  grid.table(sector_count)
+  grid.newpage()
+  grid.table(sector_count,theme=mytheme)
 
   DIMS=ncol(ss)
   #pairs points plot for gene sets
@@ -795,6 +803,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   }
 
   # plot effect size versus significance 
+  par(mfrow=c(1,1))
   plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
     xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
     pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
