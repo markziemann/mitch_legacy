@@ -1,3 +1,9 @@
+library("biomaRt")
+library("plyr")
+
+source("mitch.R")
+
+
 COLDUCT<-read.table("COLDUCT.WCvWD.tsv")
 MACROPHAGE<-read.table("MACROPHAGE.WCvWD.tsv")
 MESANGIAL<-read.table("MESANGIAL.WCvWD.tsv")
@@ -26,14 +32,14 @@ rownames(xxx)<-sapply(strsplit(xxx$rn,"_"),"[")[1,]
 
 xxx$rn=NULL
 
-library("biomaRt")
+ensembl=useMart("ensembl")
 ensembl = useDataset("mmusculus_gene_ensembl",mart=ensembl)
-gt<-getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), values=ids,mart=ensembl)
+gt<-getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), values=rownames(xxx),mart=ensembl)
 x4<-merge(xxx,gt,by.x=0,by.y="ensembl_gene_id")
 row.names(x4)<-x4$external_gene_name
- x4$Row.names=x4$external_gene_name=NULL
+x4$Row.names=x4$external_gene_name=NULL
 
-source("../mitch.R")
+source("mitch.R")
 genesets<-gmt_import("../reactome.v5.2.symbols_mouse.gmt")
 
 
