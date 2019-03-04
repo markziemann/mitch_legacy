@@ -555,7 +555,7 @@ mitch_rank<-function(x) {
 for ( i in 1:ncol(x)) {
   LEN=length(x[,i])
   UNIQLEN=length(unique(x[,i]))
-  if ( UNIQLEN/LEN<0.99 ) { stop("Error: >99% of genes have the same score. More granular measurements needed for rank based enrichment analysis.") }
+#  if ( UNIQLEN/LEN<0.1 ) { stop("Error: >90% of genes have the same score. More granular measurements needed for rank based enrichment analysis.") }
   if ( UNIQLEN/LEN<0.4 ) { warning("Warning: >60% of genes have the same score. This isn't optimal for rank based enrichment analysis.") }
 }
 
@@ -856,5 +856,5 @@ mitch_report<-function(res,out) {
   assign("res",res,knitrenv)
   HTMLNAME=paste(out,".html",sep="")
 #  knit2html("nDrich.Rmd", envir=knitrenv , output=out)
-  rmarkdown::render("nDrich.Rmd",output_file=out)
+  rmarkdown::render("mitch.Rmd",output_file=out)
 }
