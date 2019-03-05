@@ -3,54 +3,32 @@ library("plyr")
 
 source("mitch.R")
 
-
-COLDUCT<-read.table("COLDUCT.WCvWD.tsv")
-MACROPHAGE<-read.table("MACROPHAGE.WCvWD.tsv")
-MESANGIAL<-read.table("MESANGIAL.WCvWD.tsv")
-NK_TLYMPH<-read.table("NK_TLYMPH.WCvWD.tsv")
-
-
-COLDUCT$COLDUCT<-sign(COLDUCT$avg_logFC)*-log10(COLDUCT$p_val)
-COLDUCT$rn<-rownames(COLDUCT)
-
-MACROPHAGE$MACROPHAGE<-sign(MACROPHAGE$avg_logFC)*-log10(MACROPHAGE$p_val)
-MACROPHAGE$rn<-rownames(MACROPHAGE)
-
-MESANGIAL$MESANGIAL<-sign(MESANGIAL$avg_logFC)*-log10(MESANGIAL$p_val)
-MESANGIAL$rn<-rownames(MESANGIAL)
-
-NK_TLYMPH$NK_LYMPH<-sign(NK_TLYMPH$avg_logFC)*-log10(NK_TLYMPH$p_val)
-NK_TLYMPH$rn<-rownames(NK_TLYMPH)
-
-x<-list("COLDUCT"=COLDUCT,"MACROPHAGE"=MACROPHAGE,"MESANGIAL"=MESANGIAL,"NK_TLYMPH"=NK_TLYMPH)
-
-xxx<-join_all(x,by = "rn", type = 'full',match='first')
-
-xxx<-xxx[,c(1,7:ncol(xxx))]
-
-rownames(xxx)<-sapply(strsplit(xxx$rn,"_"),"[")[1,]
-
-xxx$rn=NULL
-
+#get gene identifier information from ensembl
 ensembl=useMart("ensembl")
 ensembl = useDataset("mmusculus_gene_ensembl",mart=ensembl)
-gt<-getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), values=rownames(xxx),mart=ensembl)
-x4<-merge(xxx,gt,by.x=0,by.y="ensembl_gene_id")
-row.names(x4)<-x4$external_gene_name
-x4$Row.names=x4$external_gene_name=NULL
+gt<-getBM(attributes = c('ensembl_gene_id', 'external_gene_name') , mart=ensembl)
 
-source("mitch.R")
+#read in the seurat files
+file_list<-list.files(".",pattern="WCvWD.tsv")
+x = lapply(file_list, read.delim)
+names(x)<-file_list
+
+# run the mitch import function for seurat
+y<-mitch_import(x,DEtype="seurat",geneTable=gt)
+
+# import the reactome gene sets for mouse
 genesets<-gmt_import("../reactome.v5.2.symbols_mouse.gmt")
 
-
-
 # remove genes with >1 NA value
-x5<-x4[which(apply(x4, 1, function(x) sum(is.na(x)))<2),]
+#x5<-x4[which(apply(x4, 1, function(x) sum(is.na(x)))<2),]
 
-res<-mitch_calc(x5,genesets,resrows=25,bootstraps=100,priority="significance",minsetsize=5)
+# run the enrichment calculation
+res<-mitch_calc(y,genesets,resrows=10,bootstraps=100,priority="confidence",minsetsize=5)
 
+# generate the pdf report
 mitch_plots(res,outfile="seurat_mitch_plots.pdf")
 
+# generate the html report
 mitch_report(res,"seurat_mitch_report.html")
 
 

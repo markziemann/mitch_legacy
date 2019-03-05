@@ -44,7 +44,8 @@ mapGeneIds<-function(y,z) {
       colnames(gt)=c("GeneSymbol","geneidentifiers")
       z<-merge(gt,z,by="geneidentifiers")
     }
-    z<-aggregate(. ~ GeneSymbol,z,sum)
+    z<-aggregate(. ~ GeneSymbol,z,function(x) sum(as.numeric(as.character(x))))
+#    z<-aggregate(. ~ GeneSymbol,z,sum)
     z$geneidentifiers=NULL
     colnames(z)=c("geneidentifiers","y")
   }
@@ -54,7 +55,7 @@ mapGeneIds<-function(y,z) {
 #the geneIDcol should be an attribute added to each list item
 for (i in 1:length(x) ) {
   if ( !is.null(geneIDcol) ) {
-    LEN=length( which(names(x1[[i]]) %in% geneIDcol) )
+    LEN=length( which(names(x[[i]]) %in% geneIDcol) )
     if (LEN<1) { stop("Error: the specified geneIDcol doesn't seem to exist") }
     if (LEN>1) { stop("Error: there are multiple matches for the  specified geneIDcol") }
     attributes(x[[i]])$geneIDcol<-which( names(x1[[i]]) %in% geneIDcol )
@@ -211,6 +212,30 @@ topconfect_score<-function(y) {
   z
 }
 
+seurat_score<-function(y) {
+
+  NCOL=ncol(y)
+  if (NCOL<2){ stop("Error: there are <2 columns in the input, 'PValue' and 'logFC' are required ") }
+
+  PCOL=length(which(names(y)=="p_val"))
+  if (PCOL>1){ stop("Error, there is more than 1 column named 'PValue' in the input") }
+  if (PCOL<1){ stop("Error, there is no column named 'PValue' in the input") }
+
+  FCCOL=length(which(names(y)=="avg_logFC"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'logFC' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
+
+  z<-as.data.frame(sign(y$avg_logFC)*-log10(y$p_val))
+  colnames(z)<-"y"
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+  } else {
+    z$geneidentifiers<-rownames(y)
+  }
+  z<-mapGeneIds(y,z)
+  z
+}
+
 if ( DEtype == "edger" ) {
   xx<-lapply(x,edger_score)
 } else if ( DEtype == "deseq2" ) {
@@ -221,11 +246,23 @@ if ( DEtype == "edger" ) {
   xx<-lapply(x,absseq_score)
 } else if ( DEtype == "sleuth" ) {
   xx<-lapply(x,sleuth_score)
+} else if ( DEtype == "seurat" ) {
+  xx<-lapply(x,seurat_score)
 } else if ( DEtype == "topconfects" ) {
   xx<-lapply(x,topconfect_score)
 }
 
-xxx<-join_all(xx,by = 'geneidentifiers', type = 'inner',match='first')
+
+# give the colums a unique name otherwise join_all will fail
+for (i in 1:length(xx) )  {
+  colnames(xx[[i]])<-c("geneidentifiers",paste("y",i,sep=""))    
+}
+
+if ( DEtype == "seurat" ) {
+  xxx<-join_all(xx,by = "geneidentifiers",type="full")
+} else {
+  xxx<-join_all(xx,by = 'geneidentifiers', type = 'inner')
+}
 rownames(xxx)<-xxx$geneidentifiers
 xxx$geneidentifiers=NULL
 colnames(xxx)<-names(x)
@@ -726,6 +763,18 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   } else {
 
   pdf(outfile)
+
+  # if working with >5 dimensions, then substitute the dimension (colnames) names with a number
+  if ( ncol(ss)>5 ) {
+    mydims<-data.frame(colnames(res$input_profile))
+    colnames(mydims)<-"dimensions"
+    grid.newpage()
+    grid.table(mydims,theme=mytheme)
+    colnames(res$input_profile)<- paste("d",1:ncol(res$input_profile),sep="")
+    colnames(res$ranked_profile)<- paste("d",1:ncol(res$ranked_profile),sep="")
+    ss<-res$ranked_profile
+  }
+
   #pairs points plot for genes
   ggpairs_points_plot <- function(data ,mapping, ...){
     p <- ggplot(data = data, mapping = mapping) +
@@ -815,8 +864,12 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     size<-ll$setSize
     sss<-res$detailed_sets[[i]]
 
+    if ( ncol(ss)>5 ) {
+      colnames(sss)<- paste("d",1:ncol(res$input_profile),sep="")
+    }
+
     p<-ggpairs(as.data.frame(sss), title=ll[,1], lower=list(continuous=ggpairs_contour_limit_range),
-      diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)) )
+      diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10 )) )
     print( p + theme_bw() )
 
     p<-ggpairs(as.data.frame(sss), title=ll[,1], lower= list(continuous = ggpairs_points_limit_range ),
