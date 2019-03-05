@@ -667,6 +667,8 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   resrows=length(res$detailed_sets)
 
+  attr(res, 'profile_dimensions') <- colnames(res$input_profile)
+
   ss<-res$ranked_profile
 
   xmin=min(ss[,1])
@@ -766,7 +768,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   # if working with >5 dimensions, then substitute the dimension (colnames) names with a number
   if ( ncol(ss)>5 ) {
-    mydims<-data.frame(colnames(res$input_profile))
+    mydims<-data.frame( attributes(res)$profile_dimensions )
     colnames(mydims)<-"dimensions"
     grid.newpage()
     grid.table(mydims,theme=mytheme)
@@ -837,7 +839,9 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   DIMS=ncol(ss)
   #pairs points plot for gene sets
-  p<-ggpairs(res$manova_result[,4:(3+DIMS)] , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
+  manova_result_clipped<-res$manova_result[,4:(3+DIMS)] 
+  colnames(manova_result_clipped)<-colnames(res$input_profile)
+  p<-ggpairs(manova_result_clipped , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
   print( p +  theme_bw() )
 
   #subset points plot function

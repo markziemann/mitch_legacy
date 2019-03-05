@@ -20,6 +20,17 @@ Here is the first few lines of the input profile.
 
 ```{r,peek,echo=FALSE}
 load(DATANAME)
+  # if working with >5 dimensions, then substitute the dimension (colnames) names with a number
+  if ( ncol(res$input_profile)>5 ) {
+    mydims<-data.frame(1:ncol(res$input_profile))
+    mydims$colnames<-attributes(res)$profile_dimensions
+    colnames(mydims)<-c("dimension","contrast_name")
+    print(kable( mydims, caption = "Profile dimensions" ))
+    colnames(res$input_profile)<- paste("d",1:ncol(res$input_profile),sep="")
+    colnames(res$ranked_profile)<- paste("d",1:ncol(res$ranked_profile),sep="")
+    ss<-res$ranked_profile
+  }
+
 head(res$input_profile)
 ```
 
@@ -206,16 +217,11 @@ library(gtools)
   } else {
     message("No significant enrichments found.")
   }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+
+  while ( length(p)>0 ) {
+    pp<-p[[1]] ; p[[1]]=NULL ; pp
+  }
+
 ```
 
 ## Enrichment scatterplot with taucharts
@@ -253,16 +259,10 @@ library(gtools)
     p<-lapply( 1:nrow(plan) , tauscatter)
   }
 
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
+  while ( length(p)>0 ) {
+    pp<-p[[1]] ; p[[1]]=NULL ; pp
+  }
+
 ```
 
 # A plot of effect size versus significance
@@ -309,7 +309,6 @@ cat("<hr><br>")
 ```
 
 ## Detailed Gene set reports
-
 ```{r,detailed_geneset_reports1,results="asis",echo=FALSE,fig.height=5, fig.width=6,out.width = '40%',comment=NA, message=FALSE}
 library("GGally")
 library(vioplot)
@@ -346,6 +345,10 @@ ndplot<-function(i) {
   ll<-res$manova_result[i,]
   size<-ll$setSize
   sss<-res$detailed_sets[[i]]
+
+  if ( ncol(ss)>5 ) {
+    colnames(sss)<- paste("d",1:ncol(res$input_profile),sep="")
+  }
 
   #subset contour plot
   ggpairs_contour_limit_range <- function(data ,mapping, ...){
@@ -387,6 +390,10 @@ topgenelist<-function(i) {
   d=ncol(ss)
 
   sss<-res$detailed_sets[[i]]
+  if ( ncol(ss)>5 ) {
+    colnames(sss)<- paste("d",1:ncol(res$input_profile),sep="")
+  }
+
   tl=bl=tr=br=0
   myres<-head(res$manova_result,resrows)
   myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
