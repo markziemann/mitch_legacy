@@ -645,6 +645,8 @@ mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=
 	        if ( nrow(manova_result) < resrows ) { resrows<-nrow(manova_result) }
 
 	        dat$detailed_sets<-detailed_sets(dat,resrows)
+
+                attr(dat, 'profile_dimensions') <- colnames(dat$input_profile)
 	
 		dat
 
@@ -666,8 +668,6 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     rowhead = list(fg_params=list(cex = 0.7)))
 
   resrows=length(res$detailed_sets)
-
-  attr(res, 'profile_dimensions') <- colnames(res$input_profile)
 
   ss<-res$ranked_profile
 
