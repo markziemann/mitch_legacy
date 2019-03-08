@@ -1,8 +1,3 @@
-library("plyr")
-library("parallel")
-library("pbmcapply")
-library("Rmisc")
-
 #' mitch_import
 #'
 #' This function imports differential omics data from common differential tools like edgeR, limma, DESeq2, Sleuth, 
@@ -22,6 +17,8 @@ library("Rmisc")
 #' # import as edgeR table with gene accessions in column named "GeneAccession" and "gt" mapping gene names.
 #' x<-mitch_import(w,DEtype="edger",geneIDcol="GeneAccession",geneTable=gt)
 mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
+
+library("plyr")
 
 if ( !is.list(x) ){
   stop("Error: Input (x) must be a LIST of dataframes.")
@@ -596,6 +593,12 @@ detailed_sets<-function(res,  resrows=50) {
 #' # generated from 100 bootstraps.
 #' res<-mitch_calc(x,genesets,resrows=25,bootstraps=100,priority="confidence")
 mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL, bootstraps=0) {
+library("plyr")
+library("parallel")
+library("pbmcapply")
+library("Rmisc")
+
+
 	input_profile<-x
 
         input_genesets<-genesets
@@ -639,6 +642,7 @@ mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=
 #' # render enrichment plots in high res pdf
 #' mitch_plots(res,outfile="outres.pdf")
 mitch_plots <- function(res,outfile="Rplots.pdf") {
+  library("plyr")
   library("GGally")
   library("vioplot")
   library("grid")
@@ -891,6 +895,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #' # render mitch results in the form of a HTML report
 #' mitch_report(res,"outres.html")
 mitch_report<-function(res,out) {
+  library("plyr")
   library("knitr")
   library("markdown")
   library("rmarkdown")
