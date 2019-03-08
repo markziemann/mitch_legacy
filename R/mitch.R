@@ -3,7 +3,24 @@ library("parallel")
 library("pbmcapply")
 library("Rmisc")
 
-
+#' mitch_import
+#'
+#' This function imports differential omics data from common differential tools like edgeR, limma, DESeq2, Sleuth, 
+#' ABSSeq and Seurat. It calculates a summarised differential expression metric by multiplying the sign of the log
+#' fold change by the -log10 of the p-value. If this behaviour is not desired, mitch_import can be bypassed in 
+#' favour of another scoring metric.
+#' @param x a list of differential expression tables
+#' @param DEtype the program that generated the differential expression table
+#' @param geneIDcol the column containing gene names. If gene names are specified as row names, then geneIDcol=NULL.
+#' @param geneTable a 2 column table mapping gene identifiers in the profile to gene identifiers in the gene sets. 
+#' @return a multi-column table compatible with mitch_calc analysis.
+#' @keywords import mitch
+#' @export
+#' @examples
+#' # first step is to create a list of differential 
+#' w<-list("edger1"=edger1,"edger2"=edger2)
+#' # import as edgeR table with gene accessions in column named "GeneAccession" and "gt" mapping gene names.
+#' x<-mitch_import(w,DEtype="edger",geneIDcol="GeneAccession",geneTable=gt)
 mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
 if ( !is.list(x) ){
@@ -280,21 +297,17 @@ if (PROP<0.05) {
 return(xxx)
 }
 
-
-# v - 2 value vector or 2 col matrix
-diffRankDistance2<-function(v, test, nh) {
-	#see stackoverflow.com/questions/22231773/
-	h1dist<-sqrt(colSums( (test-t(v) )^2   ))
-	h0dist<-sqrt(colSums( (nh-t(v))^2   ))
-	rr<-rank( h1dist - h0dist )
-	return(rr)
-}
-
-proj2DdirMag<-function(v,s=c(1,1) ) {
-	qr<- (as.vector(v %*% s) / (s %*% s))
-	rrr <-cbind(qr*s[1],qr*s[2])
-	return((rrr[,1]^2 + rrr[,2]^2)^0.5  * sign(rrr[,2]))
-}
+#' gmt_import
+#'
+#' This function imports GMT files into a list of character vectors for mitch analysis. GMT files are a commonly used
+#' format for lists of genes used in pathway enrichment analysis. GMT files can be obtained from Reactome, MSigDB, etc.
+#' @param gmtfile a gmt file.
+#' @return a list of gene sets.
+#' @keywords import genesets
+#' @export
+#' @examples
+#' # Import some gene sets
+#' genesets<-gmt_import("MyGeneSets.gmt")
 
 gmt_import<-function(gmtfile){
     genesetLines <- strsplit(readLines(gmtfile), "\t")
@@ -304,125 +317,23 @@ gmt_import<-function(gmtfile){
     genesets
 }
 
-GSTSets<-function(testset, setsTable) {
-	#Remove items from set unkown by msigdb
-	ntestset = testset[ testset %in% setsTable[,2]  ]
-	universesize = length(unique(setsTable[,2]))
-	nDrawn<-length(ntestset)
-	#Hit vector
-	setsTable$hit = setsTable[,2] %in% ntestset
-		
-	ini<-aggregate(msigdb$hit, list(msigdb[,1]),sum)
-	colnames(ini)<-c("Set", "nFound")	
-	ini$inCat<- aggregate(msigdb$hit, list(msigdb[,1]),length)[,2]
-	ini$NotinCat<- universesize - ini$inCat
-
-	ini$p.value<-apply(ini, 1, function(x){phyper(as.numeric(x[2]),as.numeric(x[3]),as.numeric(x[4]), nDrawn, lower.tail=FALSE )})
-	ini$adj.p.value <-p.adjust(ini$p.value,"fdr")
-	ini<-ini[order(ini$p.value),]
-	return(ini)
-}
-
-
-# x - matrix of 2 columns to be tested
-# table of genesets
-EnDrichProject<-function(x, genesets, topfig=1) {
-	library("limma")
-
-	xCor<-proj2DdirMag(x)
-	xAntiCor<-proj2DdirMag(x,c(1,-1))
-	medxCor<-median(xCor)
-	medxAntiCor<-median(xAntiCor)
-	sets<-unique(genesets[,1])
-	res<-mclapply(sets,function(set) { 
-		lx<- row.names(x) %in% genesets[genesets[,1]==set,2]
-		#cat(sum(lx))
-		pCor      <- wilcoxGST(lx, xCor)
-		pAntiCor  <- wilcoxGST(lx, xAntiCor)
-		if( sum(lx[ xCor < medxCor ]) > sum(lx[ xCor > medxCor ])  ) {pCor<- pCor*-1}
-		if( sum(lx[ xAntiCor < medxAntiCor ]) > sum(lx[ xAntiCor > medxAntiCor ])  ) {pAntiCor<- pAntiCor*-1}
-		return(data.frame(set,pCor,pAntiCor))
-	},
-	mc.cores=detectCores()-1 )
-	return(ldply(res, data.frame))
-}
-
-
-# x - matrix of 2 columns to be tested
-# table of genesets
-EnDrichDist<-function(x, genesets) {
-	library("limma")
-
-	#y=x
-	p_1_1   = c( max(x[,1]), max(x[,2])        )
-	p_n1_n1 = c( min(x[,1]), min(x[,2])         )
-
-	#x axis
-	p_1_0   = c( max(x[,1]), median(x[,2])      )
-	p_n1_0   = c( min(x[,1]), median(x[,2])      )
-
-	#y= -x
-	p_n1_1  = c( min(x[,1]), max(x[,2])      )
-	p_1_n1  = c( max(x[,1]), min(x[,2])      )
-
-	xCorUp      <- diffRankDistance2(x,p_1_1,p_1_0)
-	xCorDn      <- diffRankDistance2(x,p_n1_n1,p_n1_0)
-	xAntiCorUp  <- diffRankDistance2(x,p_1_n1,p_1_0)
-	xAntiCorDn  <- diffRankDistance2(x,p_n1_1,p_n1_0)
-
-	sets<-unique(as.character(genesets[,1]))
-	cat(sets)
-	res<-mclapply(sets,function(set) { 
-		lx<- row.names(x) %in% genesets[genesets[,1]==set,2]
-		pCorUp     <- wilcoxGST(lx, xCorUp)
-		pCorDn     <- wilcoxGST(lx, xCorDn)
-		pAntiCorUp <- wilcoxGST(lx, xAntiCorUp)
-		pAntiCorDn <- wilcoxGST(lx, xAntiCorDn)
-		return(data.frame(set,setSize=sum(lx),pCorUp, pCorDn, pAntiCorUp, pAntiCorDn))
-	},
-	mc.cores=detectCores()-1 )
-
-	return(ldply(res, data.frame))
-}
-
-
-# x - matrix of 2 columns to be tested
-# table of genesets
-EnDrichDist3<-function(x, genesets, topfig=1) {
-	library("limma")
-
-	p_1_1   = c( max(x[,1]), max(x[,2]) ,max(x[,3])       )
-
-	p_1_0   = c( max(x[,1]), median(x[,2])      )
-	p_n1_0   = c( min(x[,1]), median(x[,2])      )
-
-	p_n1_1  = c( min(x[,1]), max(x[,2])      )
-	p_1_n1  = c( max(x[,1]), min(x[,2])      )
-
-	xCorUp      <- diffRankDistance2(x,p_1_1,p_1_0)
-	xCorDn      <- diffRankDistance2(x,p_n1_n1,p_n1_0)
-	xAntiCorUp  <- diffRankDistance2(x,p_1_n1,p_1_0)
-	xAntiCorDn  <- diffRankDistance2(x,p_n1_1,p_n1_0)
-
-	sets<-unique(genesets[,1])
-
-	res<-mclapply(sets,function(set) { 
-		lx<- row.names(x) %in% genesets[genesets[,1]==set,2]
-		#cat(sum(lx))
-		pCorUp     <- wilcoxGST(lx, xCorUp)
-		pCorDn     <- wilcoxGST(lx, xCorDn)
-		pAntiCorUp <- wilcoxGST(lx, xAntiCorUp)
-		pAntiCorDn <- wilcoxGST(lx, xAntiCorDn)
-		return(data.frame(set,setSize=sum(lx),pCorUp, pCorDn, pAntiCorUp, pAntiCorDn))
-	},
-	mc.cores=detectCores()-1 )
-
-	return(ldply(res, data.frame))	
-}
-
-
-
-#TODO does not work with neg numbers !!
+#' MANOVA
+#'
+#' This function performs the multivariate analysis of variance for each set of genes. It wraps around the existing
+#' manova function in R. This function is not meant to be used directly.
+#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
+#' Rownames must match genesets.
+#' @param genesets lists of genes imported by the gmt_imprt function or similar.
+#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
+#' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
+#' @param priority the prioritisation metric to selecting top gene sets. Valid options are "significance", 
+#' "effect" and "confidence"
+#' @param bootstraps the number of bootstraps to recalculate in estimate the confidence intervals.
+#' @return a mitch results object 
+#' @keywords mitch MANOVA
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
 MANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
 
 sets<-names(genesets)
@@ -531,7 +442,19 @@ if (nrow(fres)<1) {
 }
 }
 
-
+#' mitch_metrics_calc
+#'
+#' This function collects some metrics from the manova analysis. This function is not meant to be used directly.
+#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
+#' Rownames must match genesets.
+#' @param genesets lists of genes imported by the gmt_imprt function or similar.
+#' @param manova_result a valid result of the MANOVA function
+#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
+#' @return a list of metrics
+#' @keywords mitch metrics
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
 mitch_metrics_calc<-function(x, genesets, manova_result, minsetsize=10 ) {
 
 if (!is.null(manova_result)){
@@ -587,6 +510,16 @@ if (!is.null(manova_result)){
 }
 
 
+#' mitch_rank
+#'
+#' This function performs zero-centred ranking of differential contrast omics data. This function is not meant to 
+#' be used directly.
+#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
+#' @return a ranked table differential expression data.
+#' @keywords mitch rank ranking
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
 mitch_rank<-function(x) {
 
 for ( i in 1:ncol(x)) {
@@ -608,7 +541,18 @@ for ( i in 1:ncol(x)) {
   adj
 }
 
-
+#' detailed_sets
+#'
+#' This function fetches differential expression scores for members of sets of genes that were top ranked. This 
+#' function is not meant to be used directly.
+#' @param res a mitch results object
+#' @param resrows an integer representing the number of top genesets for which a detailed report is to be generated.
+#' Default is 50.
+#' @return mitch res object with dataframes of the high priority gene sets attached.
+#' @keywords mitch detailed sets
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
 detailed_sets<-function(res,  resrows=50) {
   #collect ranked genelist of each genest
   ss<-res$ranked_profile
@@ -623,7 +567,34 @@ detailed_sets<-function(res,  resrows=50) {
   dat
 }
 
+#' mitch_calc
+#'
+#' This function performs multivariate gene set enrichment analysis. 
 
+#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
+#' Rownames must match genesets.
+#' @param genesets lists of genes imported by the gmt_imprt function or similar.
+#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
+#' Default is 10.
+#' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
+#' @param resrows an integer value representing the number of top genesets for which a detailed report is to be 
+#' generated. Default is 50.
+#' @param priority the prioritisation metric used to selecting top gene sets. Valid options are "significance", 
+#' "effect" and "confidence". If using "confidence", then bootstraps must be set >0.
+#' @param bootstraps the number of bootstraps to recalculate in estimate the confidence intervals.
+#' @return mitch res object with the following parts:
+#'  $input_profile: the supplied input differential profile
+#'  $input_genesets: the supplied input gene sets
+#'  $ranked_profile: the differential profile after ranking
+#'  $manova_result: the table of MANOVA enrichment results for each gene set
+#'  $manova_analysis_metrics:  several metrics that are important to the interpretation of the results
+#'  $detailed_sets: a list of dataframes containing ranks of members of prioritised gene sets.
+#' @keywords mitch calc calculate manova 
+#' @export
+#' @examples
+#' # An example of using mitch to calculate multivariate enrichments and prioritise based on confidence intervals 
+#' # generated from 100 bootstraps.
+#' res<-mitch_calc(x,genesets,resrows=25,bootstraps=100,priority="confidence")
 mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL, bootstraps=0) {
 	input_profile<-x
 
@@ -654,7 +625,19 @@ mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=
 
 }
 
-
+#' mitch_plots
+#'
+#' This function generates several plots of multivariate gene set enrichment in high resolution PDF format.
+#' The number of detailed sets to generate is dictated by the resrows set in the mitch_calc command.
+#' @param res a mitch results object.
+#' @param outfile the destination file for the plots in PDF format. should contain "pdf" suffix. Defaults to 
+#' "Rplots.pdf"
+#' @return generates a PDF file containing enrichment plots.
+#' @keywords mitch plot plots pdf 
+#' @export
+#' @examples
+#' # render enrichment plots in high res pdf
+#' mitch_plots(res,outfile="outres.pdf")
 mitch_plots <- function(res,outfile="Rplots.pdf") {
   library("GGally")
   library("vioplot")
@@ -893,20 +876,20 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 }
 
 
-RankRankBinPlot<-function(x, binsize=500) {
-	library("ggplot2")
-	bin=floor(x[,1]/binsize)
-	yy<- aggregate(x[,2],list(bin), function(zz){quantile(zz,c(0.25,0.5,0.75))})
-	yy[,1]<-yy[,1]*binsize	
-	zz<-cbind(xpos=yy$Group.1,yy$x)
-	colnames(zz)<-gsub("%","",colnames(zz))
-        zz<-data.frame(zz)
-	ggplot(zz, aes(xpos)) + 
-	geom_line(aes(y=X50) , size=1.4) + 
-	theme_bw() + geom_ribbon(aes(ymin=X25, ymax=X75), alpha=0.2) +
-	xlab(colnames(x)[1]) + ylab(colnames(x)[2])
-}
-
+#' mitch_report
+#'
+#' This function generates an R markdown based html report containing tables and several plots of mitch results 
+#' The plots are in png format, so are not as high in resolution as compared to the PDF generated by mitch_plots 
+#' function. The number of detailed sets to generate is dictated by the resrows set in the mitch_calc command.
+#' @param res a mitch results object.
+#' @param outfile the destination file for the html report. should contain "html" suffix. Defaults to 
+#' "Rplots.pdf"
+#' @return generates a HTML file containing enrichment plots.
+#' @keywords mitch report html markdown knitr
+#' @export
+#' @examples
+#' # render mitch results in the form of a HTML report
+#' mitch_report(res,"outres.html")
 mitch_report<-function(res,out) {
   library("knitr")
   library("markdown")
@@ -921,6 +904,6 @@ mitch_report<-function(res,out) {
   assign("DATANAME", DATANAME, knitrenv)
   assign("res",res,knitrenv)
   HTMLNAME=paste(out,".html",sep="")
-#  knit2html("nDrich.Rmd", envir=knitrenv , output=out)
+  download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/mitch.Rmd",destfile="mitch.Rmd")
   rmarkdown::render("mitch.Rmd",output_file=out)
 }
