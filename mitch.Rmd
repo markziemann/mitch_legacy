@@ -174,11 +174,14 @@ if ( ncol(ss)<3 ) {
   barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
 } 
 d=ncol(ss)
-sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
-sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
-colnames(sector_count)[ncol(sector_count)]<-"Count"
-kable(sector_count ,caption = "Gene sets by sector" ,row.names=T)
-dev.off()
+nsig=length(which(res$manova_result$p.adjustMANOVA<0.05))
+if ( nsig > 0 ) {
+  sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
+  sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+  colnames(sector_count)[ncol(sector_count)]<-"Count"
+  kable(sector_count ,caption = "Gene sets by sector" ,row.names=T)
+  dev.off()
+}
 ```
 
 ## Enrichment scatterplot with taucharts
