@@ -1,15 +1,12 @@
-install.packages("devtools")
+#install.packages("devtools")
+#devtools::install_github("markziemann/dee2/getDEE2")
+#devtools::install_github("markziemann/Mitch")
+#devtools::install_github("hrbrmstr/taucharts")
+
 library("devtools")
-
-devtools::install_github("markziemann/dee2/getDEE2")
 library("getDEE2")
-
-devtools::install_github("markziemann/Mitch")
 library("mitch")
-
-devtools::install_github("hrbrmstr/taucharts")
 library("taucharts")
-
 library("DESeq2")
 
 
@@ -70,63 +67,178 @@ genesets<-gmt_import("ReactomePathways.gmt")
 ##################################################
 # run the analysis significance vs effect
 ##################################################
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=100,priority="effect")
+res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="effect")
 mitch_plots(res,outfile="HGVPA_eff.pdf")
 mitch_report(res,"HGVPA_eff.html")
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=100,priority="significance")
+res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="significance")
 mitch_plots(res,outfile="HGVPA_sig.pdf")
 mitch_report(res,"HGVPA_sig.html")
 
 ##################################################
-# bootstrap saturation analysis
+# bootstrap saturation analysis reactome
 ##################################################
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=5,priority="confidence")
-b0005<-res$manova_result
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=10,priority="confidence")
-b0010<-res$manova_result
+bb=NULL
+for (i in 1:10) {
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=5,priority="confidence")
+  b0005<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=10,priority="confidence")
+  b0010<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=20,priority="confidence")
+  b0020<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=50,priority="confidence")
+  b0050<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=100,priority="confidence")
+  b0100<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=200,priority="confidence")
+  b0200<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="confidence")
+  b0500<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=1000,priority="confidence")
+  b1000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=2000,priority="confidence")
+  b2000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=5000,priority="confidence")
+  b5000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=10000,priority="confidence")
+  b10000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=100000,priority="confidence")
+  b100000<-res$manova_result
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=20,priority="confidence")
-b0020<-res$manova_result
+  b0005r<-b0005[,c(1,9)] 
+  b0010r<-b0010[,c(1,9)]
+  b0020r<-b0020[,c(1,9)]
+  b0050r<-b0050[,c(1,9)]
+  b0100r<-b0100[,c(1,9)]
+  b0200r<-b0200[,c(1,9)]
+  b0500r<-b0500[,c(1,9)]
+  b1000r<-b1000[,c(1,9)]
+  b2000r<-b2000[,c(1,9)]
+  b5000r<-b5000[,c(1,9)]
+  b10000r<-b10000[,c(1,9)]
+  b100000r<-b100000[,c(1,9)]
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=50,priority="confidence")
-b0050<-res$manova_result
+  b<-join_all(list(b0005r,b0010r,b0020r,b0050r,b0100r,b0200r,b0500r,b1000r,b2000r,b5000r,b10000r,b100000r),by="set")
+  colnames(b)<-c("set","b0005","b0010","b0020","b0050","b0100","b0200","b0500","b1000","b2000","b5000","b10000","b100000")
+  rownames(b)<-b$set
+  b$set=NULL
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=100,priority="confidence")
-b0100<-res$manova_result
+  bb<-c(bb,cor(b)[,ncol(b)])
+}
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=200,priority="confidence")
-b0200<-res$manova_result
+save.image("fig1.RData")
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="confidence")
-b0500<-res$manova_result
+b0005m<-bb[which(names(bb)=="b0005")]
+b0010m<-bb[which(names(bb)=="b0010")]
+b0020m<-bb[which(names(bb)=="b0020")]
+b0050m<-bb[which(names(bb)=="b0050")]
+b0100m<-bb[which(names(bb)=="b0100")]
+b0200m<-bb[which(names(bb)=="b0200")]
+b0500m<-bb[which(names(bb)=="b0500")]
+b1000m<-bb[which(names(bb)=="b1000")]
+b2000m<-bb[which(names(bb)=="b2000")]
+b5000m<-bb[which(names(bb)=="b5000")]
+b10000m<-bb[which(names(bb)=="b10000")]
+b100000m<-bb[which(names(bb)=="b100000m")]
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=1000,priority="confidence")
-b1000<-res$manova_result
+pdf("bootstrap_saturation.pdf",width=10,height=10)
+boxplot(b0005m,b0010m,b0020m,b0050m,b0100m,b0200m,b0500m,b1000m,b2000m,b5000m,b10000m, 
+ names = c("5", "10", "20", "50", "100", "200", "500", "1000", "2000", "5000", "10000") ,
+ ylab="Pearson correlation with 100k bootstraps",
+ xlab="no. bootstraps")
+dev.off()
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=2000,priority="confidence")
-b2000<-res$manova_result
+##################################################
+# get the msigdb gene sets and import
+##################################################
+library(msigdbr)
+m_df = msigdbr(species = "Homo sapiens")
+genesets = m_df %>% split(x = .$gene_symbol, f = .$gs_name)
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=5000,priority="confidence")
-b5000<-res$manova_result
+##################################################
+# run the analysis significance vs effect
+##################################################
+res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="effect")
+mitch_plots(res,outfile="HGVPA_m_eff.pdf")
+mitch_report(res,"HGVPA_m_eff.html")
+
+res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="significance")
+mitch_plots(res,outfile="HGVPA_m_sig.pdf")
+mitch_report(res,"HGVPA_m_sig.html")
+
+##################################################
+# bootstrap saturation analysis reactome
+##################################################
+
+bb=NULL
+for (i in 1:10) {
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=5,priority="confidence")
+  b0005<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=10,priority="confidence")
+  b0010<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=20,priority="confidence")
+  b0020<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=50,priority="confidence")
+  b0050<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=100,priority="confidence")
+  b0100<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=200,priority="confidence")
+  b0200<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="confidence")
+  b0500<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=1000,priority="confidence")
+  b1000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=2000,priority="confidence")
+  b2000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=5000,priority="confidence")
+  b5000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=10000,priority="confidence")
+  b10000<-res$manova_result
+  res<-mitch_calc(d,genesets,resrows=50,bootstraps=100000,priority="confidence")
+  b100000<-res$manova_result
+
+  b0005r<-b0005[,c(1,9)]
+  b0010r<-b0010[,c(1,9)]
+  b0020r<-b0020[,c(1,9)]
+  b0050r<-b0050[,c(1,9)]
+  b0100r<-b0100[,c(1,9)]
+  b0200r<-b0200[,c(1,9)]
+  b0500r<-b0500[,c(1,9)]
+  b1000r<-b1000[,c(1,9)]
+  b2000r<-b2000[,c(1,9)]
+  b5000r<-b5000[,c(1,9)]
+  b10000r<-b10000[,c(1,9)]
+  b100000r<-b100000[,c(1,9)]
+
+  b<-join_all(list(b0005r,b0010r,b0020r,b0050r,b0100r,b0200r,b0500r,b1000r,b2000r,b5000r,b10000r,b100000r),by="set")
+  colnames(b)<-c("set","b0005","b0010","b0020","b0050","b0100","b0200","b0500","b1000","b2000","b5000","b10000","b100000")
+  rownames(b)<-b$set
+  b$set=NULL
+
+  bb<-c(bb,cor(b)[,ncol(b)])
+}
+
+save.image("fig1.RData")
+
+b0005m<-bb[which(names(bb)=="b0005")]
+b0010m<-bb[which(names(bb)=="b0010")]
+b0020m<-bb[which(names(bb)=="b0020")]
+b0050m<-bb[which(names(bb)=="b0050")]
+b0100m<-bb[which(names(bb)=="b0100")]
+b0200m<-bb[which(names(bb)=="b0200")]
+b0500m<-bb[which(names(bb)=="b0500")]
+b1000m<-bb[which(names(bb)=="b1000")]
+b2000m<-bb[which(names(bb)=="b2000")]
+b5000m<-bb[which(names(bb)=="b5000")]
+b10000m<-bb[which(names(bb)=="b10000")]
+b100000m<-bb[which(names(bb)=="b100000m")]
+
+pdf("bootstrap_saturation.pdf",width=10,height=10)
+boxplot(b0005m,b0010m,b0020m,b0050m,b0100m,b0200m,b0500m,b1000m,b2000m,b5000m,b10000m,
+ names = c("5", "10", "20", "50", "100", "200", "500", "1000", "2000", "5000", "10000") ,
+ ylab="Pearson correlation with 100k bootstraps",
+ xlab="no. bootstraps")
+dev.off()
 
 
-b0005r<-as.data.frame( cbind( b0005$set , rank(-b0005$confESp) ) ) 
-b0010r<-as.data.frame( cbind( b0010$set , rank(-b0010$confESp) ) )
-b0020r<-as.data.frame( cbind( b0020$set , rank(-b0020$confESp) ) )
-b0050r<-as.data.frame( cbind( b0050$set , rank(-b0050$confESp) ) )
-b0100r<-as.data.frame( cbind( b0100$set , rank(-b0100$confESp) ) )
-b0200r<-as.data.frame( cbind( b0200$set , rank(-b0200$confESp) ) )
-b0500r<-as.data.frame( cbind( b0500$set , rank(-b0500$confESp) ) )
-b1000r<-as.data.frame( cbind( b1000$set , rank(-b1000$confESp) ) )
-b2000r<-as.data.frame( cbind( b2000$set , rank(-b2000$confESp) ) )
-b5000r<-as.data.frame( cbind( b5000$set , rank(-b5000$confESp) ) )
-
-b<-join_all(list(b0005r,b0010r,b0020r,b0050r,b0100r,b0200r,b0500r,b1000r,b2000r,b5000r),by="V1")
-colnames(b)<-c("Setname","b0005","b0010","b0020","b0050","b0100","b0200","b0500","b1000","b2000")
-rownames(b)<-b$Setname
-b$Setname=NULL
-
-bb<-apply(b,2,function(x) as.numeric(as.character(x)) )
-plot(cor(bb)[,ncol(bb)])
