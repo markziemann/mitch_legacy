@@ -13,8 +13,8 @@ unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 # get cistrome gene sets
-download.file("https://raw.githubusercontent.com/markziemann/cistro_gmt/master/HumanTfPeaks.gmt","HumanTfPeaks.gmt")
-genesets<-gmt_import("HumanTfPeaks.gmt")
+#download.file("https://raw.githubusercontent.com/markziemann/cistro_gmt/master/HumanTfPeaks.gmt","HumanTfPeaks.gmt")
+#genesets<-gmt_import("HumanTfPeaks.gmt")
 
 
 atac<-read.table("atac_res.tsv")
@@ -42,7 +42,11 @@ y<-mitch_import(x, DEtype="deseq2" , geneTable = gt)
 
 res<-mitch_calc(y,genesets,resrows=50,bootstraps=1000,priority="confidence")
 
-mitch_plots(res,outfile="a549_res_tf.pdf")
+mitch_plots(res,outfile="a549_res_conf.pdf")
 
-mitch_report(res,"a549_res_tf.html")
+res<-mitch_calc(y,genesets,resrows=50,bootstraps=1000,priority="significance")
+
+mitch_plots(res,outfile="a549_res_sig.pdf")
+
+
 

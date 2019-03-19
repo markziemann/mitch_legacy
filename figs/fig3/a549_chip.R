@@ -135,7 +135,7 @@ z<-z[order(z$pvalue),]
 write.table(z,"ctcf_res.tsv",sep="\t")
 
 mds<-scale(y)
-plot(cmdscale(dist(t(mds))),xlab="Coordinate 1", ylab="Coordinate 2", type = "p",pch=19,main="MDS NR3C1")
+plot(cmdscale(dist(t(mds))),xlab="Coordinate 1", ylab="Coordinate 2", type = "p",pch=19,main="MDS CTCF")
 text(cmdscale(dist(t(mds)))+1, labels=colnames(mds))
 
 
@@ -169,7 +169,7 @@ z<-z[order(z$pvalue),]
 write.table(z,"atac_res.tsv",sep="\t")
 
 mds<-scale(y)
-plot(cmdscale(dist(t(mds))),xlab="Coordinate 1", ylab="Coordinate 2", type = "p",pch=19,main="MDS NR3C1")
+plot(cmdscale(dist(t(mds))),xlab="Coordinate 1", ylab="Coordinate 2", type = "p",pch=19,main="MDS ATAC")
 text(cmdscale(dist(t(mds)))+1, labels=colnames(mds))
 
 dev.off()
