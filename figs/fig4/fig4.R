@@ -128,6 +128,13 @@ mitch_report(res,"fig4_report.html")
 
 pdf("fig4.pdf")
 
+sets_deseq2<-res$manova_res[which(p.adjust(res$manova_res$p.DESeq2)<0.05),]$set
+sets_edger_glmrt<-res$manova_res[which(p.adjust(res$manova_res$p.edgeR_GLMRT)<0.05),]$set
+sets_edger_ql<-res$manova_res[which(p.adjust(res$manova_res$p.edgeR_QL)<0.05),]$set
+sets_absseq<-res$manova_res[which(p.adjust(res$manova_res$p.ABSSeq)<0.05),]$set
+sets_voom_limma<-res$manova_res[which(p.adjust(res$manova_res$p.voom_limma)<0.05),]$set
+
+
 # barplt of number of DE sets
 my_lengths<-unlist(lapply(list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,
   "edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2),length))
@@ -163,14 +170,6 @@ rownames(res_subset)<-res_subset$label
 # heatmap of gene sets with high variance
 heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.8,trace="none",cexCol=0.8)
 
-sets_deseq2<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.DESeq2)<0.05),]$set
-sets_edger_glmrt<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.edgeR_GLMRT)<0.05),]$set
-sets_edger_ql<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.edgeR_QL)<0.05),]$set
-sets_absseq<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.ABSSeq)<0.05),]$set
-sets_voom_limma<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.voom.limma)<0.05),]$set
-
-my_lengths<-unlist(lapply(list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,
-  "edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2),length))
 
 res_list<-list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,"edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2)
 res_list<-lapply(res_list, function(x){
