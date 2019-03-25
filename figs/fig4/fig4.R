@@ -1,6 +1,3 @@
-#SRP004777  https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3063777/
-#comparison of Evaluating Gene Expression in C57BL/6J and DBA/2J Mouse Striatum Using RNA-Seq and Microarrays
-
 library("getDEE2")
 library("DESeq2")
 library("limma")
@@ -37,8 +34,8 @@ tx1<-x$GeneCounts[which(rowSums(tx)/ncol(tx)>=(10)),]
 
 # DESeq2
 dds <- DESeqDataSetFromMatrix(countData = round(tx1), colData = s, design = ~ s)
-res <- DESeq(dds)
-res_deseq2<- DESeq2::results(res)
+dres <- DESeq(dds)
+res_deseq2<- DESeq2::results(dres)
 res_deseq2$pvalue[is.na(res_deseq2$pvalue)] <- 1
 res_deseq2$log2FoldChange[is.na(res_deseq2$log2FoldChange)] <- 0
 rnk_deseq2<-as.data.frame( sign(res_deseq2$log2FoldChange) * -log10(res_deseq2$pvalue))
@@ -83,7 +80,7 @@ fit.de <- eBayes(fit, robust=TRUE)
 res_voom_limma<-topTable(fit.de,n=Inf)
 rnk_voom_limma<-as.data.frame( sign(res_voom_limma$logFC) * -log10(res_voom_limma$P.Value))
 rownames(rnk_voom_limma)<-rownames(res_voom_limma)
-colnames(rnk_voom_limma)<-"voom-limma"
+colnames(rnk_voom_limma)<-"voom_limma"
 rnk_voom_limma$geneID<-rownames(rnk_voom_limma)
 
 # ABSseq
@@ -123,10 +120,10 @@ unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 # run mitch analysis
-mitch_res<-mitch_calc(xx,genesets,resrows=200,bootstraps=1000,priority="effect")
+res<-mitch_calc(xx,genesets,resrows=200,bootstraps=1000,priority="effect")
 
-mitch_plots(mitch_res,outfile="fig4_plots.pdf")
-mitch_report(mitch_res,"fig4_report.html")
+mitch_plots(res,outfile="fig4_plots.pdf")
+mitch_report(res,"fig4_report.html")
 
 
 pdf("fig4.pdf")
@@ -142,7 +139,7 @@ text(x=my_lengths+5,y=bp,label=my_lengths)
 # revert default
 par(mai=c(1.02,0.82,0.82,0.42))
 
-svals<-mitch_res$manova_res[,4:8]
+svals<-res$manova_res[,4:8]
 
 # correlation  plot
 chart.Correlation(svals, histogram=F,method = c("pearson"),main="Pearson correlation of s scores")
@@ -156,11 +153,11 @@ heatmap.2(cor(svals,method="p"),scale="none",margin=c(15, 15),trace="none",
 
 
 # identify high variance gene set
-mitch_res$manova_res$sd<-(apply(mitch_res$manova_res[,4:8],1,sd))
+res$manova_res$sd<-(apply(res$manova_res[,4:8],1,sd))
 
-mitch_res$manova_res$label<-paste(mitch_res$manova_res$set,": set size =",mitch_res$manova_res$setSize,", SD =",signif(mitch_res$manova_res$sd,2))
+res$manova_res$label<-paste(res$manova_res$set,": set size =",res$manova_res$setSize,", SD =",signif(res$manova_res$sd,2))
 
-res_subset<-head( mitch_res$manova_res[order(-mitch_res$manova_res$sd),] ,20)
+res_subset<-head( res$manova_res[order(-res$manova_res$sd),] ,20)
 rownames(res_subset)<-res_subset$label
 
 # heatmap of gene sets with high variance
@@ -195,3 +192,11 @@ dev.off()
 pdf("fig4b.pdf",width=10,height=7)
 heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.8,trace="none",cexCol=0.8)
 dev.off()
+
+
+subset_genesets<-genesets[which(names(genesets) %in% res_subset$set )]
+
+res<-mitch_calc(xx,subset_genesets,resrows=20,bootstraps=1000,priority="effect")
+mitch_plots(res,outfile="fig4_subset_plots.pdf")
+mitch_report(res,"fig4_subset_report.html")
+
