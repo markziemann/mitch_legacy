@@ -9,17 +9,26 @@ library("ABSSeq")
 library("plyr")
 library("msigdbr")
 library("mitch")
+library("gplots")
+library("PerformanceAnalytics")
+library("reshape2")
+library("UpSetR")
 
-mdat<-getDee2Metadata("mmusculus")
-m1<-mdat[which(mdat$SRP_accession %in% "SRP004777"),]
+
+set_plot_dimensions <- function(width_choice, height_choice) {
+        options(repr.plot.width=width_choice, repr.plot.height=height_choice)
+        }
+
+mdat<-getDee2Metadata("hsapiens")
+m1<-mdat[which(mdat$SRP_accession %in% "SRP096177"),]
 SRRlist<-as.vector(m1$SRR_accession)
 SRRlist<-SRRlist[order(SRRlist)]
-x<-getDEE2("mmusculus",SRRlist)
+x<-getDEE2("hsapiens",SRRlist)
 x<-Tx2Gene(x)
 tx<-x$Tx2Gene
 
 #ctrl=c57 trt=DBA
-s<-c(1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1)
+s<-c(1,1,1,0,0,0)
 s<-as.data.frame(s)
 rownames(s)<-colnames(tx)
 
@@ -80,7 +89,7 @@ rnk_voom_limma$geneID<-rownames(rnk_voom_limma)
 # ABSseq
 obj<-ABSDataSet(tx1, factor(s$s))  #default normalisation is qtotal
 obj<-ABSSeq(obj)
-dge<- as.data.frame(cbind(obj$Amean,obj$Bmean,obj$foldChange,obj$pvalue,obj$adj.pvalue))
+dge<- as.data.frame(cbind(obj$Amean,obj$Bmean,-obj$foldChange,obj$pvalue,obj$adj.pvalue))
 colnames(dge)=c("Amean","Bmean","logFC","PValue","FDR")
 res_absseq<-dge[order(dge$PValue),]
 rnk_absseq<-as.data.frame( sign(res_absseq$logFC) * -log10(res_absseq$PValue))
@@ -96,8 +105,8 @@ colnames(gt)<-c("symbol","geneID")
 # join the tables together
 xx<-join_all(list("symbol"=gt,"DESeq2"=rnk_deseq2,
   "edgeR_GLMRT"=rnk_edger_glmrt,
-  "edgeR_QL"=rnk_edger_ql,"voom-limma"=rnk_voom_limma,
-  "ABSSeq"=rnk_absseq),by="geneID")
+  "edgeR_QL"=rnk_edger_ql,"ABSSeq"=rnk_absseq, 
+  "voom-limma"=rnk_voom_limma),by="geneID")
 
 
 # aggregate
@@ -108,8 +117,81 @@ xx$symbol=NULL
 
 
 # gene sets from my website but this needs to be updated
-genesets<-gmt_import("reactome.v5.2.symbols_mouse.gmt")
+#genesets<-gmt_import("reactome.v5.2.symbols_mouse.gmt")
+download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip","ReactomePathways.gmt.zip")
+unzip("ReactomePathways.gmt.zip")
+genesets<-gmt_import("ReactomePathways.gmt")
 
 # run mitch analysis
-mitch_res<-mitch_calc(xx,genesets,resrows=25,bootstraps=100,priority="effect")
+mitch_res<-mitch_calc(xx,genesets,resrows=200,bootstraps=1000,priority="effect")
 
+mitch_plots(mitch_res,outfile="fig4_plots.pdf")
+mitch_report(mitch_res,"fig4_report.html")
+
+
+pdf("fig4.pdf")
+
+# barplt of number of DE sets
+my_lengths<-unlist(lapply(list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,
+  "edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2),length))
+
+par(mar=c(5,10,4,2))
+bp<-barplot(my_lengths,xlab="no. sets FDR<0.05",las=1,horiz=T,xlim=c(0,110))
+text(x=my_lengths+5,y=bp,label=my_lengths)
+
+# revert default
+par(mai=c(1.02,0.82,0.82,0.42))
+
+svals<-mitch_res$manova_res[,4:8]
+
+# correlation  plot
+chart.Correlation(svals, histogram=F,method = c("pearson"),main="Pearson correlation of s scores")
+
+# correlation heatmaps
+heatmap.2(cor(svals,method="s"),scale="none",margin=c(15, 15),trace="none",
+  main="Spearman correlation",cellnote=signif(cor(svals,method="s"),3))
+
+heatmap.2(cor(svals,method="p"),scale="none",margin=c(15, 15),trace="none",
+  main="Pearson correlation",cellnote=signif(cor(svals,method="s"),3))
+
+
+# identify high variance gene set
+mitch_res$manova_res$sd<-(apply(mitch_res$manova_res[,4:8],1,sd))
+
+mitch_res$manova_res$label<-paste(mitch_res$manova_res$set,": set size =",mitch_res$manova_res$setSize,", SD =",signif(mitch_res$manova_res$sd,2))
+
+res_subset<-head( mitch_res$manova_res[order(-mitch_res$manova_res$sd),] ,20)
+rownames(res_subset)<-res_subset$label
+
+# heatmap of gene sets with high variance
+heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.8,trace="none",cexCol=0.8)
+
+sets_deseq2<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.DESeq2)<0.05),]$set
+sets_edger_glmrt<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.edgeR_GLMRT)<0.05),]$set
+sets_edger_ql<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.edgeR_QL)<0.05),]$set
+sets_absseq<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.ABSSeq)<0.05),]$set
+sets_voom_limma<-mitch_res$manova_res[which(p.adjust(mitch_res$manova_res$p.voom.limma)<0.05),]$set
+
+my_lengths<-unlist(lapply(list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,
+  "edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2),length))
+
+res_list<-list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,"edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2)
+res_list<-lapply(res_list, function(x){
+ data.frame(
+  list=x,
+  val=1)
+})
+res_df<-ldply(res_list)
+
+colnames(res_df)<-c("list","set","val")
+res_df2<-acast(res_df,set~list,value.var="val",fill=0)
+res_df2<-as.data.frame(res_df2)
+res_df2$name<-rownames(res_df2)
+res_df3<-res_df2[,c(ncol(res_df2),1:(ncol(res_df2)-1))]
+upset(res_df3,order.by = "freq",text.scale=2)
+
+dev.off()
+
+pdf("fig4b.pdf",width=10,height=7)
+heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.8,trace="none",cexCol=0.8)
+dev.off()
