@@ -598,7 +598,7 @@ library("parallel")
 library("pbmcapply")
 library("Rmisc")
 
-
+        colnames(x)<-sub("-","_",colnames(x))
 	input_profile<-x
 
         input_genesets<-genesets
