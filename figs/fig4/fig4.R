@@ -30,7 +30,7 @@ s<-as.data.frame(s)
 rownames(s)<-colnames(tx)
 
 # filter counts
-tx1<-x$GeneCounts[which(rowSums(tx)/ncol(tx)>=(10)),]
+tx1<-tx[which(rowSums(tx)/ncol(tx)>=(10)),]
 
 # DESeq2
 dds <- DESeqDataSetFromMatrix(countData = round(tx1), colData = s, design = ~ s)
@@ -95,15 +95,16 @@ colnames(rnk_absseq)<-"ABSSeq"
 rnk_absseq$geneID<-rownames(rnk_absseq)
 
 # genetable
-gt<-data.frame(as.character(x$GeneInfo$GeneSymbol))
-gt$geneID<-rownames(x$GeneInfo)
-colnames(gt)<-c("symbol","geneID")
+gt<-unique(x$TxInfo[,1:2])
+colnames(gt)<-c("geneID","symbol")
+gt<-gt[which(gt$geneID %in% rownames(tx1)),]
+
 
 # join the tables together
 xx<-join_all(list("symbol"=gt,"DESeq2"=rnk_deseq2,
   "edgeR_GLMRT"=rnk_edger_glmrt,
-  "edgeR_QL"=rnk_edger_ql,"ABSSeq"=rnk_absseq, 
-  "voom-limma"=rnk_voom_limma),by="geneID")
+  "edgeR_QL"=rnk_edger_ql,"voom-limma"=rnk_voom_limma,
+  "ABSSeq"=rnk_absseq),by="geneID")
 
 
 # aggregate
@@ -120,7 +121,7 @@ unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 # run mitch analysis
-res<-mitch_calc(xx,genesets,resrows=200,bootstraps=1000,priority="effect")
+res<-mitch_calc(xx,genesets,resrows=20,bootstraps=1000,priority="effect")
 
 mitch_plots(res,outfile="fig4_plots.pdf")
 mitch_report(res,"fig4_report.html")
@@ -148,6 +149,10 @@ par(mai=c(1.02,0.82,0.82,0.42))
 
 svals<-res$manova_res[,4:8]
 
+#MDS plot
+plot(cmdscale(dist(t(svals))), xlab="Coordinate 1", ylab="Coordinate 2", type = "n",)
+text(cmdscale(dist(t(svals))), labels=gsub("s.","",colnames(svals)))
+
 # correlation  plot
 chart.Correlation(svals, histogram=F,method = c("pearson"),main="Pearson correlation of s scores")
 
@@ -168,7 +173,7 @@ res_subset<-head( res$manova_res[order(-res$manova_res$sd),] ,20)
 rownames(res_subset)<-res_subset$label
 
 # heatmap of gene sets with high variance
-heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.8,trace="none",cexCol=0.8)
+heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 15),cexRow=0.8,trace="none",cexCol=0.8)
 
 
 res_list<-list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,"edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2)
@@ -186,6 +191,13 @@ res_df2$name<-rownames(res_df2)
 res_df3<-res_df2[,c(ncol(res_df2),1:(ncol(res_df2)-1))]
 upset(res_df3,order.by = "freq",text.scale=2)
 
+subset_genesets<-genesets[which(names(genesets) %in% res_subset$set )]
+res<-mitch_calc(xx,subset_genesets,resrows=20,bootstraps=1000,priority="effect")
+
+heatmap.2(res$detailed_sets$`Peptide chain elongation`,scale="row",margin=c(12, 12),trace="none",main='Peptide chain elongation')
+par(mar=c(5,10,4,2))
+barplot(-log10(as.numeric(as.vector(res$manova_result[4,9:13]))),horiz=T,xlab="-log10(p-value)",las=1,names.arg=names(res$manova_result[4,9:13]),main=res$manova_result[4,1])
+par(mai=c(1.02,0.82,0.82,0.42))
 dev.off()
 
 pdf("fig4b.pdf",width=10,height=7)
@@ -193,9 +205,6 @@ heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.
 dev.off()
 
 
-subset_genesets<-genesets[which(names(genesets) %in% res_subset$set )]
-
-res<-mitch_calc(xx,subset_genesets,resrows=20,bootstraps=1000,priority="effect")
 mitch_plots(res,outfile="fig4_subset_plots.pdf")
 mitch_report(res,"fig4_subset_report.html")
 
