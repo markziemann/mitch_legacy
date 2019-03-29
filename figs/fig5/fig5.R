@@ -32,4 +32,6 @@ download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip","
 unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
-res<-mitch_calc(x,genesets,resrows=50,bootstraps=100,priority="confidence")
+res<-mitch_calc(x,genesets,resrows=200,bootstraps=1000,priority="confidence")
+mitch_plots(res,outfile="scrnaseq.pdf")
+mitch_report(res,"scrnaseq.html")
