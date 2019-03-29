@@ -240,6 +240,7 @@ seurat_score<-function(y) {
   if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
 
   z<-as.data.frame(sign(y$avg_logFC)*-log10(y$p_val))
+
   colnames(z)<-"y"
   if ( !is.null(attributes(y)$geneIDcol) ) {
     z$geneidentifiers<-y[,attributes(y)$geneIDcol]
@@ -247,6 +248,10 @@ seurat_score<-function(y) {
     z$geneidentifiers<-rownames(y)
   }
   z<-mapGeneIds(y,z)
+
+  z$y[is.infinite(z$y) & z$y < 0] <- min(z$y[!is.infinite(z$y)])-.01
+  z$y[is.infinite(z$y) & z$y > 0] <- max(z$y[!is.infinite(z$y)])+.01
+  z<-z[,c(2,1)]
   z
 }
 
