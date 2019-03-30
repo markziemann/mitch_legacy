@@ -750,8 +750,6 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
       )
       abline(v=0,h=0,lty=2,lwd=2,col="blue")
 
-  sss<-res$detailed_sets[[i]]
-
   sss_long<-melt(sss)
 
   p<-ggplot(ss_long,aes(Var2,value)) + 
@@ -892,13 +890,12 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
           diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)))
     print( p + theme_bw() )
 
-  sss<-res$detailed_sets[[i]]
   sss_long<-melt(sss)
 
   p<-ggplot(ss_long,aes(Var2,value)) +
     geom_violin(data=ss_long,fill = "grey", colour = "grey") +
     geom_violin(data=sss_long,fill = "black", colour = "black") +
-    labs(y = "Position in rank",title = ll[,i] )
+    labs(y = "Position in rank",title = ll[,1] )
 
   print(
     p +
