@@ -753,10 +753,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   sss<-res$detailed_sets[[1]]
   sss_long<-melt(sss)
 
-  p<-ggplot(ss_long,aes(Var2,value)) + geom_violin(data=ss_long,fill = "grey", colour = "grey") +
-    geom_violin(data=sss_long,fill = "black", colour = "black") +
-    labs(y = "Position in rank",title = ll[,1]) + theme_bw() +
-    theme(axis.text=element_text(size=16),axis.title=element_text(size=20,face="bold"),plot.title = element_text(size = 25, face = "bold") )
+  p<-ggplot(ss_long,aes(Var2,value)) + geom_violin(data=ss_long,fill = "grey", colour = "grey") + geom_violin(data=sss_long,fill = "black", colour = "black") + labs(y = "Position in rank",title = ll[,1]) + theme_bw() + theme(axis.text=element_text(size=16),axis.title=element_text(size=20,face="bold"),plot.title = element_text(size = 25, face = "bold") )
   print(p)
 #      do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
 #      grid()
@@ -887,10 +884,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   sss<-res$detailed_sets[[1]]
   sss_long<-melt(sss)
 
-  p<-ggplot(ss_long,aes(Var2,value)) + geom_violin(data=ss_long,fill = "grey", colour = "grey") +
-    geom_violin(data=sss_long,fill = "black", colour = "black") +
-    labs(y = "Position in rank",title = ll[,1]) + theme_bw() +
-    theme(axis.text=element_text(size=16),axis.title=element_text(size=20,face="bold"),plot.title=element_text(size=25,face="bold"))
+  p<-ggplot(ss_long,aes(Var2,value)) + geom_violin(data=ss_long,fill = "grey", colour = "grey") + geom_violin(data=sss_long,fill = "black", colour = "black") + labs(y = "Position in rank",title = ll[,1]) + theme_bw() + theme(axis.text=element_text(size=16),axis.title=element_text(size=20,face="bold"),plot.title=element_text(size=25,face="bold"))
   print(p)
 #    do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
 #    grid()
