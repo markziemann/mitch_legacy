@@ -141,8 +141,8 @@ my_lengths<-unlist(lapply(list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma
   "edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2),length))
 
 par(mar=c(5,10,4,2))
-bp<-barplot(my_lengths,xlab="no. sets FDR<0.05",las=1,horiz=T,xlim=c(0,110))
-text(x=my_lengths+5,y=bp,label=my_lengths)
+bp<-barplot(my_lengths,xlab="no. sets FDR<0.05",las=1,horiz=T,xlim=c(0,200))
+text(x=my_lengths+10,y=bp,label=my_lengths)
 
 # revert default
 par(mai=c(1.02,0.82,0.82,0.42))
@@ -150,8 +150,8 @@ par(mai=c(1.02,0.82,0.82,0.42))
 svals<-res$manova_res[,4:8]
 
 #MDS plot
-plot(cmdscale(dist(t(svals))), xlab="Coordinate 1", ylab="Coordinate 2", type = "n",)
-text(cmdscale(dist(t(svals))), labels=gsub("s.","",colnames(svals)))
+plot(cmdscale(dist(t(svals))), xlab="Coordinate 1", ylab="Coordinate 2", type = "p", xlim=c(-1,2))
+text(cmdscale(dist(t(svals)))+0.01, labels=gsub("s.","",colnames(svals)))
 
 # correlation  plot
 chart.Correlation(svals, histogram=F,method = c("pearson"),main="Pearson correlation of s scores")
@@ -165,7 +165,7 @@ heatmap.2(cor(svals,method="p"),scale="none",margin=c(15, 15),trace="none",
 
 
 # identify high variance gene set
-res$manova_res$sd<-(apply(res$manova_res[,4:8],1,sd))
+res$manova_res$sd<-apply(res$manova_res[,4:8],1,sd)
 
 res$manova_res$label<-paste(res$manova_res$set,": set size =",res$manova_res$setSize,", SD =",signif(res$manova_res$sd,2))
 
@@ -192,16 +192,16 @@ res_df3<-res_df2[,c(ncol(res_df2),1:(ncol(res_df2)-1))]
 upset(res_df3,order.by = "freq",text.scale=2)
 
 subset_genesets<-genesets[which(names(genesets) %in% res_subset$set )]
-res<-mitch_calc(xx,subset_genesets,resrows=20,bootstraps=1000,priority="effect")
+res2<-mitch_calc(xx,subset_genesets,resrows=20,bootstraps=1000,priority="effect")
 
-heatmap.2(res$detailed_sets$`Peptide chain elongation`,scale="row",margin=c(12, 12),trace="none",main='Peptide chain elongation')
+heatmap.2(res2$detailed_sets$`Peptide chain elongation`,scale="row",margin=c(12, 12),trace="none",main='Peptide chain elongation')
 par(mar=c(5,10,4,2))
-barplot(-log10(as.numeric(as.vector(res$manova_result[4,9:13]))),horiz=T,xlab="-log10(p-value)",las=1,names.arg=names(res$manova_result[4,9:13]),main=res$manova_result[4,1])
+barplot(-log10(as.numeric(as.vector(res2$manova_result[2,9:13]))),horiz=T,xlab="-log10(p-value)",las=1,names.arg=names(res2$manova_result[2,9:13]),main=res2$manova_result[2,1])
 par(mai=c(1.02,0.82,0.82,0.42))
 dev.off()
 
 pdf("fig4b.pdf",width=10,height=7)
-heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.8,trace="none",cexCol=0.8)
+heatmap.2(as.matrix(res2$manova_result[1:10,4:8]),scale="row",margin=c(15, 30),cexRow=0.8,trace="none",cexCol=0.8)
 dev.off()
 
 
