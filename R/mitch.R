@@ -648,8 +648,10 @@ library("Rmisc")
 #' mitch_plots(res,outfile="outres.pdf")
 mitch_plots <- function(res,outfile="Rplots.pdf") {
   library("plyr")
+  library("reshape2")
   library("GGally")
-  library("vioplot")
+  library("ggplot2")
+#  library("vioplot")
   library("grid")
   library("gridExtra")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
@@ -727,6 +729,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
       pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
       main="effect size versus statistical significance")
 
+  ss_long<-melt(ss)
 
    for(i in 1:resrows) {
       ll<-res$manova_result[i,]
@@ -747,10 +750,19 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
       )
       abline(v=0,h=0,lty=2,lwd=2,col="blue")
 
-      do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
-      grid()
-      abline(h=0,lty=2,lwd=2,col="blue")
-      title(main = ll[,1] , ylab = "Position in rank")
+  sss<-res$detailed_sets[[1]]
+  sss_long<-melt(sss)
+
+  ggplot(ss_long,aes(Var2,value)) + geom_violin(data=ss_long,fill = "grey", colour = "grey")
+    + geom_violin(data=sss_long,fill = "black", colour = "black")
+    + labs(y = "Position in rank",title = ll[,1]) + theme_bw()
+    + theme(axis.text=element_text(size=16),axis.title=element_text(size=20,face="bold") 
+    , plot.title = element_text(size = 25, face = "bold") )
+
+#      do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
+#      grid()
+#      abline(h=0,lty=2,lwd=2,col="blue")
+#      title(main = ll[,1] , ylab = "Position in rank")
 
     }
     dev.off()
@@ -854,6 +866,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
     main="effect size versus statistical significance")
 
+  ss_long<-melt(ss)
 
   for(i in 1:resrows) {
     ll<-res$manova_result[i,]
@@ -872,10 +885,19 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
           diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)))
     print( p + theme_bw() )
 
-    do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
-    grid()
-    abline(h=0,lty=2,lwd=2)
-    title(main = ll[,1] , ylab = "Position in rank")
+  sss<-res$detailed_sets[[1]]
+  sss_long<-melt(sss)
+
+  ggplot(ss_long,aes(Var2,value)) + geom_violin(data=ss_long,fill = "grey", colour = "grey")
+    + geom_violin(data=sss_long,fill = "black", colour = "black")
+    + labs(y = "Position in rank",title = ll[,1]) + theme_bw()
+    + theme(axis.text=element_text(size=16),axis.title=element_text(size=20,face="bold") 
+    , plot.title = element_text(size = 25, face = "bold") )
+
+#    do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
+#    grid()
+#    abline(h=0,lty=2,lwd=2)
+#    title(main = ll[,1] , ylab = "Position in rank")
 
   }
   dev.off()
