@@ -52,7 +52,7 @@ if ( ncol(res$input_profile)<3 ) {
   plot(res$input_profile, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.15), main="Input profiles"  )
 } else {
   library("GGally")
-  library("vioplot")
+#  library("vioplot")
   ggpairs_points_plot <- function(data ,mapping, ...){
     p <- ggplot(data = data, mapping = mapping) +
     geom_point(alpha=0.05) +
@@ -591,8 +591,10 @@ cat("<hr><br>")
 
 ## Detailed Gene set reports
 ```{r,detailed_geneset_reports1,results="asis",echo=FALSE,fig.height=5, fig.width=6 ,out.width = '100%',comment=NA, message=FALSE}
+library("reshape2")
+library("ggplot2")
 library("GGally")
-library(vioplot)
+#library(vioplot)
 resrows=length(res$detailed_sets)
 d=ncol(res$input_profile)
 ss<-res$ranked_profile
@@ -662,10 +664,27 @@ ndplot<-function(i) {
   p<-ggpairs(as.data.frame(sss), title=ll[,1], lower= list(continuous = ggpairs_points_limit_range ),
     diag=list(continuous=wrap("barDiag", binwidth=nrow(ss)/10)))
   print( p + theme_bw() )
-  do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
-  grid()
-  abline(h=0,lty=2,lwd=2)
-  title(main = ll[,1] , ylab = "Position in rank")
+
+  sss_long<-melt(sss)
+
+  p<-ggplot(ss_long,aes(Var2,value)) +
+    geom_violin(data=ss_long,fill = "grey", colour = "grey") +
+    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA) +
+    geom_violin(data=sss_long,fill = "black", colour = "black") +
+    geom_boxplot(data=sss_long,width=0.1,outlier.shape = NA) +
+    labs(y = "Position in rank",title = ll[,1] )
+
+  print(
+    p +
+    theme_bw() +
+    theme( axis.text=element_text(size=14),
+    axis.title=element_text(size=15),
+    plot.title = element_text(size = 20)))
+
+#  do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
+#  grid()
+#  abline(h=0,lty=2,lwd=2)
+#  title(main = ll[,1] , ylab = "Position in rank")
 }
 
 topgenelist<-function(i) {
@@ -729,6 +748,7 @@ topgenelist<-function(i) {
   cat("<br><hr>")
 }
 
+ss_long<-melt(ss)
 
 #functions end here
 if ( ncol(ss)<3 ) {
