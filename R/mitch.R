@@ -651,7 +651,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   library("reshape2")
   library("GGally")
   library("ggplot2")
-  library("vioplot")
+#  library("vioplot")
   library("grid")
   library("gridExtra")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
@@ -753,16 +753,18 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   sss_long<-melt(sss)
 
   p<-ggplot(ss_long,aes(Var2,value)) + 
-    geom_violin(data=ss_long,fill = "grey", colour = "grey") +
+ geom_violin(data=ss_long,fill = "grey", colour = "grey") +
+    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA) +
     geom_violin(data=sss_long,fill = "black", colour = "black") +
-    labs(y = "Position in rank",title = ll[,1] ) 
+    geom_boxplot(data=sss_long,width=0.1,outlier.shape = NA) +
+    labs(y = "Position in rank",title = ll[,1] )
 
   print(
     p + 
     theme_bw() + 
-    theme( axis.text=element_text(size=16),
-    axis.title=element_text(size=20,face="bold"),
-    plot.title = element_text(size = 25, face = "bold")))
+    theme( axis.text=element_text(size=14),
+    axis.title=element_text(size=15),
+    plot.title = element_text(size = 20)))
 
 #      do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
 #      grid()
@@ -894,15 +896,17 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   p<-ggplot(ss_long,aes(Var2,value)) +
     geom_violin(data=ss_long,fill = "grey", colour = "grey") +
+    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA) +
     geom_violin(data=sss_long,fill = "black", colour = "black") +
+    geom_boxplot(data=sss_long,width=0.1,outlier.shape = NA) +
     labs(y = "Position in rank",title = ll[,1] )
 
   print(
     p +
     theme_bw() +
-    theme( axis.text=element_text(size=16),
-    axis.title=element_text(size=20,face="bold"),
-    plot.title = element_text(size = 25, face = "bold")))
+    theme( axis.text=element_text(size=14),
+    axis.title=element_text(size=15),
+    plot.title = element_text(size = 20)))
 
 #    do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
 #    grid()
