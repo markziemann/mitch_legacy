@@ -754,7 +754,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   p<-ggplot(ss_long,aes(Var2,value)) + 
  geom_violin(data=ss_long,fill = "grey", colour = "grey") +
-    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA) +
+    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA,coef = 0) +
     geom_violin(data=sss_long,fill = "black", colour = "black") +
     geom_boxplot(data=sss_long,width=0.1,outlier.shape = NA) +
     labs(y = "Position in rank",title = ll[,1] )
@@ -896,7 +896,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   p<-ggplot(ss_long,aes(Var2,value)) +
     geom_violin(data=ss_long,fill = "grey", colour = "grey") +
-    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA) +
+    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA,coef = 0) +
     geom_violin(data=sss_long,fill = "black", colour = "black") +
     geom_boxplot(data=sss_long,width=0.1,outlier.shape = NA) +
     labs(y = "Position in rank",title = ll[,1] )
