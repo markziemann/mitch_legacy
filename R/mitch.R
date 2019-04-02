@@ -557,6 +557,7 @@ for ( i in 1:ncol(x)) {
 #' #This function is not designed to be used directly
 detailed_sets<-function(res,  resrows=50) {
   #collect ranked genelist of each genest
+  genesets<-res$input_genesets
   ss<-res$ranked_profile
   mykeys <- as.character(res$manova_result[1:resrows,1])
   dat <- vector(mode="list", length=resrows)
