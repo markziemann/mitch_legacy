@@ -557,6 +557,7 @@ for ( i in 1:ncol(x)) {
 #' #This function is not designed to be used directly
 detailed_sets<-function(res,  resrows=50) {
   #collect ranked genelist of each genest
+  genesets<-res$input_genesets
   ss<-res$ranked_profile
   mykeys <- as.character(res$manova_result[1:resrows,1])
   dat <- vector(mode="list", length=resrows)
@@ -941,7 +942,16 @@ mitch_report<-function(res,out) {
   library("markdown")
   library("rmarkdown")
 
+  HTMLNAME<-paste(out,".html",sep="")
+  HTMLNAME<-gsub(".html.html",".html",HTMLNAME)
+  HTMLNAME<-paste(getwd(),HTMLNAME,sep="/")
+  rmd_tmpdir<-tempdir()
+  rmd_tmpfile<-paste(rmd_tmpdir,"/mitch.Rmd",sep="")
+  html_tmp<-paste(paste(rmd_tmpdir,"/mitch_report.html",sep=""))
+  download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/mitch.Rmd",destfile=rmd_tmpfile)
+
   DATANAME<-gsub(".html$",".RData",out)
+  DATANAME<-paste(rmd_tmpdir,"/",DATANAME,sep="")
   save.image(DATANAME)
   MYMESSAGE=paste("Dataset saved as \"",DATANAME,"\".")
   message(MYMESSAGE)
@@ -949,7 +959,8 @@ mitch_report<-function(res,out) {
   knitrenv <- new.env()
   assign("DATANAME", DATANAME, knitrenv)
   assign("res",res,knitrenv)
-  HTMLNAME=paste(out,".html",sep="")
-  download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/mitch.Rmd",destfile="mitch.Rmd")
-  rmarkdown::render("mitch.Rmd",output_file=out)
+
+  download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/mitch.Rmd",destfile=rmd_tmpfile)
+  rmarkdown::render(rmd_tmpfile,output_file=html_tmp)
+  file.rename(html_tmp,HTMLNAME)
 }
