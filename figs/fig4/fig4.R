@@ -173,7 +173,8 @@ res_subset<-head( res$manova_res[order(-res$manova_res$sd),] ,20)
 rownames(res_subset)<-res_subset$label
 
 # heatmap of gene sets with high variance
-heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 15),cexRow=0.8,trace="none",cexCol=0.8)
+my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+heatmap.2(as.matrix(res_subset[1:10,4:8]),scale="row",margin=c(15, 15),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
 
 res_list<-list("ABSSeq"=sets_absseq,"voom-limma"=sets_voom_limma,"edgeR GLMRT"=sets_edger_glmrt,"edgeR QL"=sets_edger_ql,"DESeq2"=sets_deseq2)
@@ -194,7 +195,7 @@ upset(res_df3,order.by = "freq",text.scale=2)
 subset_genesets<-genesets[which(names(genesets) %in% res_subset$set )]
 res2<-mitch_calc(xx,subset_genesets,resrows=20,bootstraps=1000,priority="effect")
 
-heatmap.2(res2$detailed_sets$`Peptide chain elongation`,scale="row",margin=c(12, 12),trace="none",main='Peptide chain elongation')
+heatmap.2(res2$detailed_sets$`Peptide chain elongation`,scale="row",col=my_palette,margin=c(12, 12),trace="none",main='Peptide chain elongation')
 par(mar=c(5,10,4,2))
 barplot(-log10(as.numeric(as.vector(res2$manova_result[2,9:13]))),horiz=T,xlab="-log10(p-value)",las=1,names.arg=names(res2$manova_result[2,9:13]),main=res2$manova_result[2,1])
 par(mai=c(1.02,0.82,0.82,0.42))
