@@ -398,7 +398,7 @@ res<-pbmclapply(sets,function(set){
       CHUNK=50
       b=NULL
       # use an approach to stop bootstrapping un
-      while ( BAND_SIZE>0.1 && STRAPSDONE<bootstraps) {
+      while ( STRAPSDONE<bootstraps) {
         bb<-bootstrap(x,CHUNK,set)
         b<-c(b,bb)
         STRAPSDONE=STRAPSDONE+CHUNK
