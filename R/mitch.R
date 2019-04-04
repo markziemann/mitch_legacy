@@ -962,5 +962,5 @@ mitch_report<-function(res,out) {
 
   download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/mitch.Rmd",destfile=rmd_tmpfile)
   rmarkdown::render(rmd_tmpfile,output_file=html_tmp)
-  file.rename(html_tmp,HTMLNAME)
+  file.copy(html_tmp,HTMLNAME)
 }
