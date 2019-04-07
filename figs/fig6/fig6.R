@@ -16,6 +16,7 @@ randy <- function(n = 5000) {
 #   500 genes per set
 #################################################
 
+figa<-function(){
 genes<-randy(20000)
 k1<-as.data.frame(genes,stringsAsFactors=F)
 
@@ -88,18 +89,22 @@ times_a$bootstraps<-bootstraps
 times_a_wide<-t(acast(times_a,bootstraps ~ cores, value.var="elapsed"))
 
 pdf("fig6a.pdf")
-matplot(times_a_wide,pch=1,type = c("b"),xlab="Cores",ylab="elapsed time (s)" , main="variation of cores and bootstraps",ylim=c(0,1000),axes=F)
+matplot(times_a_wide,pch=1,type = c("b"),xlab="Cores",ylab="elapsed time (s)" , main="variation of cores and bootstraps",axes=F,ylim=c(0,900))
 axis(2)
 legend("topright", legend = c(1000,500,100,0), col=4:1, pch=1) # optional legend
 mtext("5 dimensions, 20000 genes, 1000 sets, 500 genes per set")
 axis(side=1,at=1:nrow(times_a_wide),labels=rownames(times_a_wide))
 
-matplot(times_a_wide[,1],pch=1,type = c("b"),xlab="Cores",ylab="elapsed time (s)" , main="variation of cores without bootstraps",axes=F)
+matplot(times_a_wide[,1],pch=1,type = c("b"),xlab="Cores",ylab="elapsed time (s)" , main="variation of cores without bootstraps",axes=F,ylim=c(0,18))
 axis(2)
 axis(side=1,at=1:nrow(times_a_wide),labels=rownames(times_a_wide))
 mtext("5 dimensions, 20000 genes, 1000 sets, 500 genes per set")
 dev.off()
 
+write.table(times_a_wide,files="fig6a.tsv")
+
+times_a_wide
+}
 
 #################################################
 # second example - vary the no genes in profile and number of dimensions
@@ -112,7 +117,7 @@ dev.off()
 #################################################
 
 # create the large dataset
-
+figb<-function(){
 g100k<-randy(100000)
 
 k<-as.data.frame(g100k,stringsAsFactors=F)
@@ -234,13 +239,18 @@ times_b$ngenes<-ngenes
 times_b_wide<-t(acast(times_b,ngenes ~ dims, value.var="elapsed"))
 
 pdf("fig6b.pdf")
-matplot(times_b_wide,pch=1,type = c("b"),xlab="dimensions",ylab="elapsed time (s)" , main="variation of n genes and dimensions", axes=F, ylim=c(0,400))
+matplot(times_b_wide,pch=1,type = c("b"),xlab="dimensions",ylab="elapsed time (s)" , main="variation of n genes and dimensions", axes=F, ylim=c(0,500))
 grid()
 axis(2)
 axis(side=1,at=1:nrow(times_b_wide),labels=rownames(times_b_wide))
 legend("right", legend = c("100k","20k","5k","1k"), col=4:1, pch=1)
 mtext("8 cores, 500 bootstraps, 1000 sets, 500 genes per set")
 dev.off()
+
+write.table(times_b_wide,files="fig6b.tsv")
+
+times_b_wide
+}
 
 #################################################
 # next, see vary the number and size of gene sets
@@ -252,6 +262,7 @@ dev.off()
 #   5 dimensions
 #################################################
 
+figc<-function(){
 genes<-randy(20000)
 k1<-as.data.frame(genes,stringsAsFactors=F)
 
@@ -346,13 +357,18 @@ times_c$ngenes<-setsize
 times_c_wide<-t(acast(times_c,nsets ~ setsize, value.var="elapsed"))
 
 pdf("fig6c.pdf")
-matplot(times_c_wide,pch=1,type = c("b"),xlab="gene set size",ylab="elapsed time (s)" , main="variation of number and size of gene sets", axes=F, ylim=c(0,150))
+matplot(times_c_wide,pch=1,type = c("b"),xlab="gene set size",ylab="elapsed time (s)" , main="variation of number and size of gene sets", axes=F)
 grid()
 axis(2)
 axis(side=1,at=1:nrow(times_c_wide),labels=rownames(times_c_wide))
 legend("topleft", legend = c("20000","5000","500","100"), col=4:1, pch=1)
 mtext("5 dimensions, 20000 genes, 8 cores, 0 bootstraps")
 dev.off()
+
+write.table(times_c_wide,files="fig6c.tsv")
+
+times_c_wide
+}
 
 #################################################
 # next, see vary the number and size of gene sets
@@ -364,6 +380,7 @@ dev.off()
 #   5 dimensions
 #################################################
 
+figd<-function(){
 genes<-randy(20000)
 k1<-as.data.frame(genes,stringsAsFactors=F)
 
@@ -466,24 +483,15 @@ legend("topleft", legend = c("20000","5000","500","100"), col=4:1, pch=1)
 mtext("5 dimensions, 20000 genes, 8 cores, 500 bootstraps")
 dev.off()
 
+write.table(times_d_wide,files="fig6d.tsv")
+
+times_d_wide
+}
 
 
-
-
-
-
+times_a_wide<-figa()
+times_b_wide<-figb()
+times_c_wide<-figc()
+times_d_wide<-figd()
 
 save.image("fig6.RData")
-
-
-q()
-
-
-
-
-
-
-
-
-
-
