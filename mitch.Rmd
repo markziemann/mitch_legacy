@@ -610,6 +610,7 @@ myres<-head(res$manova_result,resrows)
 myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
 myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
+ss_long<-melt(ss)
 
 twodimplot<-function(i) {
   ll<-res$manova_result[i,]
@@ -627,10 +628,27 @@ twodimplot<-function(i) {
     xlab=X_AXIS,ylab=Y_AXIS
   )
   abline(v=0,h=0,lty=2,lwd=2,col="blue")
-  do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
-  grid()
-  abline(h=0,lty=2,lwd=2,col="blue")
-  title(main = ll[,1] , ylab = "Position in rank")
+
+  sss_long<-melt(sss)
+
+  p<-ggplot(ss_long,aes(Var2,value)) +
+    geom_violin(data=ss_long,fill = "grey", colour = "grey") +
+    geom_boxplot(data=ss_long,width=0.9,fill="grey",outlier.shape = NA) +
+    geom_violin(data=sss_long,fill = "black", colour = "black") +
+    geom_boxplot(data=sss_long,width=0.1,outlier.shape = NA) +
+    labs(y = "Position in rank",title = ll[,1] )
+
+  print(
+    p +
+    theme_bw() +
+    theme( axis.text=element_text(size=14),
+    axis.title=element_text(size=15),
+    plot.title = element_text(size = 20)))
+
+ # do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
+ # grid()
+ # abline(h=0,lty=2,lwd=2,col="blue")
+ # title(main = ll[,1] , ylab = "Position in rank")
 }
 
 ndplot<-function(i) {
