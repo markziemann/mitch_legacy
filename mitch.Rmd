@@ -20,14 +20,15 @@ Here is the first few lines of the input profile.
 
 ```{r,peek,echo=FALSE}
 load(DATANAME)
+  d=ncol(res$input_profile)
   # if working with >5 dimensions, then substitute the dimension (colnames) names with a number
-  if ( ncol(res$input_profile)>5 ) {
-    mydims<-data.frame(1:ncol(res$input_profile))
+  if ( d>5 ) {
+    mydims<-data.frame(1:d)
     mydims$colnames<-attributes(res)$profile_dimensions
     colnames(mydims)<-c("dimension","contrast_name")
     print(kable( mydims, caption = "Profile dimensions" ))
-    colnames(res$input_profile)<- paste("d",1:ncol(res$input_profile),sep="")
-    colnames(res$ranked_profile)<- paste("d",1:ncol(res$ranked_profile),sep="")
+    colnames(res$input_profile)<- paste("d",1:d,sep="")
+    colnames(res$ranked_profile)<- paste("d",1:d,sep="")
     ss<-res$ranked_profile
   }
 
@@ -48,7 +49,7 @@ kable( formatted, caption = "Profile metrics" )
 Here is a scatterplot of the input profiles. Note the dynamic ranges.
 
 ```{r, scatterplot, echo=FALSE,fig.height = 6, fig.width = 6.5, message=FALSE, warning=FALSE}
-if ( ncol(res$input_profile)<3 ) {
+if ( d<3 ) {
   plot(res$input_profile, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.15), main="Input profiles"  )
 } else {
   library("GGally")
@@ -74,7 +75,7 @@ xmax=max(ss[,1])
 ymin=min(ss[,2])
 ymax=max(ss[,2])
 ss<-res$ranked_profile
-if ( ncol(ss)<3 ) {
+if ( d<3 ) {
   k<-MASS:::kde2d(ss[,1],ss[,2])
   X_AXIS=paste("Rank in contrast",colnames(ss)[1])
   Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
@@ -124,7 +125,7 @@ if ( ncol(ss)<3 ) {
 
 Here is the distribution of genes in the quadrants/sectors
 ```{r, quadrant_distribution, results="asis",echo=FALSE}
-if ( ncol(ss)<3 ) {
+if ( d<3 ) {
   uu=length(which(res$input_profile[,1]>0 & res$input_profile[,2]>0))
   ud=length(which(res$input_profile[,1]>0 & res$input_profile[,2]<0))
   dd=length(which(res$input_profile[,1]<0 & res$input_profile[,2]<0))
@@ -134,7 +135,6 @@ if ( ncol(ss)<3 ) {
   colnames(a)="a"
   barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
 } else {
-  d=ncol(ss)
   sig<-sign(ss)
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Count"
@@ -166,14 +166,13 @@ hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed hi
 ```
 
 ```{r,input_geneset_metrics3,results="asis",echo=FALSE}
-if ( ncol(ss)<3 ) {
+if ( d<3 ) {
   a<-res$manova_analysis_metrics[14]
   a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
   rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
   colnames(a)="a"
   barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
 } 
-d=ncol(ss)
 nsig=length(which(res$manova_result$p.adjustMANOVA<0.05))
 if ( nsig > 0 ) {
   sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
@@ -195,7 +194,7 @@ library(gtools)
   if (numsets>0){
     myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
     myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
-    if ( ncol(ss)<3 ) {
+    if ( d<3 ) {
       myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
       myres$set<-gsub("_"," ",as.character(myres$set))
       colnames(myres)=gsub("\\.","_",colnames(myres))
@@ -389,7 +388,7 @@ library(gtools)
   myres<-head(res$manova_result,resrows)
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 
-  if ( ncol(ss)<3 ) {
+  if ( d<3 ) {
     myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
     myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
     myres$set<-gsub("_"," ",as.character(myres$set))
@@ -547,10 +546,20 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 
 ```
+# A heatmap of the top results
+```{r,heatmap,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+
+    hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
+    rownames(hmapx)<-head(res$manova_result$set,resrows)
+    colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
+    my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+    heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
+```
 
 # A plot of effect size versus significance
 Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist which is the hypotenuse of the s scores.
 ```{r,effectsize,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+  library(gplots)
   myres<-res$manova_result
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
   myres$significance<--log2(myres$p.adjustMANOVA)
@@ -596,7 +605,6 @@ library("ggplot2")
 library("GGally")
 #library(vioplot)
 resrows=length(res$detailed_sets)
-d=ncol(res$input_profile)
 ss<-res$ranked_profile
 myres<-head(res$manova_result,resrows)
 myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
@@ -631,8 +639,8 @@ ndplot<-function(i) {
   ss<-res$ranked_profile
   sss<-res$detailed_sets[[i]]
 
-  if ( ncol(ss)>5 ) {
-    colnames(sss)<- paste("d",1:ncol(res$input_profile),sep="")
+  if ( d>5 ) {
+    colnames(sss)<- paste("d",1:d,sep="")
   }
 
   #subset contour plot
@@ -689,11 +697,9 @@ ndplot<-function(i) {
 
 topgenelist<-function(i) {
   ss<-res$ranked_profile
-  d=ncol(ss)
-
   sss<-res$detailed_sets[[i]]
-  if ( ncol(ss)>5 ) {
-    colnames(sss)<- paste("d",1:ncol(res$input_profile),sep="")
+  if ( d>5 ) {
+    colnames(sss)<- paste("d",1:d,sep="")
   }
 
   tl=bl=tr=br=0
@@ -751,7 +757,7 @@ topgenelist<-function(i) {
 ss_long<-melt(ss)
 
 #functions end here
-if ( ncol(ss)<3 ) {
+if ( d<3 ) {
   xmin=min(ss[,1])
   xmax=max(ss[,1])
   ymin=min(ss[,2])

@@ -648,6 +648,7 @@ library("Rmisc")
 #' # render enrichment plots in high res pdf
 #' mitch_plots(res,outfile="outres.pdf")
 mitch_plots <- function(res,outfile="Rplots.pdf") {
+  library("gplots")
   library("plyr")
   library("reshape2")
   library("GGally")
@@ -671,7 +672,10 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   ymin=min(ss[,2])
   ymax=max(ss[,2])
 
-  if ( ncol(ss)<3 ) {
+  # d is the number of dimensions - this is very important and refered to frequently
+  d=ncol(ss)
+
+  if ( d<3 ) {
 
     pdf(outfile)
     k<-MASS:::kde2d(ss[,1],ss[,2])
@@ -689,7 +693,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
       }
     )
 
-    #barcghart of gene locations by quadrant
+    #barchart of gene locations by quadrant
     uu=length(which(res$input_profile[,1]>0 & res$input_profile[,2]>0))
     ud=length(which(res$input_profile[,1]>0 & res$input_profile[,2]<0))
     dd=length(which(res$input_profile[,1]<0 & res$input_profile[,2]<0))
@@ -705,7 +709,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
     hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
-    #barcghart of gene set locations by quadrant
+    #barchart of gene set locations by quadrant
     a<-res$manova_analysis_metrics[14]
     a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
     rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
@@ -723,6 +727,13 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
       main=paste("Scatterplot of all gene sets; top",resrows,"in red") )
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
     points(top[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+
+    # A heatmap of s values for the resrows sets
+    hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
+    rownames(hmapx)<-head(res$manova_result$set,resrows)
+    colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
+    my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+    heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
     # plot effect size versus significance 
     plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
@@ -779,7 +790,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   pdf(outfile)
 
   # if working with >5 dimensions, then substitute the dimension (colnames) names with a number
-  if ( ncol(ss)>5 ) {
+  if ( d>5 ) {
     mydims<-data.frame( attributes(res)$profile_dimensions )
     colnames(mydims)<-"dimensions"
     grid.newpage()
@@ -828,7 +839,6 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   }
 
   #a table of gene location by sector
-  d=ncol(ss)
   sig<-sign(ss)
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Number of genes in each sector"
@@ -849,9 +859,8 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   grid.newpage()
   grid.table(sector_count,theme=mytheme)
 
-  DIMS=ncol(ss)
   #pairs points plot for gene sets
-  manova_result_clipped<-res$manova_result[,4:(3+DIMS)] 
+  manova_result_clipped<-res$manova_result[,4:(3+d)] 
   colnames(manova_result_clipped)<-colnames(res$input_profile)
   p<-ggpairs(manova_result_clipped , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
   print( p +  theme_bw() )
@@ -867,6 +876,13 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     p
   }
 
+  # A heatmap of s values for the resrows sets
+  hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
+  rownames(hmapx)<-head(res$manova_result$set,resrows)
+  colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
+  my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+  heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
+
   # plot effect size versus significance 
   par(mfrow=c(1,1))
   plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
@@ -881,7 +897,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     size<-ll$setSize
     sss<-res$detailed_sets[[i]]
 
-    if ( ncol(ss)>5 ) {
+    if ( d>5 ) {
       colnames(sss)<- paste("d",1:ncol(res$input_profile),sep="")
     }
 
