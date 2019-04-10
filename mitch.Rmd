@@ -53,7 +53,6 @@ if ( d<3 ) {
   plot(res$input_profile, pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.15), main="Input profiles"  )
 } else {
   library("GGally")
-#  library("vioplot")
   ggpairs_points_plot <- function(data ,mapping, ...){
     p <- ggplot(data = data, mapping = mapping) +
     geom_point(alpha=0.05) +
@@ -546,7 +545,7 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 
 ```
-# A heatmap of the top results
+## A heatmap of S values for top results
 ```{r,heatmap,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
 
     hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
@@ -603,7 +602,6 @@ cat("<hr><br>")
 library("reshape2")
 library("ggplot2")
 library("GGally")
-#library(vioplot)
 resrows=length(res$detailed_sets)
 ss<-res$ranked_profile
 myres<-head(res$manova_result,resrows)
@@ -645,10 +643,6 @@ twodimplot<-function(i) {
     axis.title=element_text(size=15),
     plot.title = element_text(size = 20)))
 
- # do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
- # grid()
- # abline(h=0,lty=2,lwd=2,col="blue")
- # title(main = ll[,1] , ylab = "Position in rank")
 }
 
 ndplot<-function(i) {
@@ -707,10 +701,6 @@ ndplot<-function(i) {
     axis.title=element_text(size=15),
     plot.title = element_text(size = 20)))
 
-#  do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
-#  grid()
-#  abline(h=0,lty=2,lwd=2)
-#  title(main = ll[,1] , ylab = "Position in rank")
 }
 
 topgenelist<-function(i) {
