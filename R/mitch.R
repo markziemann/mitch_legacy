@@ -286,6 +286,13 @@ rownames(xxx)<-xxx$geneidentifiers
 xxx$geneidentifiers=NULL
 colnames(xxx)<-names(x)
 
+STARTSWITHNUM=length(grep("^[0-9]",colnames(xxx)))
+if (STARTSWITHNUM>0) {
+  stop("Error: it looks like one or more column names starts with a number. This is incompatible with downstream analysis. Please modify")
+}
+
+
+
 MEAN_N_GENES_IN=mean(unlist(lapply(x,nrow)))
 N_GENES_OUT=nrow(xxx)
 PROP=signif(N_GENES_OUT/MEAN_N_GENES_IN,3)
@@ -337,6 +344,11 @@ gmt_import<-function(gmtfile){
 #' @examples
 #' #This function is not designed to be used directly
 MANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
+
+STARTSWITHNUM=length(grep("^[0-9]",colnames(x)))
+if (STARTSWITHNUM>0) {
+  stop("Error: it looks like one or more column names starts with a number. This is incompatible with downstream analysis. Please modify")
+}
 
 sets<-names(genesets)
 
