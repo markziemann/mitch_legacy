@@ -1,5 +1,5 @@
 ---
-title: "nDrichr Report"
+title: "Mitch Report"
 author: "Antony Kaspi & Mark Ziemann"
 runtime: shiny
 output: html_document
@@ -10,9 +10,10 @@ date generated: "`r Sys.Date()`"
 
 ## Background
 
-nDrich performs multidimensional gene set enrichment analysis. The concept behind this dates to work by Cox and 
+Mitch performs multidimensional gene set enrichment analysis. The concept behind this dates to work by Cox and 
 Mann (https://doi.org/10.1186/1471-2105-13-S16-S12). This implementation is suited to R based workflows of 
-multi-omics datasets. This software was developed by Antony Kaspi and Mark Ziemann.
+multi-omics datasets. This software was developed by Antony Kaspi and Mark Ziemann. Learn
+more about Mitch at the website: https://github.com/markziemann/Mitch
 
 ## Input profiles
 
