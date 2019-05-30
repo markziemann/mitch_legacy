@@ -189,11 +189,12 @@ All sets with p.adjustMANOVA<0.05. Try hovering over the points.
 library("taucharts")
 library(dplyr)
 library(gtools)
+res$manova_result$confESp<-as.numeric(res$manova_result$confESp)
   numsets=nrow(subset(res$manova_result,p.adjustMANOVA<0.05))
   p=NULL
   if (numsets>0){
     myres<-subset(res$manova_result,p.adjustMANOVA<0.05)
-    myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
+    # myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
     if ( d<3 ) {
       myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
       myres$set<-gsub("_"," ",as.character(myres$set))
