@@ -1,7 +1,6 @@
 ---
 title: "Mitch Report"
 author: "Antony Kaspi & Mark Ziemann"
-runtime: shiny
 output: html_document
 theme: cosmo
 ---
