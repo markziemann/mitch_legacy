@@ -34,9 +34,13 @@ The `mitch_calc` function performs multivariate enrichment analysis of the suppl
 res<-mitch_calc(y,genesets,priority="significance")
 res<-mitch_calc(y,genesets,priority="effect")
 ```
-`mitch_calc` takes advantage of mclapply to speed up calculations on multi-threaded CPUs. This behaviour can be modified by setting the `cores` to a desred number.
+By default, `mitch_calc` uses mclapply to speed up calculations on all but one available CPU threads. This behaviour can be modified by setting the `cores` to a desred number.
 
 ```
 res<-mitch_calc(y,genesets,priority="significance",cores=4)
 ```
-At this point, 
+
+minsetsize
+resrows
+priority
+bootstraps
