@@ -11,7 +11,7 @@ library("mitch")
 
 ## Workflow overview
 ### Importing gene sets
-Mitch has a function to import GMT files to R lists, which was adapted from work by [Yu et al, 2012](https://dx.doi.org/10.1089%2Fomi.2011.0118) in the clusterProfiler package. For example:
+Mitch has a function to import GMT files to R lists, which was adapted from work by [Yu et al, 2012](https://dx.doi.org/10.1089%2Fomi.2011.0118) in the [clusterProfiler](http://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) package. For example:
 ```
 genesets<-gmt_import("Reactome.gmt")
 ```
@@ -35,12 +35,24 @@ res<-mitch_calc(y,genesets,priority="significance")
 res<-mitch_calc(y,genesets,priority="effect")
 ```
 By default, `mitch_calc` uses mclapply to speed up calculations on all but one available CPU threads. This behaviour can be modified by setting the `cores` to a desred number.
-
 ```
 res<-mitch_calc(y,genesets,priority="significance",cores=4)
 ```
+By default, gene sets with fewer than 10 members present in the profiling data are discarded. This threshold can be modified using the `minsetsize` option. There is no upper limit of gene set size.
+```
+res<-mitch_calc(y,genesets,priority="significance",minsetsize=20)
+```
 
-minsetsize
-resrows
-priority
-bootstraps
+Optionally, users can specify bootstrapping to estimate the lower 95% confidence interval of the s.distance (effect size). This is done by randomly resampling the gene set with replacement. This adds significantly to the execution time, so it is not advised for "first-pass" analysis. A reasonable bootstrap number is 1000.
+```
+res<-mitch_calc(y,genesets,priority="significance",bootstraps=1000)
+```
+If bootstraps are specified, then the results can be prioritised by the lower confidence interval of the s.distance:
+```
+res<-mitch_calc(y,genesets,priority="confidence",bootstraps=1000)
+```
+
+By default, in downstream visualisation steps, charts are made from the top 50 gene sets, but this can be modified using the `resrows` option. 
+```
+res<-mitch_calc(y,genesets,priority="significance",resrows=100)
+```
