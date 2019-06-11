@@ -63,8 +63,11 @@ The Taucharts package is requried to create interactive charts. Install it accor
 ```
 mitch_report(res,"myreport.html")
 ```
+Take a look at an [example report](https://github.com/markziemann/Mitch/blob/master/figs/myreport.html).
+
 ### Generate high resolution plots
 In case you want the charts in PDF format, these can be generated as such:
 ```
 mitch_plots(res,outfile="mycharts.pdf")
 ```
+Take a look at an [example plot set](https://github.com/markziemann/Mitch/blob/master/figs/mycharts.pdf).
