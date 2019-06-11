@@ -7,6 +7,7 @@ Mitch is an R package for multi-dimensional enrichment analysis. At it's heart, 
 ```
 install.packages("devtools")
 library("devtools")
+devtools::install_github("hrbrmstr/taucharts")
 devtools::install_github("markziemann/Mitch")
 library("mitch")
 ```
@@ -59,10 +60,11 @@ By default, in downstream visualisation steps, charts are made from the top 50 g
 res<-mitch_calc(y,genesets,priority="significance",resrows=100)
 ```
 ### Generate a HTML report
-The Taucharts package is requried to create interactive charts. Install it according to the instructions [here](https://github.com/hrbrmstr/taucharts). Once installed, the report can be generated like this:
+Can be done like this:
 ```
 mitch_report(res,"myreport.html")
 ```
+If you receive an error here, ensure that [Taucharts](https://github.com/hrbrmstr/taucharts) is installed properly.
 Take a look at an [example report](https://github.com/markziemann/Mitch/blob/master/figs/myreport.html).
 
 ### Generate high resolution plots
