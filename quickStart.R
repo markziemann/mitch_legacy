@@ -19,11 +19,10 @@ unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 # Run the analysis
-res<-mitch_calc(x,genesets,resrows=25,bootstraps=100,priority="effect")
+res<-mitch_calc(x,genesets,resrows=25,bootstraps=100,priority="significance")
 
 # Generate a report in html format
 mitch_report(res,"outres.html")
 
 # Generate high res plots
 mitch_plots(res,outfile="outres.pdf")
-
