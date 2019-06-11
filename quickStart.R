@@ -22,7 +22,7 @@ genesets<-gmt_import("ReactomePathways.gmt")
 res<-mitch_calc(x,genesets,resrows=25,bootstraps=100,priority="significance")
 
 # Generate a report in html format
-mitch_report(res,"outres.html")
+mitch_report(res,"myreport.html")
 
 # Generate high res plots
-mitch_plots(res,outfile="outres.pdf")
+mitch_plots(res,outfile="mycharts.pdf")
