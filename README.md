@@ -23,9 +23,9 @@ Mitch accepts pre-ranked data supplied by the user, but also has a function call
 x<-list("dge1"=dge1,"dge2"=dge2)
 y<-mitch_import(x,"edger")
 ```
-By default, differential gene activiy is scored using the directional nominal p-value.
+By default, differential gene activity is scored using the directional nominal p-value.
 
-S=-log10(p-value) * sgn(logFC)
+S = -log10(p-value) * sgn(logFC)
 
 If this is not desired, then users can perform their own custom scoring procedure.
 
@@ -57,4 +57,14 @@ res<-mitch_calc(y,genesets,priority="confidence",bootstraps=1000)
 By default, in downstream visualisation steps, charts are made from the top 50 gene sets, but this can be modified using the `resrows` option. 
 ```
 res<-mitch_calc(y,genesets,priority="significance",resrows=100)
+```
+### Generate a HTML report
+The Taucharts package is requried to create interactive charts. Install it according to the instructions [here](https://github.com/hrbrmstr/taucharts). Once installed, the report can be generated like this:
+```
+mitch_report(res,"myreport.html")
+```
+### Generate high resolution plots
+In case you want the charts in PDF format, these can be generated as such:
+```
+mitch_plots(res,outfile="mycharts.pdf")
 ```
