@@ -1,5 +1,7 @@
 # Mitch
 Mitch is a tool for multi-dimensional enrichment analysis. At it's heart, it uses a rank-MANOVA based statistical approach to detect sets of genes that exhibit enrichment in the multidimensional space as compared to the background. Mitch is useful for pathway analysis of profiling studies with two to or more contrasts, or in studies with multiple omics profiling, for example proteomic, transcriptomic, epigenomic analysis of the same samples.
+![example enrichment plot](https://github.com/markziemann/Mitch/blob/master/figs/outres.pdf.png"Example enrichment plot")
+
 
 ## Installation
 ```
