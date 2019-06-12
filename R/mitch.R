@@ -72,7 +72,7 @@ for (i in 1:length(x) ) {
     LEN=length( which(names(x[[i]]) %in% geneIDcol) )
     if (LEN<1) { stop("Error: the specified geneIDcol doesn't seem to exist") }
     if (LEN>1) { stop("Error: there are multiple matches for the  specified geneIDcol") }
-    attributes(x[[i]])$geneIDcol<-which( names(x1[[i]]) %in% geneIDcol )
+    attributes(x[[i]])$geneIDcol<-which( names(x[[i]]) %in% geneIDcol )
   } else {
     attributes(x[[i]])$geneIDcol<-NULL
   }
