@@ -2,8 +2,9 @@
 install.packages("devtools")
 library("devtools")
 
-# Install mitch from github
+# Install mitch and taucharts from github
 devtools::install_github("markziemann/Mitch")
+devtools::install_github("hrbrmstr/taucharts")
 library("mitch")
 
 # Download a 2 column DGE rank file from an RNA-seq experiment
