@@ -1,6 +1,6 @@
 Package: mitch
 Title: Multidimensional Gene Set Enrichment Analysis
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: 
     person(given = "Mark",
            family = "Ziemann",
@@ -15,4 +15,4 @@ Depends: plyr, dplyr, parallel, pbmcapply, Rmisc, GGally, vioplot, grid, gridExt
 License: CC BY-SA 4.0
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1.9000
+RoxygenNote: 6.1.1.9001

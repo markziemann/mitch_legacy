@@ -96,13 +96,15 @@ edger_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'logFC' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
 
-  z<-as.data.frame(sign(y$logFC)*-log10(y$PValue))
-  colnames(z)<-"y"
+  s<-sign(y$logFC)*-log10(y$PValue)
+
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+    g<-y[,attributes(y)$geneIDcol]
   } else {
-    z$geneidentifiers<-rownames(y)
+    g<-rownames(y)
   }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
   z<-mapGeneIds(y,z)
   z
 }
@@ -120,14 +122,15 @@ deseq2_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'log2FoldChange' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'log2FoldChange' in the input") }
 
-  z<-as.data.frame(sign(y$log2FoldChange)*-log10(y$pvalue))
-  colnames(z)<-"y"
-  COL<-attributes(y)$geneIDcol
+  s<-sign(y$log2FoldChange)*-log10(y$pvalue)
+
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+    g<-y[,attributes(y)$geneIDcol]
   } else {
-    z$geneidentifiers<-rownames(y)
+    g<-rownames(y)
   }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
   z<-mapGeneIds(y,z)
   z
 }
@@ -145,14 +148,15 @@ limma_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'logFC' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
 
-  z<-as.data.frame(sign(y$logFC)*-log10(y$P.Value))
-  colnames(z)<-"y"
-  COL<-attributes(y)$geneIDcol
+  s<-sign(y$logFC)*-log10(y$P.Value)
+
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+    g<-y[,attributes(y)$geneIDcol]
   } else {
-    z$geneidentifiers<-rownames(y)
+    g<-rownames(y)
   }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
   z<-mapGeneIds(y,z)
   z
 }
@@ -170,14 +174,15 @@ absseq_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'foldChange' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'foldChange' in the input") }
 
-  z<-as.data.frame(sign(y$foldChange)*-log10(y$pvalue))
-  colnames(z)<-"y"
-  COL<-attributes(y)$geneIDcol
+  s<-sign(y$foldChange)*-log10(y$pvalue)
+
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+    g<-y[,attributes(y)$geneIDcol]
   } else {
-    z$geneidentifiers<-rownames(y)
+    g<-rownames(y)
   }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
   z<-mapGeneIds(y,z)
   z
 }
@@ -195,14 +200,15 @@ sleuth_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'b' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'b' in the input") }
 
-  z<-as.data.frame(sign(y$b)*-log10(y$pval))
-  colnames(z)<-"y"
-  COL<-attributes(y)$geneIDcol
+  s<-sign(y$b)*-log10(y$pval)
+
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+    g<-y[,attributes(y)$geneIDcol]
   } else {
-    z$geneidentifiers<-rownames(y)
+    g<-rownames(y)
   }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
   z<-mapGeneIds(y,z)
   z
 }
@@ -213,15 +219,16 @@ topconfect_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'confect' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'confect' in the input") }
 
-  z<-as.data.frame(y$confect)
-  z[is.na(z)] <- 0
-  colnames(z)<-"y"
-  COL<-attributes(y)$geneIDcol
+  s<-y$confect
+  s[is.na(s)] <- 0
+
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+    g<-y[,attributes(y)$geneIDcol]
   } else {
-    z$geneidentifiers<-rownames(y)
+    g<-rownames(y)
   }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
   z<-mapGeneIds(y,z)
   z
 }
@@ -239,14 +246,15 @@ seurat_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'logFC' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
 
-  z<-as.data.frame(sign(y$avg_logFC)*-log10(y$p_val))
+  s<-sign(y$avg_logFC)*-log10(y$p_val)
 
-  colnames(z)<-"y"
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    z$geneidentifiers<-y[,attributes(y)$geneIDcol]
+    g<-y[,attributes(y)$geneIDcol]
   } else {
-    z$geneidentifiers<-rownames(y)
+    g<-rownames(y)
   }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
   z<-mapGeneIds(y,z)
 
   z$y[is.infinite(z$y) & z$y < 0] <- min(z$y[!is.infinite(z$y)])-.01
@@ -274,7 +282,7 @@ if ( DEtype == "edger" ) {
 
 # give the colums a unique name otherwise join_all will fail
 for (i in 1:length(xx) )  {
-  colnames(xx[[i]])<-c("geneidentifiers",paste("y",i,sep=""))    
+  colnames(xx[[i]])<-c("geneidentifiers" , paste("y",i,sep=""))
 }
 
 if ( DEtype == "seurat" ) {
