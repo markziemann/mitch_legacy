@@ -9,6 +9,183 @@ library("stringi")
 library("mitch")
 library("fgsea")
 
+
+########################################
+# simulate some gene expression data
+########################################
+simrna2d<-function(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets) {
+
+# N_REPS=3 ; SUM_COUNT=10000000 ; VARIANCE=0.2 ; FRAC_DE=0.02 ; FC=1 
+
+library("edgeR")
+
+df = NULL
+for (k in paste0("data",1:(N_REPS*4)))  {
+        b<-thinCounts(a,target.size=SUM_COUNT)
+        colnames(b)=k
+        df = cbind(df,b)
+     }
+
+# now need to only include gsets with 10 members in the 
+gsets_sub<-which(unlist( lapply(gsets,function(x) { length(which(rownames(a) %in% as.character(unlist(x)))) >10 }  ) ) )
+gsets<-gsets[which(names(gsets) %in% names(gsets_sub))]
+
+#Number of differential genes
+NDIF=round(length(gsets)*FRAC_DE)
+
+if (VARIANCE>0) {
+  #create some random values centred around 1 with some% error
+  rand<-matrix(log2(rnorm(nrow(a)*N_REPS*4 , 2, VARIANCE)),ncol=N_REPS*4)
+  #incorporate the noise
+  df<-round(df*rand)
+  #set any negative counts to zero
+  df<-apply(df, 2, function(x) {ifelse(x < 0, 0, x)})
+}
+
+if (NDIF>0) {
+  message("prep fold changes")
+  #Make even
+  if ( NDIF%%2==1 ) { print("odd") ; NDIF=NDIF-1 }
+  # sample some pathways to fiddle with
+  DE_LIST1<-sample(gsets , NDIF)
+  # divide the list in 2 with half up and half down
+  UP_LIST1=sample(DE_LIST1 , NDIF/2)
+  DN_LIST1<-DE_LIST1[!(DE_LIST1 %in% UP_LIST1)]
+  # now find a list of genes inside the pathways
+  UP_DE1<-unique(unlist(unname(UP_LIST1)))
+  # select the ones that are also in the profile
+  UP_DE1<-UP_DE1[which(UP_DE1 %in% row.names(df))]
+  # same for down genes
+  DN_DE1<-unique(unlist(unname(DN_LIST1)))
+  DN_DE1<-DN_DE1[which(DN_DE1 %in% row.names(df))]
+  ITX<-intersect(UP_DE1,DN_DE1)
+  # need to eliminate the overlapping ones for simplicity
+  UP_DE1<-setdiff(UP_DE1,ITX)
+  DN_DE1<-setdiff(DN_DE1,ITX)
+  #reformat as df and add fold change
+  UP_DE1<-as.data.frame(UP_DE1)
+  UP_DE1$V1<-2^FC
+  colnames(UP_DE1)=c("Gene","FC")
+  DN_DE1<-as.data.frame(DN_DE1)
+  DN_DE1$V1<-2^-FC
+  colnames(DN_DE1)=c("Gene","FC")
+  ALL_DE1<-rbind(DN_DE1,UP_DE1)
+  #Go back to list for downstream work
+  UP_DE1<-UP_DE1$Gene
+  DN_DE1<-DN_DE1$Gene
+  NON_DE1<-as.data.frame(setdiff(rownames(df),ALL_DE1$Gene))
+  colnames(NON_DE1)="Gene"
+  NON_DE1$FC=1
+  ALL_DE1<-rbind(ALL_DE1,NON_DE1)
+  ALL_DE1<-ALL_DE1[ order(as.vector(ALL_DE1$Gene)) , ]
+
+  DE_LIST2<-sample(gsets , NDIF)
+  # divide the list in 2 with half up and half down
+  UP_LIST2=sample(DE_LIST2 , NDIF/2)
+  DN_LIST2<-DE_LIST2[!(DE_LIST2 %in% UP_LIST2)]
+  # now find a list of genes inside the pathways
+  UP_DE2<-unique(unlist(unname(UP_LIST2)))
+  # select the ones that are also in the profile
+  UP_DE2<-UP_DE2[which(UP_DE2 %in% row.names(df))]
+  # same for down genes
+  DN_DE2<-unique(unlist(unname(DN_LIST2)))
+  DN_DE2<-DN_DE2[which(DN_DE2 %in% row.names(df))]
+  ITX<-intersect(UP_DE2,DN_DE2)
+  # need to eliminate the overlapping ones for simplicity
+  UP_DE2<-setdiff(UP_DE2,ITX)
+  DN_DE2<-setdiff(DN_DE2,ITX)
+  #reformat as df and add fold change
+  UP_DE2<-as.data.frame(UP_DE2)
+  UP_DE2$V1<-2^FC
+  colnames(UP_DE2)=c("Gene","FC")
+  DN_DE2<-as.data.frame(DN_DE2)
+  DN_DE2$V1<-2^-FC
+  colnames(DN_DE2)=c("Gene","FC")
+  ALL_DE2<-rbind(DN_DE2,UP_DE2)
+  #Go back to list for downstream work
+  UP_DE2<-UP_DE2$Gene
+  DN_DE2<-DN_DE2$Gene
+  NON_DE2<-as.data.frame(setdiff(rownames(df),ALL_DE2$Gene))
+  colnames(NON_DE2)="Gene"
+  NON_DE2$FC=1
+  ALL_DE2<-rbind(ALL_DE2,NON_DE2)
+  ALL_DE2<-ALL_DE2[ order(as.vector(ALL_DE2$Gene)) , ]
+
+  DE_LIST3<-sample(gsets , NDIF)
+  # divide the list in 2 with half up and half down
+  UP_LIST3=sample(DE_LIST3 , NDIF/2)
+  DN_LIST3<-DE_LIST3[!(DE_LIST3 %in% UP_LIST3)]
+  # now find a list of genes inside the pathways
+  UP_DE3<-unique(unlist(unname(UP_LIST3)))
+  # select the ones that are also in the profile
+  UP_DE3<-UP_DE3[which(UP_DE3 %in% row.names(df))]
+  # same for down genes
+  DN_DE3<-unique(unlist(unname(DN_LIST3)))
+  DN_DE3<-DN_DE3[which(DN_DE3 %in% row.names(df))]
+  ITX<-intersect(UP_DE3,DN_DE3)
+  # need to eliminate the overlapping ones for simplicity
+  UP_DE3<-setdiff(UP_DE3,ITX)
+  DN_DE3<-setdiff(DN_DE3,ITX)
+  #reformat as df and add fold change
+  UP_DE3<-as.data.frame(UP_DE3)
+  UP_DE3$V1<-2^FC
+  colnames(UP_DE3)=c("Gene","FC")
+  DN_DE3<-as.data.frame(DN_DE3)
+  DN_DE3$V1<-2^-FC
+  colnames(DN_DE3)=c("Gene","FC")
+  ALL_DE3<-rbind(DN_DE3,UP_DE3)
+  #Go back to list for downstream work
+  UP_DE3<-UP_DE3$Gene
+  DN_DE3<-DN_DE3$Gene
+  NON_DE3<-as.data.frame(setdiff(rownames(df),ALL_DE3$Gene))
+  colnames(NON_DE3)="Gene"
+  NON_DE3$FC=1
+  ALL_DE3<-rbind(ALL_DE3,NON_DE3)
+  ALL_DE3<-ALL_DE3[ order(as.vector(ALL_DE3$Gene)) , ]
+
+  message("incorporate changes")
+  df <- df[ order(row.names(df)), ]
+} else {
+  ALL_DE1<-df[,1,drop=F] ; ALL_DE1[,1]<-1 ; colnames(ALL_DE1)="FC"
+  ALL_DE2<-df[,1,drop=F] ; ALL_DE2[,1]<-1 ; colnames(ALL_DE2)="FC"
+  ALL_DE3<-df[,1,drop=F] ; ALL_DE3[,1]<-1 ; colnames(ALL_DE3)="FC"
+  UP_DE1=NULL ; DN_DE1=NULL ; UP_LIST1=NULL ; DN_LIST1=NULL
+  UP_DE2=NULL ; DN_DE2=NULL ; UP_LIST2=NULL ; DN_LIST2=NULL
+  UP_DE3=NULL ; DN_DE3=NULL ; UP_LIST3=NULL ; DN_LIST3=NULL
+}
+ONE_IDX_COLS=(1:ncol(df))[c(TRUE,FALSE,FALSE,FALSE)]
+TWO_IDX_COLS=(1:ncol(df))[c(FALSE,TRUE,FALSE,FALSE)]
+THREE_IDX_COLS=(1:ncol(df))[c(FALSE,FALSE,TRUE,FALSE)]
+FOUR_IDX_COLS=(1:ncol(df))[c(FALSE,FALSE,FALSE,TRUE)]
+
+controls1<-df[,ONE_IDX_COLS]
+colnames(controls1)=paste0( "ctrl1_" ,1:ncol(controls1) )
+
+treatments1<-round(df[,TWO_IDX_COLS]*ALL_DE1$FC)
+colnames(treatments1)=paste0( "trt1_" ,1:ncol(treatments1) )
+
+controls2<-round(df[,c(THREE_IDX_COLS)]*ALL_DE2$FC)
+colnames(controls2)=paste0( "ctrl2_" ,1:ncol(controls2) )
+
+treatments2<-round(df[,FOUR_IDX_COLS]*ALL_DE2$FC*ALL_DE3$FC)
+colnames(treatments2)=paste0( "trt2_" ,1:ncol(treatments2) )
+
+x<-cbind(controls1,treatments1,controls2,treatments2)
+rownames(x)=rownames(df)
+#filter out genes that are not expressed
+x<- x[which(rowSums(x)/ncol(x)>10),]
+UP_DE1<-intersect(UP_DE1,rownames(x)) ; DN_DE1<-intersect(DN_DE1,rownames(x))
+UP_DE2<-intersect(UP_DE2,rownames(x)) ; DN_DE2<-intersect(DN_DE2,rownames(x))
+UP_DE3<-intersect(UP_DE3,rownames(x)) ; DN_DE3<-intersect(DN_DE3,rownames(x))
+
+xx <- list("x" = x,"UP_DE1"=UP_DE1,"DN_DE1"=DN_DE1, "UP_DE2"=UP_DE2,"DN_DE2"=DN_DE2, "UP_LIST1"=UP_LIST1,"DN_LIST1"=DN_LIST1, "UP_LIST2"=UP_LIST2,"DN_LIST2"=DN_LIST2 )
+xx
+}
+
+
+
+
+
 ########################################
 # simulate some gene expression data
 ########################################
