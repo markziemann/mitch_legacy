@@ -15,6 +15,20 @@ a<-countData()
 # generate some gene sets
 gsets<-randomGeneSets(a)
 
+# create some random data with two contraste
+N_REPS=5 ; SUM_COUNT=40000000 ; VARIANCE=0.2 ; FRAC_DE=0.1 ; FC=1 ; DGE_FUNC="deseq2"
+
+x<-simrna2d(a,REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets)
+
+# run the DESeq2 DE analysis
+x<-deseq2(x)
+
+# run mitch
+x<-run_mitch(x,DGE_FUNC,gsets, N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
+
+# look at the results
+str(x)
+
 ###############################################
 # run simulations over a range of parameters
 ###############################################
