@@ -15,21 +15,22 @@ a<-countData()
 # generate some gene sets
 gsets<-randomGeneSets(a)
 
+
+# test
+# x<-agg_dge(a,3,40000000,0.3,0.05,1,10,"deseq2",gsets) ; str(x)
+
 ###############################################
 # run simulations over a range of parameters
 ###############################################
 SIMS=10
 unlink("simpw_res_running.tsv")
 res=NULL
-for ( FRAC_DE in c(0.2)) {
-  PDFNAME=paste(FRAC_DE,"_pw.pdf",sep="")
-  pdf(file=PDFNAME,width=11.7,height=6.9)
+for ( FRAC_DE in c(0.05)) {
   for (FC in c(1)) {
-    par(mfrow=c(3,3))
     for (N_REPS in c(3,5,10)) {
       for (DGE_FUNC in c("deseq2")) {
         for ( SUM_COUNT in c(10000000,40000000,100000000)) {
-          for  ( VARIANCE in c(0,0.2,0.3,0.4,0.5)) {
+          for ( VARIANCE in c(0,0.3,0.6)) {
             x<-agg_dge(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,gsets)
             x<-as.data.frame(do.call(rbind, x))
             write.table(x,file="simpw_res_running.tsv",quote=F,sep='\t',append=T)

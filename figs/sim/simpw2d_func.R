@@ -221,8 +221,6 @@ xx <- list("x" = x,"QUAD1"=names(QUAD1),"QUAD2"=names(QUAD2), "QUAD3"=names(QUAD
 xx
 }
 
-
-
 #################################################
 # A parallel repeat function
 #################################################
@@ -347,7 +345,7 @@ dge2<-x[[9]]
 dge<-list("dge1"=dge1,"dge2"=dge2)
 
 w<-mitch_import(dge, DGE_FUNC )
-res<-mitch_calc(w,gsets,priority="significance")
+res<-mitch_calc(w,gsets,priority="significance",cores=1)
 res<-res$manova_result
 
 quad1<-res[which(res$s.dge1>0 & res$s.dge2>0 & res$p.adjustMANOVA<0.05),1]
@@ -396,120 +394,146 @@ x
 ##################################
 # hypergeometric test function (limited to deseq2)
 ##################################
-run_hypergeometric<-function(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS){
+run_hypergeometric<-function(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC){
 
-dge<-sapply(x,"[",6)
+ups1<-x[[7]]
+dns1<-x[[8]]
+ups2<-x[[10]]
+dns2<-x[[11]]
 
-ups<-lapply(dge, function(x) { rownames(subset(x, padj<0.05 & log2FoldChange > 0)) } )
-dns<-lapply(dge, function(x) { rownames(subset(x, padj<0.05 & log2FoldChange < 0)) } )
+q1<-intersect(ups1,ups2)
+q2<-intersect(ups1,dns2)
+q3<-intersect(dns1,ups2)
+q4<-intersect(dns1,dns2)
 
-l_ups<-sapply(ups,length)
-l_dns<-sapply(dns,length)
+l_q1<-length(q1)
+l_q2<-length(q2)
+l_q3<-length(q3)
+l_q4<-length(q4)
+
 geneset_sizes<-sapply( gsets , length )
 
 # calculate number of genes in sets that are up and downregulated
 n_dns=n_ups=p_ups=p_dns=obs_up=obs_dn=NULL
 n_dns=n_ups=p_ups=p_dns=obs_up=obs_dn=list()
 
-for (d in 1:length(dge)) {
-  universe=length(rownames(dge[[d]]))
-  n_ups[[d]]<-sapply( 1:length(gsets),function(x){length(which(gsets[[x]] %in% ups[[d]] ))} )
-  n_dns[[d]]<-sapply( 1:length(gsets),function(x){length(which(gsets[[x]] %in% dns[[d]] ))} )
+universe=length(unique(rownames(x[[9]]),rownames(x[[9]])))
 
-  p_ups[[d]]<-sapply( 1:length(gsets),function(x){phyper((n_ups[[d]][[x]]-1),l_ups[[d]],universe-geneset_sizes[[x]],geneset_sizes[[x]],lower.tail=FALSE,log.p=FALSE)})
-  p_dns[[d]]<-sapply( 1:length(gsets),function(x){phyper((n_dns[[d]][[x]]-1),l_dns[[d]],universe-geneset_sizes[[x]],geneset_sizes[[x]],lower.tail=FALSE,log.p=FALSE)})
+n_q1<-sapply( 1:length(gsets),function(x){length(which(gsets[[x]] %in% q1 ))} )
+n_q2<-sapply( 1:length(gsets),function(x){length(which(gsets[[x]] %in% q2 ))} )
+n_q3<-sapply( 1:length(gsets),function(x){length(which(gsets[[x]] %in% q3 ))} )
+n_q4<-sapply( 1:length(gsets),function(x){length(which(gsets[[x]] %in% q4 ))} )
 
-  x[[d]][[11]]<-names(gsets[which(p.adjust(p_ups[[d]],method="fdr")<0.05)])
-  x[[d]][[12]]<-names(gsets[which(p.adjust(p_dns[[d]],method="fdr")<0.05)])
-}
+p_q1<-sapply( 1:length(gsets),function(z){phyper((n_q1[[z]]-1),l_q1,universe-geneset_sizes[[z]],geneset_sizes[[z]],lower.tail=FALSE,log.p=FALSE)})
+p_q2<-sapply( 1:length(gsets),function(z){phyper((n_q2[[z]]-1),l_q2,universe-geneset_sizes[[z]],geneset_sizes[[z]],lower.tail=FALSE,log.p=FALSE)})
+p_q3<-sapply( 1:length(gsets),function(z){phyper((n_q3[[z]]-1),l_q3,universe-geneset_sizes[[z]],geneset_sizes[[z]],lower.tail=FALSE,log.p=FALSE)})
+p_q4<-sapply( 1:length(gsets),function(z){phyper((n_q4[[z]]-1),l_q4,universe-geneset_sizes[[z]],geneset_sizes[[z]],lower.tail=FALSE,log.p=FALSE)})
 
-obs_up<-sapply(x,"[",11)
-obs_dn<-sapply(x,"[",12)
+q1_obs<-names(gsets[which(p.adjust(p_q1,method="fdr")<0.05)])
+q2_obs<-names(gsets[which(p.adjust(p_q2,method="fdr")<0.05)])
+q3_obs<-names(gsets[which(p.adjust(p_q3,method="fdr")<0.05)])
+q4_obs<-names(gsets[which(p.adjust(p_q4,method="fdr")<0.05)])
 
-gt_up<-sapply(x,"[",4)
-gt_up<-lapply( gt_up , names)
-gt_dn<-sapply(x,"[",5)
-gt_dn<-lapply( gt_dn , names)
+gt_q1<-x[[2]]
+gt_q2<-x[[3]]
+gt_q3<-x[[4]]
+gt_q4<-x[[5]]
 
-true_pos_up<-as.numeric(mapply( function(x,y) length(intersect(x,y)) , obs_up ,  gt_up ))
-true_pos_dn<-as.numeric(mapply( function(x,y) length(intersect(x,y)) , obs_dn ,  gt_dn ))
-false_pos_up<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , obs_up ,  gt_up ))
-false_pos_dn<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , obs_dn , gt_dn ))
-false_neg_up<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , gt_up ,  obs_up ))
-false_neg_dn<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , gt_dn ,  obs_dn ))
+true_pos_q1=length(intersect( q1_obs , gt_q1 ))
+true_pos_q2=length(intersect( q2_obs , gt_q2 ))
+true_pos_q3=length(intersect( q3_obs , gt_q3 ))
+true_pos_q4=length(intersect( q4_obs , gt_q4 ))
+true_pos=sum(true_pos_q1, true_pos_q2, true_pos_q3, true_pos_q4)
 
-true_pos<-mean(true_pos_up+true_pos_dn)
-false_pos<-mean(false_pos_up+false_pos_dn)
-false_neg<-mean(false_neg_up+false_neg_dn)
-nrows<-as.numeric(lapply( sapply(x,"[",1 ), nrow))
-true_neg<-mean(nrows-(true_pos+false_pos+false_neg))
+false_pos_q1=length(setdiff(q1_obs , gt_q1 ))
+false_pos_q2=length(setdiff(q2_obs , gt_q2 ))
+false_pos_q3=length(setdiff(q3_obs , gt_q3 ))
+false_pos_q4=length(setdiff(q4_obs , gt_q4 ))
+false_pos=sum(false_pos_q1, false_pos_q2, false_pos_q3, false_pos_q4)
+
+false_neg_q1=length(setdiff(gt_q1 , q1_obs ))
+false_neg_q2=length(setdiff(gt_q2 , q2_obs ))
+false_neg_q3=length(setdiff(gt_q3 , q3_obs ))
+false_neg_q4=length(setdiff(gt_q4 , q4_obs ))
+false_neg=sum( false_neg_q1 , false_neg_q2 , false_neg_q3 , false_neg_q4)
+
+true_neg=length(gsets)-sum(true_pos,false_pos,false_neg)
 
 p<-true_pos/(true_pos+false_pos)
 r<-true_pos/(true_pos+false_neg)
 f<-2*p*r/(p+r)
 
-attr(x,'phyper_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
+attr(x,'phyper_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
 x
-
 }
 
 ##################################
 # FGSEA function
 ##################################
-run_fgsea<-function(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS){
+run_fgsea<-function(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC){
 
-dge<-sapply(x,"[",6)
+dge1<-x[[6]]
+dge2<-x[[9]]
 
-xx<-lapply( dge , function(x) { 
- s<-sign(x$log2FoldChange)*-log10(x$pvalue)
- s[is.na(s)] <- 1
- s[!is.finite(s)] <- 1
- names(s)<-rownames(x)
- p<-as.data.frame(fgsea(pathways=gsets, stats=s, nperm=1000))
-} )
+#dge1
+s1<-sign(dge1$log2FoldChange)*-log10(dge1$pvalue+1E-300)
+names(s1)<-rownames(dge1)
+p1<-as.data.frame(fgsea(pathways=gsets, stats=s1, nperm=1000))
+obs_up1<-subset(p1,padj<0.05 & ES>0)[,1]
+obs_dn1<-subset(p1,padj<0.05 & ES<0)[,1]
 
-obs_up<-lapply(xx, function(x) { subset(x,padj<0.05 & ES>0)[,1] } )
-obs_dn<-lapply(xx, function(x) { subset(x,padj<0.05 & ES<0)[,1] } )
+#dge2
+s2<-sign(dge2$log2FoldChange)*-log10(dge2$pvalue+1E-300)
+names(s2)<-rownames(dge2)
+p2<-as.data.frame(fgsea(pathways=gsets, stats=s2, nperm=1000))
+obs_up2<-subset(p2,padj<0.05 & ES>0)[,1]
+obs_dn2<-subset(p2,padj<0.05 & ES<0)[,1]
 
-for (d in 1:length(dge)) {
-  x[[d]][[13]]<-obs_up[[d]]
-  x[[d]][[14]]<-obs_dn[[d]]
-}
+q1_obs<-intersect(obs_up1,obs_up2)
+q2_obs<-intersect(obs_up1,obs_dn2)
+q3_obs<-intersect(obs_dn1,obs_up2)
+q4_obs<-intersect(obs_dn1,obs_dn2)
 
-gt_up<-sapply(x,"[",4)
-gt_up<-lapply( gt_up , names)
-gt_dn<-sapply(x,"[",5)
-gt_dn<-lapply( gt_dn , names)
+gt_q1<-x[[2]]
+gt_q2<-x[[3]]
+gt_q3<-x[[4]]
+gt_q4<-x[[5]]
 
-true_pos_up<-as.numeric(mapply( function(x,y) length(intersect(x,y)) , obs_up ,  gt_up ))
-true_pos_dn<-as.numeric(mapply( function(x,y) length(intersect(x,y)) , obs_dn ,  gt_dn ))
-false_pos_up<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , obs_up ,  gt_up ))
-false_pos_dn<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , obs_dn , gt_dn ))
-false_neg_up<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , gt_up ,  obs_up ))
-false_neg_dn<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , gt_dn ,  obs_dn ))
+true_pos_q1=length(intersect( q1_obs , gt_q1 ))
+true_pos_q2=length(intersect( q2_obs , gt_q2 ))
+true_pos_q3=length(intersect( q3_obs , gt_q3 ))
+true_pos_q4=length(intersect( q4_obs , gt_q4 ))
+true_pos=sum(true_pos_q1, true_pos_q2, true_pos_q3, true_pos_q4)
 
-true_pos<-mean(true_pos_up+true_pos_dn)
-false_pos<-mean(false_pos_up+false_pos_dn)
-false_neg<-mean(false_neg_up+false_neg_dn)
-nrows<-as.numeric(lapply( sapply(x,"[",1 ), nrow))
-true_neg<-mean(nrows-(true_pos+false_pos+false_neg))
+false_pos_q1=length(setdiff(q1_obs , gt_q1 ))
+false_pos_q2=length(setdiff(q2_obs , gt_q2 ))
+false_pos_q3=length(setdiff(q3_obs , gt_q3 ))
+false_pos_q4=length(setdiff(q4_obs , gt_q4 ))
+false_pos=sum(false_pos_q1, false_pos_q2, false_pos_q3, false_pos_q4)
+
+false_neg_q1=length(setdiff(gt_q1 , q1_obs ))
+false_neg_q2=length(setdiff(gt_q2 , q2_obs ))
+false_neg_q3=length(setdiff(gt_q3 , q3_obs ))
+false_neg_q4=length(setdiff(gt_q4 , q4_obs ))
+false_neg=sum( false_neg_q1 , false_neg_q2 , false_neg_q3 , false_neg_q4)
+
+true_neg=length(gsets)-sum(true_pos,false_pos,false_neg)
 
 p<-true_pos/(true_pos+false_pos)
 r<-true_pos/(true_pos+false_neg)
 f<-2*p*r/(p+r)
 
-attr(x,'fgsea_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
+attr(x,'fgsea_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
 x
-
 }
-
 
 ##################################
 # geneSetTest function
 ##################################
-run_gst<-function(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS){
+run_gst<-function(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC){
 
-dge<-sapply(x,"[",6)
+dge1<-x[[6]]
+dge2<-x[[9]]
 
 gst_func<-function(gene_names,gset,stats) {
  i<-which(gene_names %in% gset )
@@ -521,81 +545,94 @@ gst_func<-function(gene_names,gset,stats) {
 
 mygst=NULL
 mygst=list()
-for (d in 1:length(dge)) {
-  s<-sign(dge[[d]]$log2FoldChange)*-log10(dge[[d]]$pvalue)
-  s[is.na(s)] <- 1
-  s[!is.finite(s)] <- 1
-  mygst[[d]]<-mclapply(gsets, gst_func , gene_names=rownames(dge[[d]]) , stats=s, mc.cores=8)
-  mygst[[d]]<-t(as.data.frame(mygst[[d]]))
-  colnames(mygst[[d]])<-c("padj","es")
-  x[[d]][[15]]<-names(which(mygst[[d]][,1]<0.05 & mygst[[d]][,2]>0))
-  x[[d]][[16]]<-names(which(mygst[[d]][,1]<0.05 & mygst[[d]][,2]<0))
-}
 
-obs_up<-sapply(x,"[",15)
-obs_dn<-sapply(x,"[",16)
+s<-sign(dge1$log2FoldChange)*-log10(dge1$pvalue+1E-300)
+s[is.na(s)] <- 0
+s[!is.finite(s)] <- 0
+mygst1<-mclapply(gsets, gst_func , gene_names=rownames(dge1) , stats=s, mc.cores=1)
+mygst1<-t(as.data.frame(mygst1))
+colnames(mygst1)<-c("padj","es")
+obs_up1<-names(which(mygst1[,1]<0.05 & mygst1[,2]>0))
+obs_dn1<-names(which(mygst1[,1]<0.05 & mygst1[,2]<0))
 
-gt_up<-sapply(x,"[",4)
-gt_up<-lapply( gt_up , names)
-gt_dn<-sapply(x,"[",5)
-gt_dn<-lapply( gt_dn , names)
+s<-sign(dge2$log2FoldChange)*-log10(dge2$pvalue+1E-300)
+s[is.na(s)] <- 0
+s[!is.finite(s)] <- 0
+mygst2<-mclapply(gsets, gst_func , gene_names=rownames(dge2) , stats=s, mc.cores=1)
+mygst2<-t(as.data.frame(mygst2))
+colnames(mygst2)<-c("padj","es")
+obs_up2<-names(which(mygst2[,1]<0.05 & mygst2[,2]>0))
+obs_dn2<-names(which(mygst2[,1]<0.05 & mygst2[,2]<0))
 
-true_pos_up<-as.numeric(mapply( function(x,y) length(intersect(x,y)) , obs_up ,  gt_up ))
-true_pos_dn<-as.numeric(mapply( function(x,y) length(intersect(x,y)) , obs_dn ,  gt_dn ))
-false_pos_up<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , obs_up ,  gt_up ))
-false_pos_dn<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , obs_dn , gt_dn ))
-false_neg_up<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , gt_up ,  obs_up ))
-false_neg_dn<-as.numeric(mapply( function(x,y) length(setdiff(x,y)) , gt_dn ,  obs_dn ))
+q1_obs<-intersect(obs_up1,obs_up2)
+q2_obs<-intersect(obs_up1,obs_dn2)
+q3_obs<-intersect(obs_dn1,obs_up2)
+q4_obs<-intersect(obs_dn1,obs_dn2)
 
-true_pos<-mean(true_pos_up+true_pos_dn)
-false_pos<-mean(false_pos_up+false_pos_dn)
-false_neg<-mean(false_neg_up+false_neg_dn)
-nrows<-as.numeric(lapply( sapply(x,"[",1 ), nrow))
-true_neg<-mean(nrows-(true_pos+false_pos+false_neg))
+gt_q1<-x[[2]]
+gt_q2<-x[[3]]
+gt_q3<-x[[4]]
+gt_q4<-x[[5]]
+
+true_pos_q1=length(intersect( q1_obs , gt_q1 ))
+true_pos_q2=length(intersect( q2_obs , gt_q2 ))
+true_pos_q3=length(intersect( q3_obs , gt_q3 ))
+true_pos_q4=length(intersect( q4_obs , gt_q4 ))
+true_pos=sum(true_pos_q1, true_pos_q2, true_pos_q3, true_pos_q4)
+
+false_pos_q1=length(setdiff(q1_obs , gt_q1 ))
+false_pos_q2=length(setdiff(q2_obs , gt_q2 ))
+false_pos_q3=length(setdiff(q3_obs , gt_q3 ))
+false_pos_q4=length(setdiff(q4_obs , gt_q4 ))
+false_pos=sum(false_pos_q1, false_pos_q2, false_pos_q3, false_pos_q4)
+
+false_neg_q1=length(setdiff(gt_q1 , q1_obs ))
+false_neg_q2=length(setdiff(gt_q2 , q2_obs ))
+false_neg_q3=length(setdiff(gt_q3 , q3_obs ))
+false_neg_q4=length(setdiff(gt_q4 , q4_obs ))
+false_neg=sum( false_neg_q1 , false_neg_q2 , false_neg_q3 , false_neg_q4)
+
+true_neg=length(gsets)-sum(true_pos,false_pos,false_neg)
 
 p<-true_pos/(true_pos+false_pos)
 r<-true_pos/(true_pos+false_neg)
 f<-2*p*r/(p+r)
 
-attr(x,'gst_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
+attr(x,'gst_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
 x
-
 }
-
 
 
 ##################################
 # aggregate function
 ##################################
 agg_dge<-function(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,gsets) {
-# N_REPS=3 ; SUM_COUNT=40000000 ; VARIANCE=0 ; FRAC_DE=0.2 ; FC=1 ; SIMS=10 ; DGE_FUNC="deseq2" ; gsets=gsets
 library("mitch")
-xxx<-RepParallel(SIMS,simrna(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets), simplify=F, mc.cores = detectCores() )
+SIMS=10
 
-# run deseq2
-xxx<-mclapply(xxx , DGE_FUNC , mc.cores = detectCores() )
+myagg<-function(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets) {
+ x<-simrna2d(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets)
+ x<-deseq2(x)
+ x<-run_mitch(x,DGE_FUNC,gsets, N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
+ x<-run_hypergeometric(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
+ x<-run_fgsea(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
+ x<-run_gst(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
 
-# run mitch
-xxx<-run_mitch(xxx,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS)
-
-# run phyper
-xxx<-run_hypergeometric(xxx,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS)
-
-# run fgsea
-xxx<-run_fgsea(xxx,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS)
-
-# run GeneSetTest
-xxx<-run_gst(xxx,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS)
-
-# return the result
-g=list()
-for (f in 1:length(attributes(xxx))) {
- PWAY_FUNC<-names(attributes(xxx)[f])
- PWAY_FUNC<-as.data.frame(PWAY_FUNC)
- g[[f]]<-cbind(unname(attributes(xxx)[f]),PWAY_FUNC)
+ g=list()
+ for (f in 2:length(attributes(x))) {
+  PWAY_FUNC<-names(attributes(x)[f])
+  PWAY_FUNC<-as.data.frame(PWAY_FUNC)
+  g[[f-1]]<-cbind(unname(attributes(x)[f]),PWAY_FUNC)
+ }
+ g<-as.data.frame(do.call(rbind, g))
+ g
 }
 
+g<-RepParallel(SIMS,myagg(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets), simplify=F, mc.cores = 10 )
+g<-as.data.frame(do.call(rbind, g))
 g
 }
-# x<-agg_dge(a,10,40000000,0.4,0.2,1,10,"deseq2",gsets) 
+# N_REPS=3 ; SUM_COUNT=40000000 ; VARIANCE=0 ; FRAC_DE=0.2 ; FC=1 ; SIMS=10 ; DGE_FUNC="deseq2" ; gsets=gsets
+# res<-agg_dge(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,gsets)
+# res<-agg_dge(a,10,40000000,0.4,0.2,1,10,"deseq2",gsets) 
 

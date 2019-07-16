@@ -34,7 +34,7 @@ a
 # generate some gene sets
 ########################################
 randomGeneSets<-function(a){
-gsets<-sapply( rep(100,1000) , function(x) {list(as.character(sample(rownames(a),x))) } )
+gsets<-sapply( rep(50,1000) , function(x) {list(as.character(sample(rownames(a),x))) } )
 names(gsets)<-stri_rand_strings(length(gsets), 15, pattern = "[A-Za-z]")
 gsets
 }
@@ -414,11 +414,12 @@ run_fgsea<-function(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS){
 dge<-sapply(x,"[",6)
 
 xx<-lapply( dge , function(x) { 
- s<-sign(x$log2FoldChange)*-log10(x$pvalue)
- s[is.na(s)] <- 1
- s[!is.finite(s)] <- 1
+ s<-sign(x$log2FoldChange)*-log10(x$pvalue+1E-300)
+ s[is.na(s)] <- 0
+ s[!is.finite(s)]<- 0
  names(s)<-rownames(x)
  p<-as.data.frame(fgsea(pathways=gsets, stats=s, nperm=1000))
+ p
 } )
 
 obs_up<-lapply(xx, function(x) { subset(x,padj<0.05 & ES>0)[,1] } )
@@ -475,9 +476,9 @@ gst_func<-function(gene_names,gset,stats) {
 mygst=NULL
 mygst=list()
 for (d in 1:length(dge)) {
-  s<-sign(dge[[d]]$log2FoldChange)*-log10(dge[[d]]$pvalue)
-  s[is.na(s)] <- 1
-  s[!is.finite(s)] <- 1
+  s<-sign(dge[[d]]$log2FoldChange)*-log10(dge[[d]]$pvalue+1E-300)
+  s[is.na(s)] <- 0
+  s[!is.finite(s)] <- 0
   mygst[[d]]<-mclapply(gsets, gst_func , gene_names=rownames(dge[[d]]) , stats=s, mc.cores=8)
   mygst[[d]]<-t(as.data.frame(mygst[[d]]))
   colnames(mygst[[d]])<-c("padj","es")
@@ -512,21 +513,19 @@ f<-2*p*r/(p+r)
 
 attr(x,'gst_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
 x
-
 }
-
 
 
 ##################################
 # aggregate function
 ##################################
 agg_dge<-function(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,gsets) {
-# N_REPS=3 ; SUM_COUNT=40000000 ; VARIANCE=0 ; FRAC_DE=0.2 ; FC=1 ; SIMS=10 ; DGE_FUNC="deseq2" ; gsets=gsets
+# N_REPS=3 ; SUM_COUNT=40000000 ; VARIANCE=0.3 ; FRAC_DE=0.1 ; FC=1 ; SIMS=10 ; DGE_FUNC="deseq2" ; gsets=gsets
 library("mitch")
-xxx<-RepParallel(SIMS,simrna(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets), simplify=F, mc.cores = detectCores() )
+xxx<-RepParallel(SIMS,simrna(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets), simplify=F, mc.cores = 8 )
 
 # run deseq2
-xxx<-mclapply(xxx , DGE_FUNC , mc.cores = detectCores() )
+xxx<-mclapply(xxx , DGE_FUNC , mc.cores = 8 )
 
 # run mitch
 xxx<-run_mitch(xxx,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS)
