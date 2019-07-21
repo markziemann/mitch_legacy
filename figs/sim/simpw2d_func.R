@@ -261,7 +261,7 @@ z<-calcNormFactors(z)
 z<-estimateDisp(z, design1,robust=TRUE,prior.df=1)
 fit<-glmFit(z, design1)
 lrt<-glmLRT(fit)
-de<-as.data.frame(topTags(lrt,n=Inf))
+de<-as.data.frame(topTags(lrt,n=Ifnf))
 de$dispersion<-lrt$dispersion
 de<-de[order(de$PValue),]
 x[[6]]<-de
@@ -602,6 +602,67 @@ attr(x,'gst_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,DGE_FUNC,tru
 x
 }
 
+#################################################
+# define mdgsa function
+##################################################
+run_mdgsa<-function(x,DGE_FUNC,gsets, N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC) {
+library("mdgsa")
+dge1<-x[[6]]
+dge2<-x[[9]]
+dge<-list("dge1"=dge1,"dge2"=dge2)
+
+w<-mitch_import(dge, DGE_FUNC )
+
+w$dge1[w$dge1==-Inf]<--1E-300
+w$dge1[w$dge1==+Inf]<-1E-300
+w$dge2[w$dge2==-Inf]<--1E-300
+w$dge2[w$dge2==+Inf]<-1E-300
+
+res <- mdGsa (w, gsets)
+
+quad1<-rownames(res[which(res[,5]<0.05&res[,2]>0),])
+quad2<-rownames(res[which(res[,5]<0.05&res[,2]<0),])
+quad3<-rownames(res[which(res[,6]<0.05&res[,3]>0),])
+quad4<-rownames(res[which(res[,6]<0.05&res[,3]<0),])
+
+x[[12]]<-quad1
+x[[13]]<-quad2
+x[[14]]<-quad3
+x[[15]]<-quad4
+
+gt_q1<-x[[2]]
+gt_q2<-x[[3]]
+gt_q3<-x[[4]]
+gt_q4<-x[[5]]
+
+true_pos_q1=length(intersect(quad1 , gt_q1 ))
+true_pos_q2=length(intersect(quad2 , gt_q2 ))
+true_pos_q3=length(intersect(quad3 , gt_q3 ))
+true_pos_q4=length(intersect(quad4 , gt_q4 ))
+true_pos=sum(true_pos_q1, true_pos_q2, true_pos_q3, true_pos_q4)
+
+false_pos_q1=length(setdiff(quad1 , gt_q1 ))
+false_pos_q2=length(setdiff(quad2 , gt_q2 ))
+false_pos_q3=length(setdiff(quad3 , gt_q3 ))
+false_pos_q4=length(setdiff(quad4 , gt_q4 ))
+false_pos=sum(false_pos_q1, false_pos_q2, false_pos_q3, false_pos_q4)
+
+false_neg_q1=length(setdiff(gt_q1 , quad1 ))
+false_neg_q2=length(setdiff(gt_q2 , quad2 ))
+false_neg_q3=length(setdiff(gt_q3 , quad3 ))
+false_neg_q4=length(setdiff(gt_q4 , quad4 ))
+false_neg=sum( false_neg_q1 , false_neg_q2 , false_neg_q3 , false_neg_q4)
+
+true_neg=length(gsets)-sum(true_pos,false_pos,false_neg)
+
+p<-true_pos/(true_pos+false_pos)
+r<-true_pos/(true_pos+false_neg)
+f<-2*p*r/(p+r)
+
+attr(x,'mdgsa_res') <-data.frame(N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,DGE_FUNC,true_pos,false_pos,true_neg,false_neg,p,r,f)
+x
+}
+
 
 ##################################
 # aggregate function
@@ -617,6 +678,7 @@ myagg<-function(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets) {
  x<-run_hypergeometric(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
  x<-run_fgsea(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
  x<-run_gst(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
+ x<-run_mdgsa(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
 
  g=list()
  for (f in 2:length(attributes(x))) {

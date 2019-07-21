@@ -25,9 +25,9 @@ gsets<-randomGeneSets(a)
 SIMS=10
 unlink("simpw_res_running.tsv")
 res=NULL
-for ( FRAC_DE in c(0.05)) {
+for ( FRAC_DE in c(0.2)) {
   for (FC in c(1)) {
-    for (N_REPS in c(3,5,10)) {
+    for (N_REPS in c(3)) {
       for (DGE_FUNC in c("deseq2")) {
         for ( SUM_COUNT in c(10000000,40000000,100000000)) {
           for ( VARIANCE in c(0,0.3,0.6)) {

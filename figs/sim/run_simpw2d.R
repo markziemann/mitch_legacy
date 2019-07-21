@@ -6,6 +6,8 @@ library("DESeq2")
 library("limma")
 library("ABSSeq")
 library("stringi")
+library("mdgsa")
+
 
 source("simpw2d_func.R")
 
@@ -17,7 +19,7 @@ gsets<-randomGeneSets(a)
 
 test_simpw2d<-function(){
  # create some random data with two contraste
- N_REPS=5 ; SUM_COUNT=40000000 ; VARIANCE=0.0 ; FRAC_DE=0.05 ; FC=1 ; DGE_FUNC="deseq2"
+ N_REPS=3 ; SUM_COUNT=10000000 ; VARIANCE=0.3 ; FRAC_DE=0.05 ; FC=1 ; DGE_FUNC="deseq2"
 
  x<-simrna2d(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,gsets)
 
@@ -36,6 +38,9 @@ test_simpw2d<-function(){
  # run geneSetTest
  x<-run_gst(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
 
+ # run mdgsa
+ x<-run_mdgsa(x,DGE_FUNC,gsets,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC)
+
  # look at the results
  str(x)
 
@@ -50,12 +55,12 @@ test_simpw2d<-function(){
 SIMS=10
 unlink("simpw2d_res_running.tsv")
 res=NULL
-for ( FRAC_DE in c(0.05)) {
+for ( FRAC_DE in c(0.2)) {
   for (FC in c(1)) {
-    for (N_REPS in c(3,5,10)) {
+    for (N_REPS in c(3)) {
       for (DGE_FUNC in c("deseq2")) {
         for ( SUM_COUNT in c(10000000,40000000,100000000)) {
-          for  ( VARIANCE in c(0,0.2,0.3,0.4,0.5)) {
+          for  ( VARIANCE in c(0,0.3,0.6)) {
             x<-agg_dge(a,N_REPS,SUM_COUNT,VARIANCE,FRAC_DE,FC,SIMS,DGE_FUNC,gsets)
             write.table(x,file="simpw2d_res_running.tsv",quote=F,sep='\t',append=T)
             res=c(res,x)
