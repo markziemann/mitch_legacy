@@ -59,9 +59,8 @@ d<-mitch_import(d,DEtype="deseq2",geneTable=gt)
 ##################################################
 # get the gene sets and import
 ##################################################
-download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/getReactomeGMT.sh", destfile="getReactomeGMT.sh")
-system("chmod +x getReactomeGMT.sh")
-system("./getReactomeGMT.sh")
+download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip", destfile="ReactomePathways.gmt.zip")
+unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 ##################################################
@@ -145,10 +144,12 @@ b100000m<-bb[which(names(bb)=="b100000m")]
 pdf("bootstrap_saturation.pdf",width=10,height=10)
 boxplot(b0005m,b0010m,b0020m,b0050m,b0100m,b0200m,b0500m,b1000m,b2000m,b5000m,b10000m, 
  names = c("5", "10", "20", "50", "100", "200", "500", "1000", "2000", "5000", "10000") ,
- ylab="Pearson correlation with 100k bootstraps",
+ ylab="Pearson correlation with 50k bootstraps",
  xlab="no. bootstraps")
 dev.off()
 
+
+q()
 ##################################################
 # get the msigdb gene sets and import
 ##################################################
