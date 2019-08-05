@@ -874,19 +874,78 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   resrows=length(res$detailed_sets)
 
-  ss<-res$ranked_profile
-
-  xmin=min(ss[,1])
-  xmax=max(ss[,1])
-  ymin=min(ss[,2])
-  ymax=max(ss[,2])
-
   # d is the number of dimensions - this is very important and refered to frequently
+  ss<-res$ranked_profile
   d=ncol(ss)
 
-  if ( d<3 ) {
+  pdf(outfile)
 
-    pdf(outfile)
+  # unidimensional plots
+  if ( d==1 ) {
+
+    par(mfrow=c(2,1))
+    hist(res$input_profile[,1],breaks=50,main="Distribution of DE scores",xlab=paste("DE score for ",colnames(res$input_profile)))
+    plot(res$input_profile,xlab=paste("DE score for ",colnames(res$input_profile)),
+     pch="|",frame.plot=F)
+    UPS=length(which(res$input_profile>0))
+    DNS=length(which(res$input_profile<0))
+    TOTAL=nrow(res$input_profile)
+    mtext(paste(TOTAL,"genes in total,",UPS,"trending up-regulated,",DNS,"trending down-regulated"))
+
+    #histograms of gene set counts
+    par(mfrow=c(3,1))
+    geneset_counts<-res$analysis_metrics$geneset_counts
+    boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+    hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
+    hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
+
+    # volcano plot
+    par(mfrow=c(1,1))
+    sig<-subset(res$enrichment_result,p.adjustANOVA<=0.05)
+    plot(res$enrichment_result$s.dist,-log10(res$enrichment_result$pANOVA),
+     xlab="s score",ylab="-log10(p-value)",
+     main="volcano plot of gene set enrichments",pch=19,cex=0.8)
+    points(sig$s.dist,-log10(sig$pANOVA),pch=19,cex=0.85,col="red")
+    TOTAL=nrow(res$enrichment_result)
+    SIG=nrow(sig)
+    UP=length(which(sig$s.dist>0))
+    DN=length(which(sig$s.dist<0))
+    SUBHEADER=paste(TOTAL,"gene sets in total,",UP,"upregulated and ",DN,"downregulated (FDR≤0.05)")
+    mtext(SUBHEADER)
+
+  ss_long<-melt(ss)
+
+  for(i in 1:resrows) {
+    par(mfrow=c(3,1))
+
+    sss<-res$detailed_sets[[i]]
+    set<-names(res$detailed_sets[i])
+    size<-length(sss)
+
+    beeswarm(sss,vertical = F,cex=0.75,xlim=c(min(ss),
+     max(ss)),col="darkgray",pch=19,main=set,cex.main=1.5,
+     xlab=paste("ranked DE score in:",colnames(ss)))
+     mtext("beeswarm plot",cex=0.8)
+
+    hist(sss,xlim=c(min(ss),max(ss)),breaks=15,col="darkgray",main=NULL,
+     border="black",xlab=paste("ranked DE score in:",colnames(ss)))
+     mtext("histogram",cex=0.8)
+
+    plot(sss,rep(1,length(sss)),type="n",xlim=c(min(ss),max(ss)),
+     frame=F,axes=F,ylab="",
+     xlab=paste("ranked DE score in:",colnames(ss)))
+    rug(sss, ticksize = 0.9)
+    axis(1)
+    mtext("rugplot",cex=0.8)
+  }  
+
+  } else if ( d==2 ) {
+
+    xmin=min(ss[,1])
+    xmax=max(ss[,1])
+    ymin=min(ss[,2])
+    ymax=max(ss[,2])
+
     k<-MASS:::kde2d(ss[,1],ss[,2])
     X_AXIS=paste("Rank in contrast",colnames(ss)[1])
     Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
@@ -913,39 +972,39 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
 
     #histograms of gene set counts
-    geneset_counts<-res$manova_analysis_metrics$geneset_counts
+    geneset_counts<-res$analysis_metrics$geneset_counts
     boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
     hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
     hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
     #barchart of gene set locations by quadrant
-    a<-res$manova_analysis_metrics[14]
+    a<-res$analysis_metrics[14]
     a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
     rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
     colnames(a)="a"
     barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
 
-    sig<-subset(res$manova_result , p.adjustMANOVA<0.05)
-    plot(res$manova_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+    sig<-subset(res$enrichment_result , p.adjustMANOVA<0.05)
+    plot(res$enrichment_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
       main="Scatterplot of all gene sets; FDR<0.05 in red" )
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
     points(sig[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
 
-    top<-head(res$manova_result ,resrows)
-    plot(res$manova_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+    top<-head(res$enrichment_result ,resrows)
+    plot(res$enrichment_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
       main=paste("Scatterplot of all gene sets; top",resrows,"in red") )
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
     points(top[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
 
     # A heatmap of s values for the resrows sets
-    hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
-    rownames(hmapx)<-head(res$manova_result$set,resrows)
+    hmapx<-head( res$enrichment_result[,4:(4+d-1)] ,resrows)
+    rownames(hmapx)<-head(res$enrichment_result$set,resrows)
     colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
     my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
     heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
     # plot effect size versus significance 
-    plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
+    plot(res$enrichment_result$s.dist,-log(res$enrichment_result$p.adjustMANOVA), 
       xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
       pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
       main="effect size versus statistical significance")
@@ -953,7 +1012,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   ss_long<-melt(ss)
 
    for(i in 1:resrows) {
-      ll<-res$manova_result[i,]
+      ll<-res$enrichment_result[i,]
       size<-ll$setSize
       sss<-res$detailed_sets[[i]] 
 
@@ -993,10 +1052,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #      title(main = ll[,1] , ylab = "Position in rank")
 
     }
-    dev.off()
-  } else {
-
-  pdf(outfile)
+  } else if (d>2) {
 
   # if working with >5 dimensions, then substitute the dimension (colnames) names with a number
   if ( d>5 ) {
@@ -1056,22 +1112,22 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   #histograms of gene set counts
   par(mfrow=c(3,1))
-  geneset_counts<-res$manova_analysis_metrics$geneset_counts
+  geneset_counts<-res$analysis_metrics$geneset_counts
   boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
   hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
   hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
   #a table of geneset location by sector
-  sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
+  sig<-sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA<0.05),4:(4+d-1)])
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Number of gene sets in each sector"
   grid.newpage()
   grid.table(sector_count,theme=mytheme)
 
   #pairs points plot for gene sets
-  manova_result_clipped<-res$manova_result[,4:(3+d)] 
-  colnames(manova_result_clipped)<-colnames(res$input_profile)
-  p<-ggpairs(manova_result_clipped , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
+  enrichment_result_clipped<-res$enrichment_result[,4:(3+d)] 
+  colnames(enrichment_result_clipped)<-colnames(res$input_profile)
+  p<-ggpairs(enrichment_result_clipped , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
   print( p +  theme_bw() )
 
   #subset points plot function
@@ -1086,15 +1142,15 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   }
 
   # A heatmap of s values for the resrows sets
-  hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
-  rownames(hmapx)<-head(res$manova_result$set,resrows)
+  hmapx<-head( res$enrichment_result[,4:(4+d-1)] ,resrows)
+  rownames(hmapx)<-head(res$enrichment_result$set,resrows)
   colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
   my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
   heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
   # plot effect size versus significance 
   par(mfrow=c(1,1))
-  plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
+  plot(res$enrichment_result$s.dist,-log(res$enrichment_result$p.adjustMANOVA), 
     xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
     pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
     main="effect size versus statistical significance")
@@ -1102,7 +1158,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   ss_long<-melt(ss)
 
   for(i in 1:resrows) {
-    ll<-res$manova_result[i,]
+    ll<-res$enrichment_result[i,]
     size<-ll$setSize
     sss<-res$detailed_sets[[i]]
 
@@ -1139,11 +1195,9 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #    abline(h=0,lty=2,lwd=2)
 #    title(main = ll[,1] , ylab = "Position in rank")
 
+    }
   }
   dev.off()
-
-  }
-
 }
 
 
