@@ -865,6 +865,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #  library("vioplot")
   library("grid")
   library("gridExtra")
+  library("beeswarm")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   mytheme <- gridExtra::ttheme_default(
@@ -910,7 +911,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     SIG=nrow(sig)
     UP=length(which(sig$s.dist>0))
     DN=length(which(sig$s.dist<0))
-    SUBHEADER=paste(TOTAL,"gene sets in total,",UP,"upregulated and ",DN,"downregulated (FDR≤0.05)")
+    SUBHEADER=paste(TOTAL,"gene sets in total,",UP,"upregulated and ",DN,"downregulated (FDR<=0.05)")
     mtext(SUBHEADER)
 
   ss_long<-melt(ss)
