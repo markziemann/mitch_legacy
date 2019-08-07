@@ -81,4 +81,6 @@ res<-mitch_calc(d,genesets,resrows=50,bootstraps=0,priority="significance")
 
 mitch_plots(res,outfile="1dcharts.pdf")
 
+mitch_report(res,"1dreport.html")
+
 save.image("1d_test.Rdata")

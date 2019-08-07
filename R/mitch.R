@@ -407,8 +407,8 @@ res<-pbmclapply(sets,function(set){
     scord<- ( 2*( colMeans(x[inset,]) - NOTINSET ) ) / NROW 
     names(scord)<-paste0("s-",names(scord))
     #calculate the hypotenuse length of s scores
-    sdist<-hypotenuse(scord)
-    names(sdist)="s.dist"
+    s.dist<-hypotenuse(scord)
+    names(s.dist)="s.dist"
 
     #confidence interval calc by resampling
     if (bootstraps > 0) {
@@ -425,14 +425,14 @@ res<-pbmclapply(sets,function(set){
         BAND_SIZE<-unname((CI(b)[1]-CI(b)[3] ) /CI(b)[2])
       }
       #b<-bootstrap(x,bootstraps,set)
-      confESp<-sdist-quantile(abs(sdist-b),0.05)
+      confESp<-s.dist-quantile(abs(s.dist-b),0.05)
       names(confESp)="confESp"
     } else {
       confESp<-NA
       names(confESp)="confESp"
     }
 
-    return(data.frame(set,setSize=sum(inset), pMANOVA, t(scord), t(raov), t(sdist), t(confESp) , stringsAsFactors=F ))
+    return(data.frame(set,setSize=sum(inset), pMANOVA, t(scord), t(raov), t(s.dist), t(confESp) , stringsAsFactors=F ))
   }
 
 },mc.cores=cores )
@@ -464,25 +464,140 @@ if (nrow(fres)<1) {
 }
 }
 
+
+
+#' ANOVA
+#'
+#' This function performs the univariate analysis of variance for each set of genes. It wraps around the existing
+#' aov function in R. This function is not meant to be used directly.
+#' @param x a single column numerical table with each column containing differential expression scores for a contrast.
+#' Rownames must match genesets.
+#' @param genesets lists of genes imported by the gmt_imprt function or similar.
+#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
+#' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
+#' @param priority the prioritisation metric to selecting top gene sets. Valid options are "significance", 
+#' "effect" and "confidence"
+#' @param bootstraps the number of bootstraps to recalculate in estimate the confidence intervals.
+#' @return a mitch results object 
+#' @keywords mitch MANOVA
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+
+ANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
+
+STARTSWITHNUM=length(grep("^[0-9]",colnames(x)))
+if (STARTSWITHNUM>0) {
+  stop("Error: it looks like one or more column names starts with a number. This is incompatible with downstream analysis. Please modify")
+}
+
+sets<-names(genesets)
+
+if (  is.null(priority) ) {
+  priority="confidence"
+}
+
+if (priority!="significance" && priority!="effect" && priority!="confidence") {
+  stop("Error: Parameter 'priority' must be either 'confidence'(the default),'significance' or 'effect'.")
+}
+
+res<-pbmclapply(sets,function(set){
+  resample<-function(x,set){
+    sss<-x[which (rownames(x) %in% as.character(unlist(genesets[set]))),]
+    mysample<-sample(sss,length(sss),replace=T)
+    mean(mysample)
+  }
+
+  bootstrap<-function(x,n,set){
+    xx<-as.data.frame(t(replicate(n,resample(x,set))),stringsAsFactors=F)
+    NOTINSET<-mean(x[!inset,])
+    NROW=nrow(x)
+    xxx<- ( 2* (xx - NOTINSET ) ) / NROW
+    #b<-apply(xxx,1,hypotenuse)
+    return(xxx)
+  }
+
+  inset<-rownames(x) %in% as.character(unlist(genesets[set]))
+
+  NROW=nrow(x)
+
+  if ( length(which(inset)) >= minsetsize ) {
+    fit<- aov(x[,1] ~ inset)
+    pANOVA<-summary(fit)[[1]][,5][1]
+    NOTINSET<-mean(x[!inset,])
+    s.dist<- ( 2*( mean(x[inset,]) - NOTINSET ) ) / NROW
+
+    #confidence interval calc by resampling
+    if (bootstraps > 0) {
+
+      STRAPSDONE=0
+      BAND_SIZE=1
+      CHUNK=50
+      b=NULL
+      # use an approach to stop bootstrapping un
+      while ( STRAPSDONE<bootstraps) {
+        bb<-bootstrap(x,CHUNK,set)
+        b<-unlist(c(b,bb))
+        STRAPSDONE=STRAPSDONE+CHUNK
+        BAND_SIZE<-unname((CI(b)[1]-CI(b)[3] ) /CI(b)[2])
+      }
+      #b<-bootstrap(x,bootstraps,set)
+      confESp<-s.dist-quantile(abs(s.dist-b),0.05)
+    } else {
+      confESp<-NA
+    }
+
+    gres<-data.frame(set,setSize=sum(inset), pANOVA, s.dist, confESp , stringsAsFactors=F )
+    gres
+  }
+},mc.cores=cores )
+
+fres<-ldply(res, data.frame)
+
+if (nrow(fres)<1) {
+
+  message("Warning: No results found. Check that the gene names in the profile match the gene sets and consider loosening the minsetsize parameter.")
+
+  } else {
+  fres$p.adjustANOVA<-p.adjust(fres$pANOVA,"fdr")
+
+  #prioritisation
+  if (priority=="significance") {
+    fres<-fres[order(fres$pANOVA),]
+    message("Note: When prioritising by significance (ie: small p-values), large effect sizes might be missed.")
+  }
+  if (priority=="effect") {
+    fres<-fres[order(-abs(fres$s.dist)),]
+    message("Note: Enrichments with large effect sizes may not be statistically significant.")
+  }
+  if (priority=="confidence") {
+    fres<-fres[order(-fres$confES),]
+    message("Note: default gene set prioritisation is by confidence interval (confES). Alternatives are 'significance' and 'effect'.")
+  }
+  attributes(fres)$priority<-priority
+  return(fres)
+}
+}
+
 #' mitch_metrics_calc
 #'
-#' This function collects some metrics from the manova analysis. This function is not meant to be used directly.
+#' This function collects some metrics from the enrichment analysis. This function is not meant to be used directly.
 #' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
 #' Rownames must match genesets.
 #' @param genesets lists of genes imported by the gmt_imprt function or similar.
-#' @param manova_result a valid result of the MANOVA function
+#' @param enrichment_result a valid result of the MANOVA function
 #' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
 #' @return a list of metrics
 #' @keywords mitch metrics
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-mitch_metrics_calc<-function(x, genesets, manova_result, minsetsize=10 ) {
+mitch_metrics_calc<-function(x, genesets, enrichment_result, minsetsize=10 ) {
 
-if (!is.null(manova_result)){
+if (!is.null(enrichment_result)){
 
 	num_genesets=length(genesets)
-	included_genesets<-nrow(manova_result)
+	included_genesets<-nrow(enrichment_result)
         geneset_counts<-as.data.frame(as.vector(unlist(lapply(genesets,function(set){ length(which(as.vector(unlist(set)) %in% rownames(x))) } ))))
 	rownames(geneset_counts)<-names(genesets)
 	colnames(geneset_counts)="count"
@@ -495,9 +610,9 @@ if (!is.null(manova_result)){
 	duplicated_genes_present=length(rownames(x))>num_genes_in_profile
 	num_profile_genes_in_sets=length(which(rownames(x) %in% as.vector(unlist(genesets))))
 	num_profile_genes_not_in_sets=num_genes_in_profile - num_profile_genes_in_sets
+        num_sets_significant=nrow( enrichment_result[which(enrichment_result$p.adjustMANOVA<0.05),] )
 	profile_pearson_correl=cor(x,method="p")[2,1]
 	profile_spearman_correl=cor(x,method="s")[2,1]
-	num_sets_significant=nrow( manova_result[which(manova_result$p.adjustMANOVA<0.05),] )
 
 	#genes in each quadrant
         g1=length( which(x[,1]>0 & x[,2]>0) )
@@ -506,10 +621,10 @@ if (!is.null(manova_result)){
         g2=length( which(x[,1]<0 & x[,2]>0) )
 
 	#genesets in each quadrant
-	ns1=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]>0 & manova_result[,5]>0) )
-        ns2=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]>0 & manova_result[,5]<0) )
-        ns3=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]<0 & manova_result[,5]<0) )
-        ns4=nrow( subset(manova_result,p.adjustMANOVA<0.05 & manova_result[,4]<0 & manova_result[,5]>0) )
+	ns1=nrow( subset(enrichment_result,p.adjustMANOVA<0.05 & enrichment_result[,4]>0 & enrichment_result[,5]>0) )
+        ns2=nrow( subset(enrichment_result,p.adjustMANOVA<0.05 & enrichment_result[,4]>0 & enrichment_result[,5]<0) )
+        ns3=nrow( subset(enrichment_result,p.adjustMANOVA<0.05 & enrichment_result[,4]<0 & enrichment_result[,5]<0) )
+        ns4=nrow( subset(enrichment_result,p.adjustMANOVA<0.05 & enrichment_result[,4]<0 & enrichment_result[,5]>0) )
 	num_sets_significant_by_quadrant=paste(ns1,ns2,ns3,ns4,sep=",")
 
 	dat <- list("num_genesets" = num_genesets, 
@@ -528,6 +643,65 @@ if (!is.null(manova_result)){
 		"num_sets_significant_by_quadrant" = num_sets_significant_by_quadrant,
 		"geneset_counts" = geneset_counts)
 	dat
+}
+}
+
+#' mitch_metrics_calc1d
+#'
+#' This function collects some metrics from the anova analysis. This function is not meant to be used directly.
+#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
+#' Rownames must match genesets.
+#' @param genesets lists of genes imported by the gmt_imprt function or similar.
+#' @param anova_result a valid result of the ANOVA function
+#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
+#' @return a list of metrics
+#' @keywords mitch metrics
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+mitch_metrics_calc1d<-function(x, genesets, anova_result, minsetsize=10 ) {
+
+if (!is.null(anova_result)){
+
+        num_genesets=length(genesets)
+        included_genesets<-nrow(anova_result)
+        geneset_counts<-as.data.frame(as.vector(unlist(lapply(genesets,function(set){ length(which(as.vector(unlist(set)) %in% rownames(x))) } ))))
+        rownames(geneset_counts)<-names(genesets)
+        colnames(geneset_counts)="count"
+        genesets_excluded=names(genesets)[which(geneset_counts$count<minsetsize)]
+        genesets_included=names(genesets)[which(geneset_counts$count>=minsetsize)]
+        num_genesets_excluded=length(genesets_excluded)
+        num_genesets_included=length(genesets_included)
+        num_genes_in_genesets=length(unique(as.vector(unlist(genesets))))
+        num_genes_in_profile=length(unique(rownames(x)))
+        duplicated_genes_present=length(rownames(x))>num_genes_in_profile
+        num_profile_genes_in_sets=length(which(rownames(x) %in% as.vector(unlist(genesets))))
+        num_profile_genes_not_in_sets=num_genes_in_profile - num_profile_genes_in_sets
+        num_sets_significant=nrow( anova_result[which(anova_result$p.adjustANOVA<0.05),] )
+
+        #genes up and down
+        g1=length( which(x[,1]>0 ))
+        g2=length( which(x[,1]<0 ))
+
+        #genesets in each quadrant
+        num_sets_up=nrow( subset(anova_result,p.adjustANOVA<0.05 & anova_result[,4]>0 ) )
+        num_sets_dn=nrow( subset(anova_result,p.adjustANOVA<0.05 & anova_result[,4]<0 ) )
+
+        dat <- list("num_genesets" = num_genesets,
+                "num_genes_in_profile" = num_genes_in_profile,
+                "duplicated_genes_present" = duplicated_genes_present,
+                "num_profile_genes_in_sets" = num_profile_genes_in_sets,
+                "num_profile_genes_not_in_sets" = num_profile_genes_not_in_sets,
+                "num_genesets_excluded" = num_genesets_excluded,
+                "num_genesets_included" = num_genesets_included,
+                "num_genes_in_genesets" = num_genes_in_genesets,
+                "genesets_excluded" = genesets_excluded,
+                "genesets_included" = genesets_included,
+                "num_sets_significant" = num_sets_significant,
+                "num_sets_up" = num_sets_up,
+                "num_sets_dn" = num_sets_dn,
+                "geneset_counts" = geneset_counts)
+        dat
 }
 }
 
@@ -579,12 +753,12 @@ detailed_sets<-function(res,  resrows=50) {
   #collect ranked genelist of each genest
   genesets<-res$input_genesets
   ss<-res$ranked_profile
-  mykeys <- as.character(res$manova_result[1:resrows,1])
+  mykeys <- as.character(res$enrichment_result[1:resrows,1])
   dat <- vector(mode="list", length=resrows)
   names(dat) <- mykeys
 
   for(i in 1:resrows) {
-    sss<-ss[which(rownames(ss) %in% genesets[[which(names(genesets) %in% as.character(res$manova_result[i,1]))]]),]
+    sss<-ss[which(rownames(ss) %in% genesets[[which(names(genesets) %in% as.character(res$enrichment_result[i,1]))]]),]
     dat[[i]]<-sss
   }
   dat
@@ -609,8 +783,8 @@ detailed_sets<-function(res,  resrows=50) {
 #'  $input_profile: the supplied input differential profile
 #'  $input_genesets: the supplied input gene sets
 #'  $ranked_profile: the differential profile after ranking
-#'  $manova_result: the table of MANOVA enrichment results for each gene set
-#'  $manova_analysis_metrics:  several metrics that are important to the interpretation of the results
+#'  $enrichment_result: the table of MANOVA/ANOVA enrichment results for each gene set
+#'  $analysis_metrics:  several metrics that are important to the interpretation of the results
 #'  $detailed_sets: a list of dataframes containing ranks of members of prioritised gene sets.
 #' @keywords mitch calc calculate manova 
 #' @export
@@ -624,34 +798,49 @@ library("parallel")
 library("pbmcapply")
 library("Rmisc")
 
-        colnames(x)<-sub("-","_",colnames(x))
-	input_profile<-x
+  colnames(x)<-sub("-","_",colnames(x))
+  input_profile<-x
+  input_genesets<-genesets
+  ranked_profile<-mitch_rank(input_profile)
 
-        input_genesets<-genesets
+  if (ncol(x)>1) {
+    enrichment_result<-MANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
 
-	ranked_profile<-mitch_rank(input_profile)
+    if (!is.null(enrichment_result)) {
+      mitch_metrics <-mitch_metrics_calc(x,genesets,enrichment_result)
+      dat <- list("input_profile" = input_profile,
+       "input_genesets" = input_genesets,
+       "ranked_profile" = ranked_profile,
+       "enrichment_result" = enrichment_result,
+       "analysis_metrics" = mitch_metrics)
 
-	manova_result<-MANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
+      if ( nrow(enrichment_result) < resrows ) {
+        resrows<-nrow(enrichment_result)
+      }
+      dat$detailed_sets<-detailed_sets(dat,resrows)
+      attr(dat, 'profile_dimensions') <- colnames(dat$input_profile)
+      dat
+    }
+  } else if (ncol(x)==1) {
 
-	if (!is.null(manova_result)) {
-		mitch_metrics <-mitch_metrics_calc(x,genesets,manova_result)
+    enrichment_result<-ANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
 
-		dat <- list("input_profile" = input_profile,
-			"input_genesets" = input_genesets,
-			"ranked_profile" = ranked_profile,
-			"manova_result" = manova_result,
-			"manova_analysis_metrics" = mitch_metrics)
+    if (!is.null(enrichment_result)) {
+      mitch_metrics <-mitch_metrics_calc1d(x,genesets,enrichment_result)
+      dat <- list("input_profile" = input_profile,
+       "input_genesets" = input_genesets,
+       "ranked_profile" = ranked_profile,
+       "enrichment_result" = enrichment_result,
+       "analysis_metrics" = mitch_metrics)
 
-	        if ( nrow(manova_result) < resrows ) { resrows<-nrow(manova_result) }
-
-	        dat$detailed_sets<-detailed_sets(dat,resrows)
-
-                attr(dat, 'profile_dimensions') <- colnames(dat$input_profile)
-	
-		dat
-
-	}
-
+      if ( nrow(enrichment_result) < resrows ) {
+        resrows<-nrow(enrichment_result)
+      }
+      dat$detailed_sets<-detailed_sets(dat,resrows)
+      attr(dat, 'profile_dimensions') <- colnames(dat$input_profile)
+      dat
+    }
+  }
 }
 
 #' mitch_plots
@@ -676,6 +865,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #  library("vioplot")
   library("grid")
   library("gridExtra")
+  library("beeswarm")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   mytheme <- gridExtra::ttheme_default(
@@ -685,19 +875,78 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   resrows=length(res$detailed_sets)
 
-  ss<-res$ranked_profile
-
-  xmin=min(ss[,1])
-  xmax=max(ss[,1])
-  ymin=min(ss[,2])
-  ymax=max(ss[,2])
-
   # d is the number of dimensions - this is very important and refered to frequently
+  ss<-res$ranked_profile
   d=ncol(ss)
 
-  if ( d<3 ) {
+  pdf(outfile)
 
-    pdf(outfile)
+  # unidimensional plots
+  if ( d==1 ) {
+
+    par(mfrow=c(2,1))
+    hist(res$input_profile[,1],breaks=50,main="Distribution of DE scores",xlab=paste("DE score for ",colnames(res$input_profile)))
+    plot(res$input_profile,xlab=paste("DE score for ",colnames(res$input_profile)),
+     pch="|",frame.plot=F)
+    UPS=length(which(res$input_profile>0))
+    DNS=length(which(res$input_profile<0))
+    TOTAL=nrow(res$input_profile)
+    mtext(paste(TOTAL,"genes in total,",UPS,"trending up-regulated,",DNS,"trending down-regulated"))
+
+    #histograms of gene set counts
+    par(mfrow=c(3,1))
+    geneset_counts<-res$analysis_metrics$geneset_counts
+    boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+    hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
+    hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
+
+    # volcano plot
+    par(mfrow=c(1,1))
+    sig<-subset(res$enrichment_result,p.adjustANOVA<=0.05)
+    plot(res$enrichment_result$s.dist,-log10(res$enrichment_result$pANOVA),
+     xlab="s score",ylab="-log10(p-value)",
+     main="volcano plot of gene set enrichments",pch=19,cex=0.8)
+    points(sig$s.dist,-log10(sig$pANOVA),pch=19,cex=0.85,col="red")
+    TOTAL=nrow(res$enrichment_result)
+    SIG=nrow(sig)
+    UP=length(which(sig$s.dist>0))
+    DN=length(which(sig$s.dist<0))
+    SUBHEADER=paste(TOTAL,"gene sets in total,",UP,"upregulated and ",DN,"downregulated (FDR<=0.05)")
+    mtext(SUBHEADER)
+
+  ss_long<-melt(ss)
+
+  for(i in 1:resrows) {
+    par(mfrow=c(3,1))
+
+    sss<-res$detailed_sets[[i]]
+    set<-names(res$detailed_sets[i])
+    size<-length(sss)
+
+    beeswarm(sss,vertical = F,cex=0.75,xlim=c(min(ss),
+     max(ss)),col="darkgray",pch=19,main=set,cex.main=1.5,
+     xlab=paste("ranked DE score in:",colnames(ss)))
+     mtext("beeswarm plot",cex=0.8)
+
+    hist(sss,xlim=c(min(ss),max(ss)),breaks=15,col="darkgray",main=NULL,
+     border="black",xlab=paste("ranked DE score in:",colnames(ss)))
+     mtext("histogram",cex=0.8)
+
+    plot(sss,rep(1,length(sss)),type="n",xlim=c(min(ss),max(ss)),
+     frame=F,axes=F,ylab="",
+     xlab=paste("ranked DE score in:",colnames(ss)))
+    rug(sss, ticksize = 0.9)
+    axis(1)
+    mtext("rugplot",cex=0.8)
+  }  
+
+  } else if ( d==2 ) {
+
+    xmin=min(ss[,1])
+    xmax=max(ss[,1])
+    ymin=min(ss[,2])
+    ymax=max(ss[,2])
+
     k<-MASS:::kde2d(ss[,1],ss[,2])
     X_AXIS=paste("Rank in contrast",colnames(ss)[1])
     Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
@@ -724,39 +973,39 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
 
     #histograms of gene set counts
-    geneset_counts<-res$manova_analysis_metrics$geneset_counts
+    geneset_counts<-res$analysis_metrics$geneset_counts
     boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
     hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
     hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
     #barchart of gene set locations by quadrant
-    a<-res$manova_analysis_metrics[14]
+    a<-res$analysis_metrics[14]
     a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
     rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
     colnames(a)="a"
     barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
 
-    sig<-subset(res$manova_result , p.adjustMANOVA<0.05)
-    plot(res$manova_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+    sig<-subset(res$enrichment_result , p.adjustMANOVA<0.05)
+    plot(res$enrichment_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
       main="Scatterplot of all gene sets; FDR<0.05 in red" )
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
     points(sig[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
 
-    top<-head(res$manova_result ,resrows)
-    plot(res$manova_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+    top<-head(res$enrichment_result ,resrows)
+    plot(res$enrichment_result[,4:5] , pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
       main=paste("Scatterplot of all gene sets; top",resrows,"in red") )
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
     points(top[,4:5] , pch=19, col=rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
 
     # A heatmap of s values for the resrows sets
-    hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
-    rownames(hmapx)<-head(res$manova_result$set,resrows)
+    hmapx<-head( res$enrichment_result[,4:(4+d-1)] ,resrows)
+    rownames(hmapx)<-head(res$enrichment_result$set,resrows)
     colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
     my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
     heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
     # plot effect size versus significance 
-    plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
+    plot(res$enrichment_result$s.dist,-log(res$enrichment_result$p.adjustMANOVA), 
       xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
       pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
       main="effect size versus statistical significance")
@@ -764,7 +1013,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   ss_long<-melt(ss)
 
    for(i in 1:resrows) {
-      ll<-res$manova_result[i,]
+      ll<-res$enrichment_result[i,]
       size<-ll$setSize
       sss<-res$detailed_sets[[i]] 
 
@@ -798,16 +1047,8 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     axis.title=element_text(size=15),
     plot.title = element_text(size = 20)))
 
-#      do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
-#      grid()
-#      abline(h=0,lty=2,lwd=2,col="blue")
-#      title(main = ll[,1] , ylab = "Position in rank")
-
     }
-    dev.off()
-  } else {
-
-  pdf(outfile)
+  } else if (d>2) {
 
   # if working with >5 dimensions, then substitute the dimension (colnames) names with a number
   if ( d>5 ) {
@@ -867,22 +1108,22 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 
   #histograms of gene set counts
   par(mfrow=c(3,1))
-  geneset_counts<-res$manova_analysis_metrics$geneset_counts
+  geneset_counts<-res$analysis_metrics$geneset_counts
   boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
   hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
   hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
   #a table of geneset location by sector
-  sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
+  sig<-sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA<0.05),4:(4+d-1)])
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Number of gene sets in each sector"
   grid.newpage()
   grid.table(sector_count,theme=mytheme)
 
   #pairs points plot for gene sets
-  manova_result_clipped<-res$manova_result[,4:(3+d)] 
-  colnames(manova_result_clipped)<-colnames(res$input_profile)
-  p<-ggpairs(manova_result_clipped , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
+  enrichment_result_clipped<-res$enrichment_result[,4:(3+d)] 
+  colnames(enrichment_result_clipped)<-colnames(res$input_profile)
+  p<-ggpairs(enrichment_result_clipped , title="Scatterplot of all genessets; FDR<0.05 in red" , lower  = list(continuous = ggpairs_points_plot ))
   print( p +  theme_bw() )
 
   #subset points plot function
@@ -897,15 +1138,15 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   }
 
   # A heatmap of s values for the resrows sets
-  hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
-  rownames(hmapx)<-head(res$manova_result$set,resrows)
+  hmapx<-head( res$enrichment_result[,4:(4+d-1)] ,resrows)
+  rownames(hmapx)<-head(res$enrichment_result$set,resrows)
   colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
   my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
   heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
   # plot effect size versus significance 
   par(mfrow=c(1,1))
-  plot(res$manova_result$s.dist,-log(res$manova_result$p.adjustMANOVA), 
+  plot(res$enrichment_result$s.dist,-log(res$enrichment_result$p.adjustMANOVA), 
     xlab="s.dist (effect size)",ylab="-log(p.adjustMANOVA) (significance)",
     pch=19, col=rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
     main="effect size versus statistical significance")
@@ -913,7 +1154,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   ss_long<-melt(ss)
 
   for(i in 1:resrows) {
-    ll<-res$manova_result[i,]
+    ll<-res$enrichment_result[i,]
     size<-ll$setSize
     sss<-res$detailed_sets[[i]]
 
@@ -945,16 +1186,9 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     axis.title=element_text(size=15),
     plot.title = element_text(size = 20)))
 
-#    do.call(vioplot,c(unname(as.data.frame(sss)),col='gray',drawRect=T,names=list(names(as.data.frame(sss)))))
-#    grid()
-#    abline(h=0,lty=2,lwd=2)
-#    title(main = ll[,1] , ylab = "Position in rank")
-
+    }
   }
   dev.off()
-
-  }
-
 }
 
 
@@ -984,7 +1218,6 @@ mitch_report<-function(res,out) {
   rmd_tmpdir<-tempdir()
   rmd_tmpfile<-paste(rmd_tmpdir,"/mitch.Rmd",sep="")
   html_tmp<-paste(paste(rmd_tmpdir,"/mitch_report.html",sep=""))
-  download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/mitch.Rmd",destfile=rmd_tmpfile)
 
   DATANAME<-gsub(".html$",".RData",out)
   DATANAME<-paste(rmd_tmpdir,"/",DATANAME,sep="")
