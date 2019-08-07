@@ -5,7 +5,7 @@ output: html_document
 theme: cosmo
 ---
 
-date generated: "`r Sys.Date()`"
+date generated: `r Sys.Date()`
 
 ## Background
 
@@ -44,10 +44,20 @@ head(res$input_profile)
 
 Here are some metrics about the input data profile:
 ```{r, metrics, echo=FALSE}
-unformatted<-t(as.data.frame(res$analysis_metrics[ c(1,2,3,4,5,6,7,8,12,13 ) ])) 
-formatted<-unformatted
-formatted[1:4]<-as.character(round(as.numeric(unformatted[1:4]) , digits=0))
-formatted[5:6]<-as.character(round(as.numeric(unformatted[5:6]) , digits=5))
+if (d==1) {
+  unformatted<-t(as.data.frame(res$analysis_metrics[ c(1,2,3,4,5 ) ])) 
+  formatted<-unformatted
+  formatted<-as.character(round(as.numeric(unformatted) , digits=0))
+} else if (d==2) {
+  unformatted<-t(as.data.frame(res$analysis_metrics[ c(2,3,4,5,11,12 )  ]))
+  formatted<-unformatted
+  formatted[1:4]<-as.character(round(as.numeric(unformatted[1:4]) , digits=0))
+  formatted[5:6]<-as.character(round(as.numeric(unformatted[5:6]) , digits=5))
+} else if (d>2) {
+  unformatted<-t(as.data.frame(res$analysis_metrics[ c(2,3,4,5 )  ]))
+  formatted<-as.character(round(as.numeric(unformatted) , digits=0))
+}
+
 colnames(formatted)="Profile metrics"
 kable( formatted, caption = "Profile metrics" )
 ```
@@ -79,7 +89,7 @@ if ( d==1 ) {
 }
 ```
 
-Here is the contour plot of the profile including all genes.
+Here is the contour plot of the profile including all detected genes.
 ```{r, contourplot, echo=FALSE,fig.height = 6, fig.width = 6.5,warning=FALSE, message=FALSE}
 palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 #Contour of all the data
@@ -166,7 +176,8 @@ if (d==1) {
   a<-as.data.frame(c(uu,ud,dd,du))
   rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
   colnames(a)="a"
-  barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
+  xx<-barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
+  text(x = xx, y = a$a, label = a$a , pos = 1, cex = 1)
 } else {
   sig<-sign(ss)
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
@@ -179,9 +190,9 @@ if (d==1) {
 Here are some metrics about the gene sets used:
 ```{r,input_geneset_metrics1,results="asis",echo=FALSE}
 ORIGINFILE=attributes(genesets)$originfile
-print(paste("GMT file of genesets:",ORIGINFILE))
-unformatted<-t(as.data.frame(res$analysis_metrics[ c(1,6,7,13  ) ]))
-formatted<-as.data.frame(as.character( unformatted[1:4]) )
+cat(paste("GMT file of genesets:",ORIGINFILE,"<br>"))
+unformatted<-t(as.data.frame(res$analysis_metrics[c(1,6,7)]))
+formatted<-as.data.frame(as.character( unformatted[1:3]) )
 rownames(formatted)=rownames(unformatted)
 colnames(formatted)="Gene sets metrics"
 kable( formatted , col.names = "Gene sets metrics" ,caption = "Gene sets metrics" )
@@ -195,27 +206,31 @@ hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset siz
 hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 ```
 
-```{r,input_geneset_metrics3,results="asis",echo=FALSE}
+```{r,input_geneset_metrics3,results="asis",echo=FALSE,message=FALSE}
 if (d<2) {
 nsig=length(which(res$enrichment_result$p.adjustANOVA<0.05))
 } else {
 nsig=length(which(res$enrichment_result$p.adjustMANOVA<0.05))
 }
 
-if (d>1) {
+if (d==2) {
+  cat("<h2>Gene sets by quadrant</h2><br>")
+  cat(paste("Number of significant gene sets (FDR<0.05)=", res$analysis_metrics$num_sets_significant,"<br>" ))
   a<-res$analysis_metrics[14]
   a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
   rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
   colnames(a)="a"
-  barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
+  xx<-barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
+  text(x = xx, y = a$a, label = a$a , pos = 1, cex = 1)
 } 
 if ( nsig > 0 ) {
-  if ( d>1 ) {
+  if ( d>2 ) {
+    cat(paste("Number of significant gene sets (FDR<0.05)=", res$analysis_metrics$num_sets_significant,"<br>" ))
+    cat("<h2>Gene sets by sector</h2><br>")
     sig<-sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA<0.05),4:(4+d-1)])
     sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
     colnames(sector_count)[ncol(sector_count)]<-"Count"
     kable(sector_count ,caption = "Gene sets by sector" ,row.names=T)
-    dev.off()
   }
 }
 ```
@@ -243,10 +258,10 @@ if (numsets==0){
   p<-tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
   message("Significance is calculated by -log10(p-value). All points shown are FDR<0.05")
 }
-print("All sets with FDR<0.05. Try hovering over the points.")
+cat("All sets with FDR<0.05. Try hovering over the points.<br>")
 p
 
-print("Top N sets irrespective of FDR. Try hovering over the points.")
+cat(paste("Top N=",resrows,"sets irrespective of FDR. Try hovering over the points.<br>"))
 # volcano tauchart
 myres<-head(res$enrichment_result,resrows)
 myres$significance<--log10(myres$pANOVA)
@@ -263,7 +278,7 @@ message("Significance is calculated by -log10(p-value). All points shown are FDR
 library("taucharts")
 library(dplyr)
 library(gtools)
-
+cat("All sets with FDR<0.05. Try hovering over the points.<br>")
 res$enrichment_result$confESp<-as.numeric(res$enrichment_result$confESp)
 numsets=nrow(subset(res$enrichment_result,p.adjustMANOVA<0.05))
 p=NULL
@@ -443,9 +458,10 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-}
 
-print("Top N sets irrespective of FDR. Try hovering over the points.")
+
+cat(paste("Top N=",resrows,"sets irrespective of FDR. Try hovering over the points.<br>"))
+
 message(paste("Prioritisation done by" , attributes(res$enrichment_result)$priority ))
 resrows=length(res$detailed_sets)
 myres<-head(res$enrichment_result,resrows)
@@ -606,11 +622,11 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
-}
 ```
 
 ```{r,heatmap,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=!D1}
-asis_output("## A heatmap of S values for top results\\n")
+cat("<h2> A heatmap of S values for top results</h2><br>")
+library(gplots)
 hmapx<-head( res$enrichment_result[,4:(4+d-1)] ,resrows)
 rownames(hmapx)<-head(res$enrichment_result$set,resrows)
 colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
@@ -619,17 +635,17 @@ heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none"
 ```
 
 ```{r,effectsize,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=!D1}
-asis_output("## A plot of effect size versus significance\\n")
-library(gplots)
+cat('<h2> A plot of effect size versus significance</h2><br>')
 myres<-res$enrichment_result
 myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 myres$significance<--log2(myres$p.adjustMANOVA)
 myres$set<-gsub("_"," ",as.character(myres$set))
 colnames(myres)=gsub("\\.","_",colnames(myres))
+myres$confESp=NULL
 my_x=colnames(myres)[ncol(myres)-2]
 my_y=colnames(myres)[ncol(myres)]
 tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
-print("Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist which is the hypotenuse of the s scores.")
+cat("Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist which is the hypotenuse of the s scores.<br>")
 ```
 
 ## Results table
@@ -642,22 +658,22 @@ if ( d==1 ) {
 } else if (d>1) {
   resrows=length(res$detailed_sets)
   myres<-head(res$enrichment_result,resrows)
+  myres$confESp=NULL
   myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 }
 formatted<-myres
 formatted[,1]<-gsub("_"," ",myres[,1])
-kable( formatted , col.names = colnames(formatted) , row.names=F, caption = "Top gene sets" ,digits=100)
+kable( formatted , col.names = colnames(formatted) , row.names=F, caption = cat(paste("Top N=",resrows,"gene sets")) ,digits=100)
 cat("<hr><br>")
 ```
 
 ## Results (complete table)
 ```{r,results_table_complete,results="asis",echo=FALSE}
 myres<-res$enrichment_result
+myres$confESp=NULL
 
 if ( d==1 ) {
-  myres<-res$enrichment_result
-  myres$confESp=NULL
   myres[,c(3:ncol(myres))]<-signif(myres[,c(3:ncol(myres))],3)
   formatted<-myres
   formatted[,1]<-gsub("_"," ",myres[,1])
@@ -676,7 +692,7 @@ cat("<hr><br>")
 ```
 
 ```{r,detailed_geneset_reports1d,results="asis",echo=FALSE,fig.height=6, fig.width=6 ,out.width = '80%',comment=NA, message=FALSE,eval=D1}
-cat("## Detailed Gene set reports\\n")
+cat("<h2>Detailed Gene set reports</h2><br>")
 cat('<br>')
 cat('\n')
 library("beeswarm")
@@ -736,8 +752,8 @@ cat("<br><hr>")
 
 
 
-```{r,detailed_geneset_reports2d,results="asis",echo=FALSE,fig.height=5, fig.width=6 ,out.width = '100%',comment=NA, message=FALSE,eval=!D1}
-asis_output("## Detailed Gene set reports\\n")
+```{r,detailed_geneset_reports2d,results="asis",echo=FALSE,fig.height=5, fig.width=6 ,out.width = '80%',comment=NA, message=FALSE,eval=!D1}
+cat("<h2> Detailed Gene set reports</h2><br>")
 library("reshape2")
 library("ggplot2")
 library("GGally")
@@ -779,7 +795,7 @@ twodimplot<-function(i) {
   print( p + theme_bw() +
    theme( axis.text=element_text(size=14),
    axis.title=element_text(size=15),
-   plot.title = element_text(size = 20)))
+   plot.title = element_text(size = 14)))
 }
 
 ndplot<-function(i) {
@@ -834,7 +850,7 @@ ndplot<-function(i) {
   print( p + theme_bw() +
    theme( axis.text=element_text(size=14),
    axis.title=element_text(size=15),
-   plot.title = element_text(size = 20)))
+   plot.title = element_text(size = 14)))
 
 }
 
