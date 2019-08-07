@@ -62,7 +62,7 @@ zz<-as.vector(z$stat)
 
 names(zz)<-z$GeneSymbol
 
-fgseaRes<-fgsea(pathways=genesets,stats=zz,nperm=10000)
+fgseaRes<-fgsea(pathways=genesets,stats=zz,nperm=10000,minSize=10)
 
 fgseaRes<-fgseaRes[order(fgseaRes$pval),]
 
@@ -81,3 +81,4 @@ res<-mitch_calc(d,genesets,resrows=50,bootstraps=0,priority="significance")
 
 mitch_plots(res,outfile="1dcharts.pdf")
 
+save.image("1d_test.Rdata")
