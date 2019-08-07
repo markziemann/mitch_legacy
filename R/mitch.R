@@ -277,8 +277,10 @@ if ( DEtype == "edger" ) {
   xx<-lapply(x,seurat_score)
 } else if ( DEtype == "topconfects" ) {
   xx<-lapply(x,topconfect_score)
-}
+} else {
+  stop('Specified DEtype does not match one of the following: "deseq2", "limma", "absseq", "sleuth", "seurat", "topconfects".')
 
+}
 
 # give the colums a unique name otherwise join_all will fail
 for (i in 1:length(xx) )  {
