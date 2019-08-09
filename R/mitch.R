@@ -1230,6 +1230,10 @@ mitch_report<-function(res,out) {
   HTMLNAME<-gsub(".html.html",".html",HTMLNAME)
   HTMLNAME<-paste(getwd(),HTMLNAME,sep="/")
 
+  rmd_tmpdir<-tempdir()
+  rmd_tmpfile<-paste(rmd_tmpdir,"/mitch.Rmd",sep="")
+  html_tmp<-paste(paste(rmd_tmpdir,"/mitch_report.html",sep=""))
+
   DATANAME<-gsub(".html$",".RData",out)
   DATANAME<-paste(rmd_tmpdir,"/",DATANAME,sep="")
   save.image(DATANAME)
