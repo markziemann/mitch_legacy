@@ -1230,6 +1230,10 @@ mitch_report<-function(res,out) {
   HTMLNAME<-gsub(".html.html",".html",HTMLNAME)
   HTMLNAME<-paste(getwd(),HTMLNAME,sep="/")
 
+  if(file.exists(HTMLNAME)) {
+    stop("Error: the output HTML file aready exists.")
+  }
+
   rmd_tmpdir<-tempdir()
   rmd_tmpfile<-paste(rmd_tmpdir,"/mitch.Rmd",sep="")
   html_tmp<-paste(paste(rmd_tmpdir,"/mitch_report.html",sep=""))
