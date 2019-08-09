@@ -219,13 +219,25 @@ topconfect_score<-function(y) {
   if (FCCOL>1){ stop("Error, there is more than 1 column named 'confect' in the input") }
   if (FCCOL<1){ stop("Error, there is no column named 'confect' in the input") }
 
-  s<-y$confect
-  s[is.na(s)] <- 0
+  # better to get the sign of fold change from the effect column
+  FCCOL=length(which(names(y)=="effect"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'effect' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'effect' in the input") }
+
+  # there is a problem with topconfects having some NA values
+  yy<-y[!is.na(y$effect),]
+
+  pos<-subset(yy,effect>0)
+  neg<-subset(yy,effect<0)
+  pos$mitchrank<-rev(1:nrow(pos))
+  neg$mitchrank<-rev(-1:-nrow(neg))
+  yy<-rbind(pos,neg)
+  s<-yy$mitchrank
 
   if ( !is.null(attributes(y)$geneIDcol) ) {
-    g<-y[,attributes(y)$geneIDcol]
+    g<-yy[,attributes(y)$geneIDcol]
   } else {
-    g<-rownames(y)
+    g<-rownames(yy)
   }
   z<-data.frame(g,s,stringsAsFactors=F)
   colnames(z)<-c("geneidentifiers","y")
