@@ -1229,9 +1229,6 @@ mitch_report<-function(res,out) {
   HTMLNAME<-paste(out,".html",sep="")
   HTMLNAME<-gsub(".html.html",".html",HTMLNAME)
   HTMLNAME<-paste(getwd(),HTMLNAME,sep="/")
-  rmd_tmpdir<-tempdir()
-  rmd_tmpfile<-paste(rmd_tmpdir,"/mitch.Rmd",sep="")
-  html_tmp<-paste(paste(rmd_tmpdir,"/mitch_report.html",sep=""))
 
   DATANAME<-gsub(".html$",".RData",out)
   DATANAME<-paste(rmd_tmpdir,"/",DATANAME,sep="")
@@ -1243,7 +1240,7 @@ mitch_report<-function(res,out) {
   assign("DATANAME", DATANAME, knitrenv)
   assign("res",res,knitrenv)
 
-  download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/mitch.Rmd",destfile=rmd_tmpfile)
-  rmarkdown::render(rmd_tmpfile,output_file=html_tmp)
+  rmd=system.file("mitch.Rmd", package = "mitch")
+  rmarkdown::render(rmd,output_file=html_tmp)
   file.copy(html_tmp,HTMLNAME)
 }
