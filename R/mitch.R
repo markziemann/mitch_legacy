@@ -275,6 +275,33 @@ seurat_score<-function(y) {
   z
 }
 
+muscat_score<-function(y) {
+
+  NCOL=ncol(y)
+  if (NCOL<2){ stop("Error: there are <2 columns in the input, 'p_val' and 'logFC' are required ") }
+
+  PCOL=length(which(names(y)=="p_val"))
+  if (PCOL>1){ stop("Error, there is more than 1 column named 'p_val' in the input") }
+  if (PCOL<1){ stop("Error, there is no column named 'p_val' in the input") }
+
+  FCCOL=length(which(names(y)=="logFC"))
+  if (FCCOL>1){ stop("Error, there is more than 1 column named 'logFC' in the input") }
+  if (FCCOL<1){ stop("Error, there is no column named 'logFC' in the input") }
+
+  s<-sign(y$logFC)*-log10(y$p_val)
+
+  if ( !is.null(attributes(y)$geneIDcol) ) {
+    g<-y[,attributes(y)$geneIDcol]
+  } else {
+    g<-rownames(y)
+  }
+  z<-data.frame(g,s,stringsAsFactors=F)
+  colnames(z)<-c("geneidentifiers","y")
+  z<-mapGeneIds(y,z)
+  z
+}
+
+
 if ( DEtype == "edger" ) {
   xx<-lapply(x,edger_score)
 } else if ( DEtype == "deseq2" ) {
@@ -289,9 +316,10 @@ if ( DEtype == "edger" ) {
   xx<-lapply(x,seurat_score)
 } else if ( DEtype == "topconfects" ) {
   xx<-lapply(x,topconfect_score)
+} else if ( DEtype == "muscat" ) {
+  xx<-lapply(x,muscat_score)
 } else {
   stop('Specified DEtype does not match one of the following: "deseq2", "limma", "absseq", "sleuth", "seurat", "topconfects".')
-
 }
 
 # give the colums a unique name otherwise join_all will fail
@@ -299,7 +327,7 @@ for (i in 1:length(xx) )  {
   colnames(xx[[i]])<-c("geneidentifiers" , paste("y",i,sep=""))
 }
 
-if ( DEtype == "seurat" ) {
+if ( DEtype == "seurat" || DEtype=="muscat" ) {
   xxx<-join_all(xx,by = "geneidentifiers",type="full")
 } else {
   xxx<-join_all(xx,by = 'geneidentifiers', type = 'inner')
