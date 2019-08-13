@@ -14,7 +14,7 @@ library("mitch")
 
 ## Workflow overview
 ### Importing gene sets
-Mitch has a function to import GMT files to R lists (adapted [Yu et al, 2012](https://dx.doi.org/10.1089%2Fomi.2011.0118) in the [clusterProfiler](http://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) package). For example:
+Mitch has a function to import GMT files to R lists (adapted from [Yu et al, 2012](https://dx.doi.org/10.1089%2Fomi.2011.0118) in the [clusterProfiler](http://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) package). For example:
 ```
 download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip",destfile="ReactomePathways.gmt.zip")
 unzip("ReactomePathways.gmt.zip")
