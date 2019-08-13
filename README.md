@@ -44,7 +44,7 @@ res<-mitch_calc(y,genesets,priority="effect")
 You can peek at the top results with `head` like this:
 
 ```
-head(res$manova_result)
+head(res$enrichment_result)
 ```
 
 By default, `mitch_calc` uses mclapply to speed up calculations on all but one available CPU threads. This behaviour can be modified by setting the `cores` to a desred number.
