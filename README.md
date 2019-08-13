@@ -1,5 +1,5 @@
 # Mitch
-Mitch is an R package for multi-dimensional enrichment analysis. At it's heart, it uses a rank-MANOVA based statistical approach to detect sets of genes that exhibit enrichment in the multidimensional space as compared to the background. Mitch is useful for pathway analysis of profiling studies with two to or more contrasts, or in studies with multiple omics profiling, for example proteomic, transcriptomic, epigenomic analysis of the same samples.
+Mitch is an R package for multi-dimensional enrichment analysis. At it's heart, it uses a rank-MANOVA based statistical approach to detect sets of genes that exhibit enrichment in the multidimensional space as compared to the background. Mitch is useful for pathway analysis of profiling studies with two to or more contrasts, or in studies with multiple omics profiling, for example proteomic, transcriptomic, epigenomic analysis of the same samples. 
 
 <img align="center" width="160" height="200" src="https://github.com/markziemann/Mitch/blob/master/figs/mitch.png">
 
@@ -14,7 +14,7 @@ library("mitch")
 
 ## Workflow overview
 ### Importing gene sets
-Mitch has a function to import GMT files to R lists, which was adapted from work by [Yu et al, 2012](https://dx.doi.org/10.1089%2Fomi.2011.0118) in the [clusterProfiler](http://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) package. For example:
+Mitch has a function to import GMT files to R lists (adapted [Yu et al, 2012](https://dx.doi.org/10.1089%2Fomi.2011.0118) in the [clusterProfiler](http://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) package). For example:
 ```
 download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip",destfile="ReactomePathways.gmt.zip")
 unzip("ReactomePathways.gmt.zip")
