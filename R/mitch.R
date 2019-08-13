@@ -20,7 +20,7 @@ mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
 library("plyr")
 
-if ( attributes(x)$class=="data.frame" ) {
+if ( class(x)=="data.frame" ) {
   warning("The input is a single dataframe; one contrast only. Converting it to a list for you.")
   NAME=deparse(substitute(x))
   x<-list(x=x)
