@@ -20,16 +20,18 @@ mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
 library("plyr")
 
+if ( attributes(x)$class=="data.frame" ) {
+  warning("The input is a single dataframe; one contrast only. Converting it to a list for you.")
+  NAME=deparse(substitute(x))
+  x<-list(x=x)
+}
+
 if ( !is.list(x) ){
   stop("Error: Input (x) must be a LIST of dataframes.")
 }
 
 if ( is.null(names(x)) ){
   stop("Error: Input (x) must be a NAMED list of dataframes.")
-}
-
-if (length(which(FALSE==unname(unlist(lapply(x,is.data.frame))))) >0 ) {
-  stop("Error: Input (x) must be a named list of DATAFRAMES only.")
 }
 
 if ( !is.null(geneTable) && !is.data.frame(geneTable) ) {
@@ -301,6 +303,7 @@ muscat_score<-function(y) {
   z
 }
 
+DEtype=tolower(DEtype)
 
 if ( DEtype == "edger" ) {
   xx<-lapply(x,edger_score)
