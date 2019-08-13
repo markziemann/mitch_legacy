@@ -55,16 +55,6 @@ By default, gene sets with fewer than 10 members present in the profiling data a
 ```
 res<-mitch_calc(y,genesets,priority="significance",minsetsize=20)
 ```
-
-Optionally, users can specify bootstrapping to estimate the lower 95% confidence interval of the s.distance (effect size). This is done by randomly resampling the gene set with replacement. This adds significantly to the execution time, so it is not advised for "first-pass" analysis. A reasonable bootstrap number is 1000.
-```
-res<-mitch_calc(y,genesets,priority="significance",bootstraps=1000)
-```
-If bootstraps are specified, then the results can be prioritised by the lower confidence interval of the s.distance:
-```
-res<-mitch_calc(y,genesets,priority="confidence",bootstraps=1000)
-```
-
 By default, in downstream visualisation steps, charts are made from the top 50 gene sets, but this can be modified using the `resrows` option. 
 ```
 res<-mitch_calc(y,genesets,priority="significance",resrows=100)
