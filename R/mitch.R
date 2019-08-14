@@ -389,14 +389,13 @@ gmt_import<-function(gmtfile){
 #' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
 #' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
 #' @param priority the prioritisation metric to selecting top gene sets. Valid options are "significance", 
-#' "effect" and "confidence"
-#' @param bootstraps the number of bootstraps to recalculate in estimate the confidence intervals.
+#' "effect" and "SD"
 #' @return a mitch results object 
 #' @keywords mitch MANOVA
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-MANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
+MANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL) {
 
 STARTSWITHNUM=length(grep("^[0-9]",colnames(x)))
 if (STARTSWITHNUM>0) {
@@ -406,11 +405,11 @@ if (STARTSWITHNUM>0) {
 sets<-names(genesets)
 
 if (  is.null(priority) ) {
-  priority="confidence"
+  priority="significance"
 }
 
-if (priority!="significance" && priority!="effect" && priority!="confidence") {
-  stop("Error: Parameter 'priority' must be either 'confidence'(the default),'significance' or 'effect'.")
+if (priority!="significance" && priority!="effect" && priority!="SD") {
+  stop("Error: Parameter 'priority' must be either 'significance'(the default), 'effect' or 'SD'.")
 }
 
 hypotenuse <- function(x){ sqrt(sum(unlist(lapply(x,function(x) {x^2} )))) }
@@ -419,21 +418,6 @@ hypotenuse <- function(x){ sqrt(sum(unlist(lapply(x,function(x) {x^2} )))) }
 HYPOT=hypotenuse(apply(x,2,length))
 
 res<-pbmclapply(sets,function(set){
-
-  resample<-function(x,set){
-    sss<-x[which (rownames(x) %in% as.character(unlist(genesets[set]))),]
-    mysample<-sss[sample(nrow(sss),nrow(sss),replace=T),]
-    colMeans(mysample)
-  }
-
-  bootstrap<-function(x,n,set){
-    xx<-as.data.frame(t(replicate(n,resample(x,set))),stringsAsFactors=F)
-    NOTINSET<-colMeans(x[!inset,])
-    NROW=nrow(x)
-    xxx<- ( 2* (xx - NOTINSET ) ) / NROW
-    b<-apply(xxx,1,hypotenuse)
-    return(b)
-  }
 
   inset<-rownames(x) %in% as.character(unlist(genesets[set]))
 
@@ -447,39 +431,17 @@ res<-pbmclapply(sets,function(set){
     raov<-sapply(sumAOV, function(zz) {zz[1,"Pr(>F)"]})
     names(raov)<-gsub("^ Response ","p.",names(raov))
     #S coordinates
-
     NOTINSET<-colMeans(x[!inset,])
     scord<- ( 2*( colMeans(x[inset,]) - NOTINSET ) ) / NROW 
     names(scord)<-paste0("s-",names(scord))
     #calculate the hypotenuse length of s scores
     s.dist<-hypotenuse(scord)
     names(s.dist)="s.dist"
+    mysd=sd(scord)
+    names(mysd)="SD"
 
-    #confidence interval calc by resampling
-    if (bootstraps > 0) {
-
-      STRAPSDONE=0
-      BAND_SIZE=1
-      CHUNK=50
-      b=NULL
-      # use an approach to stop bootstrapping un
-      while ( STRAPSDONE<bootstraps) {
-        bb<-bootstrap(x,CHUNK,set)
-        b<-c(b,bb)
-        STRAPSDONE=STRAPSDONE+CHUNK
-        BAND_SIZE<-unname((CI(b)[1]-CI(b)[3] ) /CI(b)[2])
-      }
-      #b<-bootstrap(x,bootstraps,set)
-      confESp<-s.dist-quantile(abs(s.dist-b),0.05)
-      names(confESp)="confESp"
-    } else {
-      confESp<-NA
-      names(confESp)="confESp"
-    }
-
-    return(data.frame(set,setSize=sum(inset), pMANOVA, t(scord), t(raov), t(s.dist), t(confESp) , stringsAsFactors=F ))
+    return(data.frame(set,setSize=sum(inset), pMANOVA, t(scord), t(raov), t(s.dist), t(mysd) , stringsAsFactors=F ))
   }
-
 },mc.cores=cores )
 
 fres<-ldply(res, data.frame)
@@ -500,9 +462,10 @@ if (nrow(fres)<1) {
     fres<-fres[order(-fres$s.dist),]
     message("Note: Enrichments with large effect sizes may not be statistically significant.")
   }
-  if (priority=="confidence") {
-    fres<-fres[order(-fres$confES),]
-    message("Note: default gene set prioritisation is by confidence interval (confES). Alternatives are 'significance' and 'effect'.")
+  if (priority=="SD") {
+    fres<-fres[order(-fres$SD),]
+    fres<-subset(fres,p.adjustMANOVA<=0.05)
+    message("Note: Prioritisation by SD after selecting sets with p.adjustMANOVA<=0.05.")
   }
   attributes(fres)$priority<-priority
   return(fres)
@@ -520,16 +483,15 @@ if (nrow(fres)<1) {
 #' @param genesets lists of genes imported by the gmt_imprt function or similar.
 #' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
 #' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
-#' @param priority the prioritisation metric to selecting top gene sets. Valid options are "significance", 
-#' "effect" and "confidence"
-#' @param bootstraps the number of bootstraps to recalculate in estimate the confidence intervals.
+#' @param priority the prioritisation metric to selecting top gene sets. Valid options are "significance" and 
+#' "effect".
 #' @return a mitch results object 
 #' @keywords mitch MANOVA
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
 
-ANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL, bootstraps=0) {
+ANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL) {
 
 STARTSWITHNUM=length(grep("^[0-9]",colnames(x)))
 if (STARTSWITHNUM>0) {
@@ -539,11 +501,11 @@ if (STARTSWITHNUM>0) {
 sets<-names(genesets)
 
 if (  is.null(priority) ) {
-  priority="confidence"
+  priority="significance"
 }
 
-if (priority!="significance" && priority!="effect" && priority!="confidence") {
-  stop("Error: Parameter 'priority' must be either 'confidence'(the default),'significance' or 'effect'.")
+if (priority!="significance" && priority!="effect") {
+  stop("Error: Parameter 'priority' must be either 'significance' (default) or 'effect'.")
 }
 
 res<-pbmclapply(sets,function(set){
@@ -551,15 +513,6 @@ res<-pbmclapply(sets,function(set){
     sss<-x[which (rownames(x) %in% as.character(unlist(genesets[set]))),]
     mysample<-sample(sss,length(sss),replace=T)
     mean(mysample)
-  }
-
-  bootstrap<-function(x,n,set){
-    xx<-as.data.frame(t(replicate(n,resample(x,set))),stringsAsFactors=F)
-    NOTINSET<-mean(x[!inset,])
-    NROW=nrow(x)
-    xxx<- ( 2* (xx - NOTINSET ) ) / NROW
-    #b<-apply(xxx,1,hypotenuse)
-    return(xxx)
   }
 
   inset<-rownames(x) %in% as.character(unlist(genesets[set]))
@@ -571,28 +524,7 @@ res<-pbmclapply(sets,function(set){
     pANOVA<-summary(fit)[[1]][,5][1]
     NOTINSET<-mean(x[!inset,])
     s.dist<- ( 2*( mean(x[inset,]) - NOTINSET ) ) / NROW
-
-    #confidence interval calc by resampling
-    if (bootstraps > 0) {
-
-      STRAPSDONE=0
-      BAND_SIZE=1
-      CHUNK=50
-      b=NULL
-      # use an approach to stop bootstrapping un
-      while ( STRAPSDONE<bootstraps) {
-        bb<-bootstrap(x,CHUNK,set)
-        b<-unlist(c(b,bb))
-        STRAPSDONE=STRAPSDONE+CHUNK
-        BAND_SIZE<-unname((CI(b)[1]-CI(b)[3] ) /CI(b)[2])
-      }
-      #b<-bootstrap(x,bootstraps,set)
-      confESp<-s.dist-quantile(abs(s.dist-b),0.05)
-    } else {
-      confESp<-NA
-    }
-
-    gres<-data.frame(set,setSize=sum(inset), pANOVA, s.dist, confESp , stringsAsFactors=F )
+    gres<-data.frame(set,setSize=sum(inset), pANOVA, s.dist, stringsAsFactors=F )
     gres
   }
 },mc.cores=cores )
@@ -614,10 +546,6 @@ if (nrow(fres)<1) {
   if (priority=="effect") {
     fres<-fres[order(-abs(fres$s.dist)),]
     message("Note: Enrichments with large effect sizes may not be statistically significant.")
-  }
-  if (priority=="confidence") {
-    fres<-fres[order(-fres$confES),]
-    message("Note: default gene set prioritisation is by confidence interval (confES). Alternatives are 'significance' and 'effect'.")
   }
   attributes(fres)$priority<-priority
   return(fres)
@@ -822,8 +750,7 @@ detailed_sets<-function(res,  resrows=50) {
 #' @param resrows an integer value representing the number of top genesets for which a detailed report is to be 
 #' generated. Default is 50.
 #' @param priority the prioritisation metric used to selecting top gene sets. Valid options are "significance", 
-#' "effect" and "confidence". If using "confidence", then bootstraps must be set >0.
-#' @param bootstraps the number of bootstraps to recalculate in estimate the confidence intervals.
+#' "effect" and "SD". 
 #' @return mitch res object with the following parts:
 #'  $input_profile: the supplied input differential profile
 #'  $input_genesets: the supplied input gene sets
@@ -834,10 +761,9 @@ detailed_sets<-function(res,  resrows=50) {
 #' @keywords mitch calc calculate manova 
 #' @export
 #' @examples
-#' # An example of using mitch to calculate multivariate enrichments and prioritise based on confidence intervals 
-#' # generated from 100 bootstraps.
-#' res<-mitch_calc(x,genesets,resrows=25,bootstraps=100,priority="confidence")
-mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL, bootstraps=0) {
+#' # An example of using mitch to calculate multivariate enrichments and prioritise based on effect size 
+#' res<-mitch_calc(x,genesets,resrows=25,priority="effect")
+mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL) {
 library("plyr")
 library("parallel")
 library("pbmcapply")
@@ -849,7 +775,7 @@ library("Rmisc")
   ranked_profile<-mitch_rank(input_profile)
 
   if (ncol(x)>1) {
-    enrichment_result<-MANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
+    enrichment_result<-MANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority)
 
     if (!is.null(enrichment_result)) {
       mitch_metrics <-mitch_metrics_calc(x,genesets,enrichment_result)
@@ -868,7 +794,7 @@ library("Rmisc")
     }
   } else if (ncol(x)==1) {
 
-    enrichment_result<-ANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority, bootstraps=bootstraps)
+    enrichment_result<-ANOVA(ranked_profile, genesets, minsetsize=minsetsize, cores=cores, priority=priority)
 
     if (!is.null(enrichment_result)) {
       mitch_metrics <-mitch_metrics_calc1d(x,genesets,enrichment_result)

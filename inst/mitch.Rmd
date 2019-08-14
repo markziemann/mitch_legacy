@@ -243,7 +243,6 @@ if (numsets==0){
 } else {
   # volcano tauchart
   myres<-subset(res$enrichment_result,p.adjustANOVA<0.05)
-  myres$confESp=NULL # NA values will screw up the tauchart
   myres$significance<--log10(myres$pANOVA)
   myres$set<-gsub("_"," ",as.character(myres$set))
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
@@ -265,7 +264,6 @@ myres$set<-gsub("_"," ",as.character(myres$set))
 colnames(myres)=gsub("\\.","_",colnames(myres))
 my_x=colnames(myres)[4]
 my_y=colnames(myres)[7]
-myres$confESp=NULL  # NA values will screw up the tauchart
 tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
 message("Significance is calculated by -log10(p-value). All points shown are FDR<0.05")
 ```
@@ -275,7 +273,6 @@ library("taucharts")
 library(dplyr)
 library(gtools)
 cat("All sets with FDR<0.05. Try hovering over the points.<br>")
-res$enrichment_result$confESp<-as.numeric(res$enrichment_result$confESp)
 numsets=nrow(subset(res$enrichment_result,p.adjustMANOVA<0.05))
 p=NULL
 if (numsets>0){
@@ -635,7 +632,6 @@ myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 myres$significance<--log2(myres$p.adjustMANOVA)
 myres$set<-gsub("_"," ",as.character(myres$set))
 colnames(myres)=gsub("\\.","_",colnames(myres))
-myres$confESp=NULL
 my_x=colnames(myres)[ncol(myres)-2]
 my_y=colnames(myres)[ncol(myres)]
 tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
@@ -647,13 +643,11 @@ cat("Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist whi
 if ( d==1 ) {
   resrows=length(res$detailed_sets)
   myres<-head(res$enrichment_result,resrows)
-  myres$confESp=NULL
   myres[,c(3:ncol(myres))]<-signif(myres[,c(3:ncol(myres))],3)
 } else if (d>1) {
   resrows=length(res$detailed_sets)
   myres<-head(res$enrichment_result,resrows)
-  myres$confESp=NULL
-  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist") ,4:((d*2)+3))]
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 }
 formatted<-myres
@@ -665,14 +659,13 @@ cat("<hr><br>")
 ## Results (complete table)
 ```{r,results_table_complete,results="asis",echo=FALSE}
 myres<-res$enrichment_result
-myres$confESp=NULL
 
 if ( d==1 ) {
   myres[,c(3:ncol(myres))]<-signif(myres[,c(3:ncol(myres))],3)
   formatted<-myres
   formatted[,1]<-gsub("_"," ",myres[,1])
 } else if (d>1) {
-  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist") ,4:((d*2)+3))]
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
   formatted<-myres
   formatted[,1]<-gsub("_"," ",myres[,1])
@@ -757,7 +750,7 @@ ss<-res$ranked_profile
 myres<-head(res$enrichment_result,resrows)
 
 
-myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist") ,4:((d*2)+3))]
 myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 ss_long<-melt(ss)
@@ -858,7 +851,7 @@ topgenelist<-function(i) {
 
   tl=bl=tr=br=0
   myres<-head(res$enrichment_result,resrows)
-  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist"), which(names(myres) %in% "confESp") ,4:((d*2)+3))]
+  myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myres) %in% "s.dist") ,4:((d*2)+3))]
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 
   #select 2 strongest columns to highlight genes
