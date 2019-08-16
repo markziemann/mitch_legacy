@@ -44,7 +44,7 @@ NULL
 #' x<-mitch_import(w,DEtype="edger",geneIDcol="GeneAccession",geneTable=gt)
 mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
-#library("plyr")
+library("plyr")
 
 if ( class(x)=="data.frame" ) {
   warning("The input is a single dataframe; one contrast only. Converting it to a list for you.")
@@ -857,11 +857,10 @@ importFrom(plyr,;dply)
 #' mitch_plots(res,outfile="outres.pdf")
 mitch_plots <- function(res,outfile="Rplots.pdf") {
   library("gplots")
-#  library("plyr")
+  library("plyr")
   library("reshape2")
   library("GGally")
   library("ggplot2")
-#  library("vioplot")
   library("grid")
   library("gridExtra")
   library("beeswarm")
@@ -1206,7 +1205,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #' # render mitch results in the form of a HTML report
 #' mitch_report(res,"outres.html")
 mitch_report<-function(res,out) {
-#  library("plyr")
+  library("plyr")
   library("knitr")
   library("markdown")
   library("rmarkdown")
