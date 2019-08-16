@@ -1,3 +1,29 @@
+#' Mitch: An R package for multi-dimensional pathway enrichment analysis
+#'
+#' Mitch is an R package for multi-dimensional enrichment analysis. At it's heart, it uses 
+#' a rank-MANOVA based statistical approach to detect sets of genes that exhibit 
+#' enrichment in the multidimensional space as compared to the background. Mitch is useful 
+#' for pathway analysis of profiling studies with two to or more contrasts, or in studies 
+#' with multiple omics profiling, for example proteomic, transcriptomic, epigenomic 
+#' analysis of the same samples. Mitch is perfectly suited for pathway level differential 
+#' analysis of scRNA-seq data.
+#'
+#' A typical Mitch workflow consists of:
+#'  (1) Import gene sets with gmt_import()
+#'  (2) Import profiling data with mitch_import()
+#'  (3) Calculate enrichments with mitch_calc()
+#'  (4) And generate plots and reports with mitch_plots() and mitch_report()
+#' 
+#'  More documentation on the github page https://github.com/markziemann/Mitch or 
+#'  with ?function, eg ?mitch_import
+#'
+#' @docType package
+#' @name mitch
+NULL
+
+
+
+
 #' mitch_import
 #'
 #' This function imports differential omics data from common differential tools like edgeR, limma, DESeq2, Sleuth, 
@@ -18,7 +44,7 @@
 #' x<-mitch_import(w,DEtype="edger",geneIDcol="GeneAccession",geneTable=gt)
 mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
-library("plyr")
+#library("plyr")
 
 if ( class(x)=="data.frame" ) {
   warning("The input is a single dataframe; one contrast only. Converting it to a list for you.")
@@ -769,6 +795,8 @@ library("parallel")
 library("pbmcapply")
 library("Rmisc")
 
+importFrom(plyr,;dply)
+
   colnames(x)<-sub("-","_",colnames(x))
   input_profile<-x
   input_genesets<-genesets
@@ -829,7 +857,7 @@ library("Rmisc")
 #' mitch_plots(res,outfile="outres.pdf")
 mitch_plots <- function(res,outfile="Rplots.pdf") {
   library("gplots")
-  library("plyr")
+#  library("plyr")
   library("reshape2")
   library("GGally")
   library("ggplot2")
@@ -1178,7 +1206,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #' # render mitch results in the form of a HTML report
 #' mitch_report(res,"outres.html")
 mitch_report<-function(res,out) {
-  library("plyr")
+#  library("plyr")
   library("knitr")
   library("markdown")
   library("rmarkdown")
