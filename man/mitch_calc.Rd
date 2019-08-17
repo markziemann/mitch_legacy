@@ -5,7 +5,7 @@
 \title{mitch_calc}
 \usage{
 mitch_calc(x, genesets, minsetsize = 10, cores = detectCores() - 1,
-  resrows = 50, priority = NULL, bootstraps = 0)
+  resrows = 50, priority = NULL)
 }
 \arguments{
 \item{x}{a multicolumn numerical table with each column containing differential expression scores for a contrast.
@@ -22,26 +22,23 @@ Default is 10.}
 generated. Default is 50.}
 
 \item{priority}{the prioritisation metric used to selecting top gene sets. Valid options are "significance", 
-"effect" and "confidence". If using "confidence", then bootstraps must be set >0.}
-
-\item{bootstraps}{the number of bootstraps to recalculate in estimate the confidence intervals.}
+"effect" and "SD".}
 }
 \value{
 mitch res object with the following parts:
  $input_profile: the supplied input differential profile
  $input_genesets: the supplied input gene sets
  $ranked_profile: the differential profile after ranking
- $manova_result: the table of MANOVA enrichment results for each gene set
- $manova_analysis_metrics:  several metrics that are important to the interpretation of the results
+ $enrichment_result: the table of MANOVA/ANOVA enrichment results for each gene set
+ $analysis_metrics:  several metrics that are important to the interpretation of the results
  $detailed_sets: a list of dataframes containing ranks of members of prioritised gene sets.
 }
 \description{
 This function performs multivariate gene set enrichment analysis.
 }
 \examples{
-# An example of using mitch to calculate multivariate enrichments and prioritise based on confidence intervals 
-# generated from 100 bootstraps.
-res<-mitch_calc(x,genesets,resrows=25,bootstraps=100,priority="confidence")
+# An example of using mitch to calculate multivariate enrichments and prioritise based on effect size 
+res<-mitch_calc(x,genesets,resrows=25,priority="effect")
 }
 \keyword{calc}
 \keyword{calculate}

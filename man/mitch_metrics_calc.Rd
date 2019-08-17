@@ -4,7 +4,7 @@
 \alias{mitch_metrics_calc}
 \title{mitch_metrics_calc}
 \usage{
-mitch_metrics_calc(x, genesets, manova_result, minsetsize = 10)
+mitch_metrics_calc(x, genesets, enrichment_result, minsetsize = 10)
 }
 \arguments{
 \item{x}{a multicolumn numerical table with each column containing differential expression scores for a contrast.
@@ -12,7 +12,7 @@ Rownames must match genesets.}
 
 \item{genesets}{lists of genes imported by the gmt_imprt function or similar.}
 
-\item{manova_result}{a valid result of the MANOVA function}
+\item{enrichment_result}{a valid result of the MANOVA function}
 
 \item{minsetsize}{the minimum number of genes required in a set for it to be included in the statistical analysis.}
 }
@@ -20,7 +20,7 @@ Rownames must match genesets.}
 a list of metrics
 }
 \description{
-This function collects some metrics from the manova analysis. This function is not meant to be used directly.
+This function collects some metrics from the enrichment analysis. This function is not meant to be used directly.
 }
 \examples{
 #This function is not designed to be used directly

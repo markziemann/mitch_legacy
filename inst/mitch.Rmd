@@ -150,7 +150,7 @@ if (d==1) {
 ## Input genesets
 Here are some metrics about the gene sets used:
 ```{r,input_geneset_metrics1,results="asis",echo=FALSE}
-ORIGINFILE=attributes(genesets)$originfile
+ORIGINFILE=attributes(res$input_genesets)$originfile
 cat(paste("GMT file of genesets:",ORIGINFILE,"<br>"))
 unformatted<-t(as.data.frame(res$analysis_metrics[c(1,6,7)]))
 formatted<-as.data.frame(as.character( unformatted[1:3]) )

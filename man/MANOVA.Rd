@@ -5,7 +5,7 @@
 \title{MANOVA}
 \usage{
 MANOVA(x, genesets, minsetsize = 10, cores = detectCores() - 1,
-  priority = NULL, bootstraps = 0)
+  priority = NULL)
 }
 \arguments{
 \item{x}{a multicolumn numerical table with each column containing differential expression scores for a contrast.
@@ -18,9 +18,7 @@ Rownames must match genesets.}
 \item{cores}{the number of parallel threads for computation. Defaults to the number of cores present minus 1.}
 
 \item{priority}{the prioritisation metric to selecting top gene sets. Valid options are "significance", 
-"effect" and "confidence"}
-
-\item{bootstraps}{the number of bootstraps to recalculate in estimate the confidence intervals.}
+"effect" and "SD"}
 }
 \value{
 a mitch results object

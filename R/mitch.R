@@ -21,6 +21,8 @@
 #' @name mitch
 NULL
 
+#' @import utils
+utils::globalVariables(c("p.adjustMANOVA", "effect", "p.adjustANOVA","Var2","value","..density.."))
 
 
 
@@ -39,12 +41,16 @@ NULL
 #' @export
 #' @examples
 #' # first step is to create a list of differential 
-#' w<-list("edger1"=edger1,"edger2"=edger2)
-#' # import as edgeR table with gene accessions in column named "GeneAccession" and "gt" mapping gene names.
-#' x<-mitch_import(w,DEtype="edger",geneIDcol="GeneAccession",geneTable=gt)
+#' rna<-read.table(system.file("rna.tsv", package = "mitch"),header=TRUE,row.names=1)
+#' k9a<-read.table(system.file("k9a.tsv", package = "mitch"),header=TRUE,row.names=1)
+#' k36a<-read.table(system.file("k36a.tsv", package = "mitch"),header=TRUE,row.names=1)
+#' # create a list of differential profiles 
+#' x<-list("rna"=rna,"k9a"=k9a,"k36a"=k36a)
+#' # import as edgeR table 
+#' y<-mitch_import(x,DEtype="edger")
 mitch_import<-function(x , DEtype, geneIDcol=NULL, geneTable=NULL ) {
 
-library("plyr")
+#library("plyr")
 
 if ( class(x)=="data.frame" ) {
   warning("The input is a single dataframe; one contrast only. Converting it to a list for you.")
@@ -395,8 +401,8 @@ return(xxx)
 #' @export
 #' @examples
 #' # Import some gene sets
-#' genesets<-gmt_import("MyGeneSets.gmt")
-
+#' gsets<-gmt_import(system.file("sample_genesets.gmt", package = "mitch"))
+#' @import utils
 gmt_import<-function(gmtfile){
     genesetLines <- strsplit(readLines(gmtfile), "\t")
     genesets <- lapply(genesetLines, utils::tail, -2)
@@ -421,6 +427,10 @@ gmt_import<-function(gmtfile){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
+#' @import parallel
+#' @import pbmcapply
+#' @import stats
+#' @import plyr
 MANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL) {
 
 STARTSWITHNUM=length(grep("^[0-9]",colnames(x)))
@@ -516,7 +526,10 @@ if (nrow(fres)<1) {
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-
+#' @import parallel
+#' @import pbmcapply
+#' @import stats
+#' @import plyr
 ANOVA<-function(x,genesets, minsetsize=10, cores=detectCores()-1, priority=NULL) {
 
 STARTSWITHNUM=length(grep("^[0-9]",colnames(x)))
@@ -787,15 +800,16 @@ detailed_sets<-function(res,  resrows=50) {
 #' @keywords mitch calc calculate manova 
 #' @export
 #' @examples
-#' # An example of using mitch to calculate multivariate enrichments and prioritise based on effect size 
-#' res<-mitch_calc(x,genesets,resrows=25,priority="effect")
+#' # An example of using mitch to calculate multivariate enrichments and prioritise based on 
+#' # effect size 
+#' gsets<-gmt_import(system.file("sample_genesets.gmt", package = "mitch"))
+#' x<-read.table(system.file("rna.rnk", package = "mitch"),header=TRUE,row.names=1)
+#' res<-mitch_calc(x,gsets,priority="effect",minsetsize=5,cores=1)
 mitch_calc<-function(x,genesets, minsetsize=10, cores=detectCores()-1 , resrows=50, priority=NULL) {
-library("plyr")
-library("parallel")
-library("pbmcapply")
-library("Rmisc")
-
-importFrom(plyr,;dply)
+#library("plyr")
+#library("parallel")
+#library("pbmcapply")
+#library("Rmisc")
 
   colnames(x)<-sub("-","_",colnames(x))
   input_profile<-x
@@ -854,16 +868,29 @@ importFrom(plyr,;dply)
 #' @export
 #' @examples
 #' # render enrichment plots in high res pdf
+#' gsets<-gmt_import(system.file("sample_genesets.gmt", package = "mitch"))
+#' x<-read.table(system.file("rna.rnk", package = "mitch"),header=TRUE,row.names=1)
+#' res<-mitch_calc(x,gsets,priority="effect",minsetsize=5,cores=1)
 #' mitch_plots(res,outfile="outres.pdf")
+#' @import grDevices
+#' @import graphics
+#' @import grDevices
+#' @import GGally
+#' @import grid
+#' @import gridExtra
+#' @import beeswarm
+#' @importFrom  gplots heatmap.2
+#' @import reshape2
+#' @import ggplot2
 mitch_plots <- function(res,outfile="Rplots.pdf") {
-  library("gplots")
-  library("plyr")
-  library("reshape2")
-  library("GGally")
-  library("ggplot2")
-  library("grid")
-  library("gridExtra")
-  library("beeswarm")
+#  library("gplots")
+#  library("plyr")
+#  library("reshape2")
+#  library("GGally")
+#  library("ggplot2")
+#  library("grid")
+#  library("gridExtra")
+#  library("beeswarm")
   palette <- colorRampPalette(c("white", "yellow","orange" ,"red","darkred","black"))
 
   mytheme <- gridExtra::ttheme_default(
@@ -945,7 +972,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     ymin=min(ss[,2])
     ymax=max(ss[,2])
 
-    k<-MASS:::kde2d(ss[,1],ss[,2])
+    k<-MASS::kde2d(ss[,1],ss[,2])
     X_AXIS=paste("Rank in contrast",colnames(ss)[1])
     Y_AXIS=paste("Rank in contrast",colnames(ss)[2])
 
@@ -954,7 +981,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     abline(v=0,h=0,lty=2,lwd=2,col="blue")
 
     filled.contour(k, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
-      color=palette , 
+      color.palette=palette , 
       plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
         title( main="Rank-rank plot of all genes",xlab=X_AXIS,ylab=Y_AXIS )
       }
@@ -1000,7 +1027,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
     rownames(hmapx)<-head(res$enrichment_result$set,resrows)
     colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
     my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
-    heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
+    heatmap.2(as.matrix(hmapx),scale="none",margins=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
     # plot effect size versus significance 
     plot(res$enrichment_result$s.dist,-log(res$enrichment_result$p.adjustMANOVA), 
@@ -1015,8 +1042,8 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
       size<-ll$setSize
       sss<-res$detailed_sets[[i]] 
 
-      k<-MASS:::kde2d(sss[,1],sss[,2])
-      filled.contour( k, color = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
+      k<-MASS::kde2d(sss[,1],sss[,2])
+      filled.contour( k, color.palette = palette, xlim=c(xmin,xmax),ylim=c(ymin,ymax),
           plot.title={ abline(v=0,h=0,lty=2,lwd=2,col="blue")
           title( main=ll$set , xlab=X_AXIS,ylab=Y_AXIS  )
         }
@@ -1140,7 +1167,7 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
   rownames(hmapx)<-head(res$enrichment_result$set,resrows)
   colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
   my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
-  heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
+  heatmap.2(as.matrix(hmapx),scale="none",margins=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 
   # plot effect size versus significance 
   par(mfrow=c(1,1))
@@ -1202,15 +1229,21 @@ mitch_plots <- function(res,outfile="Rplots.pdf") {
 #' @keywords mitch report html markdown knitr
 #' @export
 #' @examples
+#' gsets<-gmt_import(system.file("sample_genesets.gmt", package = "mitch"))
+#' x<-read.table(system.file("rna.rnk", package = "mitch"),header=TRUE,row.names=1)
+#' res<-mitch_calc(x,gsets,priority="effect",minsetsize=5,cores=1)
 #' # render mitch results in the form of a HTML report
 #' mitch_report(res,"outres.html")
-mitch_report<-function(res,out) {
-  library("plyr")
-  library("knitr")
-  library("markdown")
-  library("rmarkdown")
+#' @import knitr
+#' @import rmarkdown
 
-  HTMLNAME<-paste(out,".html",sep="")
+mitch_report<-function(res,outfile) {
+#  library("plyr")
+#  library("knitr")
+#  library("markdown")
+#  library("rmarkdown")
+
+  HTMLNAME<-paste(outfile,".html",sep="")
   HTMLNAME<-gsub(".html.html",".html",HTMLNAME)
   HTMLNAME<-paste(getwd(),HTMLNAME,sep="/")
 
@@ -1222,7 +1255,7 @@ mitch_report<-function(res,out) {
   rmd_tmpfile<-paste(rmd_tmpdir,"/mitch.Rmd",sep="")
   html_tmp<-paste(paste(rmd_tmpdir,"/mitch_report.html",sep=""))
 
-  DATANAME<-gsub(".html$",".RData",out)
+  DATANAME<-gsub(".html$",".RData",outfile)
   DATANAME<-paste(rmd_tmpdir,"/",DATANAME,sep="")
   save.image(DATANAME)
   MYMESSAGE=paste("Dataset saved as \"",DATANAME,"\".")

@@ -11,8 +11,10 @@ Description: Mitch applies rank-MANOVA to identify differential gene set enrichm
   also high throughput profiling datasets of up to 15 contrasts. Mitch imports differential expression data from 
   commonly used tools such as edgeR, limma, DESeq2, ABSSeq and Sleuth as well as scRNA-seq data output by Seurat. 
   Mitch can output data in the form of a high resolution PDF or as a self contained HTML report. 
-Depends: plyr, reshape2, dplyr, parallel, pbmcapply, Rmisc, GGally, grid, gridExtra, knitr, markdown, rmarkdown, gplots, gtools, beeswarm
-License: CC BY-SA 4.0
+Depends: R (>= 2.6.0)
+Suggests:
+Imports: grDevices, graphics, utils, MASS, plyr, reshape2, dplyr, parallel, pbmcapply, Rmisc, GGally, grid, gridExtra, knitr, markdown, rmarkdown, ggplot2, gplots, gtools, beeswarm
+License: CC BY-SA 4.0 + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1.9001
