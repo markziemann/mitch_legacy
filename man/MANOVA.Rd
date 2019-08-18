@@ -17,8 +17,8 @@ Rownames must match genesets.}
 
 \item{cores}{the number of parallel threads for computation. Defaults to the number of cores present minus 1.}
 
-\item{priority}{the prioritisation metric to selecting top gene sets. Valid options are "significance", 
-"effect" and "SD"}
+\item{priority}{the prioritisation metric to selecting top gene sets. Valid options are 'significance', 
+'effect' and 'SD'}
 }
 \value{
 a mitch results object

@@ -21,8 +21,8 @@ Default is 10.}
 \item{resrows}{an integer value representing the number of top genesets for which a detailed report is to be 
 generated. Default is 50.}
 
-\item{priority}{the prioritisation metric used to selecting top gene sets. Valid options are "significance", 
-"effect" and "SD".}
+\item{priority}{the prioritisation metric used to selecting top gene sets. Valid options are 'significance', 
+'effect' and 'SD'.}
 }
 \value{
 mitch res object with the following parts:
@@ -37,8 +37,11 @@ mitch res object with the following parts:
 This function performs multivariate gene set enrichment analysis.
 }
 \examples{
-# An example of using mitch to calculate multivariate enrichments and prioritise based on effect size 
-res<-mitch_calc(x,genesets,resrows=25,priority="effect")
+# An example of using mitch to calculate multivariate enrichments and prioritise based on 
+# effect size 
+gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
+x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
+res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=1)
 }
 \keyword{calc}
 \keyword{calculate}

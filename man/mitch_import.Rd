@@ -26,9 +26,13 @@ favour of another scoring metric.
 }
 \examples{
 # first step is to create a list of differential 
-w<-list("edger1"=edger1,"edger2"=edger2)
-# import as edgeR table with gene accessions in column named "GeneAccession" and "gt" mapping gene names.
-x<-mitch_import(w,DEtype="edger",geneIDcol="GeneAccession",geneTable=gt)
+rna<-read.table(system.file('rna.tsv', package = 'mitch'),header=TRUE,row.names=1)
+k9a<-read.table(system.file('k9a.tsv', package = 'mitch'),header=TRUE,row.names=1)
+k36a<-read.table(system.file('k36a.tsv', package = 'mitch'),header=TRUE,row.names=1)
+# create a list of differential profiles 
+x<-list('rna'=rna,'k9a'=k9a,'k36a'=k36a)
+# import as edgeR table 
+y<-mitch_import(x,DEtype='edger')
 }
 \keyword{import}
 \keyword{mitch}

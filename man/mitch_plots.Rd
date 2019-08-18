@@ -9,8 +9,8 @@ mitch_plots(res, outfile = "Rplots.pdf")
 \arguments{
 \item{res}{a mitch results object.}
 
-\item{outfile}{the destination file for the plots in PDF format. should contain "pdf" suffix. Defaults to 
-"Rplots.pdf"}
+\item{outfile}{the destination file for the plots in PDF format. should contain 'pdf' suffix. Defaults to 
+'Rplots.pdf'}
 }
 \value{
 generates a PDF file containing enrichment plots.
@@ -21,7 +21,10 @@ The number of detailed sets to generate is dictated by the resrows set in the mi
 }
 \examples{
 # render enrichment plots in high res pdf
-mitch_plots(res,outfile="outres.pdf")
+gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
+x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
+res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=1)
+mitch_plots(res,outfile='outres.pdf')
 }
 \keyword{mitch}
 \keyword{pdf}

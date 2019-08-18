@@ -4,13 +4,13 @@
 \alias{mitch_report}
 \title{mitch_report}
 \usage{
-mitch_report(res, out)
+mitch_report(res, outfile)
 }
 \arguments{
 \item{res}{a mitch results object.}
 
-\item{outfile}{the destination file for the html report. should contain "html" suffix. Defaults to 
-"Rplots.pdf"}
+\item{outfile}{the destination file for the html report. should contain 'html' suffix. Defaults to 
+'Rplots.pdf'}
 }
 \value{
 generates a HTML file containing enrichment plots.
@@ -21,8 +21,11 @@ The plots are in png format, so are not as high in resolution as compared to the
 function. The number of detailed sets to generate is dictated by the resrows set in the mitch_calc command.
 }
 \examples{
+gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
+x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
+res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=1)
 # render mitch results in the form of a HTML report
-mitch_report(res,"outres.html")
+mitch_report(res,'outres.html')
 }
 \keyword{html}
 \keyword{knitr}
