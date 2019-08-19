@@ -66,11 +66,11 @@ genesets<-gmt_import("ReactomePathways.gmt")
 ##################################################
 # run the analysis significance vs effect
 ##################################################
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="effect")
+res<-mitch_calc(d,genesets,resrows=50,priority="effect")
 mitch_plots(res,outfile="HGVPA_eff.pdf")
 mitch_report(res,"HGVPA_eff.html")
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="significance")
+res<-mitch_calc(d,genesets,resrows=50,priority="significance")
 mitch_plots(res,outfile="HGVPA_sig.pdf")
 mitch_report(res,"HGVPA_sig.html")
 
@@ -84,11 +84,11 @@ genesets = m_df %>% split(x = .$gene_symbol, f = .$gs_name)
 ##################################################
 # run the analysis significance vs effect
 ##################################################
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="effect")
+res<-mitch_calc(d,genesets,resrows=50,priority="effect")
 mitch_plots(res,outfile="HGVPA_m_eff.pdf")
 mitch_report(res,"HGVPA_m_eff.html")
 
-res<-mitch_calc(d,genesets,resrows=50,bootstraps=500,priority="significance")
+res<-mitch_calc(d,genesets,resrows=50,priority="significance")
 mitch_plots(res,outfile="HGVPA_m_sig.pdf")
 mitch_report(res,"HGVPA_m_sig.html")
 

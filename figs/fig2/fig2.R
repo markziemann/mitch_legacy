@@ -5,14 +5,14 @@ load("fig1.RData")
 x<-d
 
 #run the analysis
-res<-mitch_calc(x,genesets,resrows=25,priority="significance",bootstraps=500)
+res<-mitch_calc(x,genesets,resrows=25,priority="significance")
 mitch_report(res,"unrand.html")
 
 #randomise rownames test
 xx<-x
 rownames(xx)<-sample(rownames(x))
 head(xx)
-res<-mitch_calc(xx,genesets,priority="significance",bootstraps=500)
+res<-mitch_calc(xx,genesets,priority="significance")
 mitch_report(res,"randres_names.html")
 
 #randomise all data
@@ -20,7 +20,7 @@ xx<-x
 xx[,1]<-sample(x[,1])
 xx[,2]<-sample(x[,2])
 head(xx)
-res<-mitch_calc(xx,genesets,priority="significance",bootstraps=500)
+res<-mitch_calc(xx,genesets,priority="significance")
 mitch_report(res,"randres_xy.html")
 
 

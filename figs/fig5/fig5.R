@@ -32,7 +32,7 @@ unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 # run mitch
-res<-mitch_calc(x,genesets,resrows=200,bootstraps=1000,priority="significance")
+res<-mitch_calc(x,genesets,resrows=200,priority="significance")
 
 # define a scale bar function
 image.scale <- function(z, zlim, col = heat.colors(12),

@@ -121,7 +121,7 @@ unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 
 # run mitch analysis
-res<-mitch_calc(xx,genesets,resrows=20,bootstraps=1000,priority="effect")
+res<-mitch_calc(xx,genesets,resrows=20,priority="effect")
 
 mitch_plots(res,outfile="fig4_plots.pdf")
 mitch_report(res,"fig4_report.html")
@@ -193,7 +193,7 @@ res_df3<-res_df2[,c(ncol(res_df2),1:(ncol(res_df2)-1))]
 upset(res_df3,order.by = "freq",text.scale=2)
 
 subset_genesets<-genesets[which(names(genesets) %in% res_subset$set )]
-res2<-mitch_calc(xx,subset_genesets,resrows=20,bootstraps=1000,priority="effect")
+res2<-mitch_calc(xx,subset_genesets,resrows=20,priority="effect")
 
 heatmap.2(res2$detailed_sets$`Peptide chain elongation`,scale="row",col=my_palette,margin=c(12, 12),trace="none",main='Peptide chain elongation')
 par(mar=c(5,10,4,2))

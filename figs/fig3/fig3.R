@@ -40,11 +40,11 @@ x<-list("ctcf"=ctcf,"h3k4me3"=h3k4me3,"nr3c1"=nr3c1,"pol2ra"=pol2ra,"rna"=rna)
 y<-mitch_import(x, DEtype="deseq2" , geneTable = gt)
 
 
-res<-mitch_calc(y,genesets,resrows=50,bootstraps=1000,priority="confidence")
+res<-mitch_calc(y,genesets,resrows=50,priority="confidence")
 
 mitch_plots(res,outfile="a549_res_conf.pdf")
 
-res<-mitch_calc(y,genesets,resrows=50,bootstraps=1000,priority="significance")
+res<-mitch_calc(y,genesets,resrows=50,priority="significance")
 
 mitch_plots(res,outfile="a549_res_sig.pdf")
 
