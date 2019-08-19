@@ -493,7 +493,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
 gmt_import <- function(gmtfile) {
     genesetLines <- strsplit(readLines(gmtfile), "\t")
     genesets <- lapply(genesetLines, utils::tail, -2)
-    names(genesets) <- sapply(genesetLines, head, 1)
+    names(genesets) <- unlist(lapply(genesetLines, head, 1))
     attributes(genesets)$originfile <- gmtfile
     genesets
 }
@@ -555,7 +555,7 @@ MANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prio
             sumMANOVA <- summary.manova(fit)
             sumAOV <- summary.aov(fit)
             pMANOVA <- sumMANOVA$stats[1, "Pr(>F)"]
-            raov <- sapply(sumAOV, function(zz) {
+            raov <- lapply(sumAOV, function(zz) {
                 zz[1, "Pr(>F)"]
             })
             names(raov) <- gsub("^ Response ", "p.", names(raov))
