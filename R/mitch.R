@@ -102,7 +102,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
     }
     
     # the geneIDcol should be an attribute added to each list item
-    for (i in 1:length(x)) {
+    for (i in seq_len(length(x))) {
         if (!is.null(geneIDcol)) {
             LEN = length(which(names(x[[i]]) %in% geneIDcol))
             if (LEN < 1) {
@@ -330,8 +330,8 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         
         pos <- subset(yy, effect > 0)
         neg <- subset(yy, effect < 0)
-        pos$mitchrank <- rev(1:nrow(pos))
-        neg$mitchrank <- rev(-1:-nrow(neg))
+        pos$mitchrank <- rev(seq(from = 1, to=nrow(pos)))
+        neg$mitchrank <- rev(seq(from=-1, to=-nrow(neg)))
         yy <- rbind(pos, neg)
         s <- yy$mitchrank
         
@@ -445,7 +445,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
     }
     
     # give the colums a unique name otherwise join_all will fail
-    for (i in 1:length(xx)) {
+    for (i in seq_len(length(xx))) {
         colnames(xx[[i]]) <- c("geneidentifiers", paste("y", i, sep = ""))
     }
     
@@ -558,6 +558,7 @@ MANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prio
             raov <- lapply(sumAOV, function(zz) {
                 zz[1, "Pr(>F)"]
             })
+            raov<-unlist(raov)
             names(raov) <- gsub("^ Response ", "p.", names(raov))
             # S coordinates
             NOTINSET <- colMeans(x[!inset, ])
@@ -823,7 +824,7 @@ mitch_metrics_calc1d <- function(x, genesets, anova_result, minsetsize = 10) {
 #' #This function is not designed to be used directly
 mitch_rank <- function(x) {
     
-    for (i in 1:ncol(x)) {
+    for (i in seq_len(ncol(x))) {
         LEN = length(x[, i])
         UNIQLEN = length(unique(x[, i]))
         # if ( UNIQLEN/LEN<0.1 ) { stop('Error: >90% of genes have the same score. More
@@ -861,11 +862,11 @@ detailed_sets <- function(res, resrows = 50) {
     # collect ranked genelist of each genest
     genesets <- res$input_genesets
     ss <- res$ranked_profile
-    mykeys <- as.character(res$enrichment_result[1:resrows, 1])
+    mykeys <- as.character(res$enrichment_result[seq_len(resrows), 1])
     dat <- vector(mode = "list", length = resrows)
     names(dat) <- mykeys
     
-    for (i in 1:resrows) {
+    for (i in seq_len(resrows)) {
         sss <- ss[which(rownames(ss) %in% genesets[[which(names(genesets) %in% as.character(res$enrichment_result[i, 
             1]))]]), ]
         dat[[i]] <- sss
@@ -1033,7 +1034,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         
         ss_long <- melt(ss)
         
-        for (i in 1:resrows) {
+        for (i in seq_len(resrows)) {
             par(mfrow = c(3, 1))
             
             sss <- res$detailed_sets[[i]]
@@ -1132,7 +1133,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         
         ss_long <- melt(ss)
         
-        for (i in 1:resrows) {
+        for (i in seq_len(resrows)) {
             ll <- res$enrichment_result[i, ]
             size <- ll$setSize
             sss <- res$detailed_sets[[i]]
@@ -1171,9 +1172,9 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
             colnames(mydims) <- "dimensions"
             grid.newpage()
             grid.table(mydims, theme = mytheme)
-            colnames(res$input_profile) <- paste("d", 1:ncol(res$input_profile), 
+            colnames(res$input_profile) <- paste("d", seq_len(ncol(res$input_profile)), 
                 sep = "")
-            colnames(res$ranked_profile) <- paste("d", 1:ncol(res$ranked_profile), 
+            colnames(res$ranked_profile) <- paste("d", seq_len(ncol(res$ranked_profile)), 
                 sep = "")
             ss <- res$ranked_profile
         }
@@ -1217,7 +1218,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         
         # a table of gene location by sector
         sig <- sign(ss)
-        sector_count <- aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+        sector_count <- aggregate(seq(from=1,to=nrow(sig)) ~ ., sig, FUN = length)
         colnames(sector_count)[ncol(sector_count)] <- "Number of genes in each sector"
         grid.newpage()
         grid.table(sector_count, theme = mytheme)
@@ -1234,7 +1235,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         # a table of geneset location by sector
         sig <- sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA < 
             0.05), 4:(4 + d - 1)])
-        sector_count <- aggregate(1:nrow(sig) ~ ., sig, FUN = length)
+        sector_count <- aggregate(seq(from=1,to=nrow(sig)) ~ ., sig, FUN = length)
         colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
         grid.newpage()
         grid.table(sector_count, theme = mytheme)
@@ -1274,13 +1275,13 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         
         ss_long <- melt(ss)
         
-        for (i in 1:resrows) {
+        for (i in seq_len(resrows)) {
             ll <- res$enrichment_result[i, ]
             size <- ll$setSize
             sss <- res$detailed_sets[[i]]
             
             if (d > 5) {
-                colnames(sss) <- paste("d", 1:ncol(res$input_profile), sep = "")
+                colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
             }
             
             p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_contour_limit_range), 
