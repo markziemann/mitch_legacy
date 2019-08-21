@@ -53,7 +53,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
     
     # library('plyr')
     
-    if (class(x) == "data.frame") {
+    if (is.data.frame(x)) {
         warning("The input is a single dataframe; one contrast only. Converting it to a list for you.")
         NAME = deparse(substitute(x))
         x <- list(x = x)
@@ -156,7 +156,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(y)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         z
@@ -192,7 +192,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(y)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         z
@@ -228,7 +228,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(y)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         z
@@ -264,7 +264,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(y)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         z
@@ -300,7 +300,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(y)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         z
@@ -340,7 +340,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(yy)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         z
@@ -376,7 +376,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(y)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         
@@ -416,7 +416,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         } else {
             g <- rownames(y)
         }
-        z <- data.frame(g, s, stringsAsFactors = F)
+        z <- data.frame(g, s, stringsAsFactors = FALSE)
         colnames(z) <- c("geneidentifiers", "y")
         z <- mapGeneIds(y, z)
         z
@@ -571,7 +571,7 @@ MANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prio
             names(mysd) = "SD"
             
             return(data.frame(set, setSize = sum(inset), pMANOVA, t(scord), t(raov), 
-                t(s.dist), t(mysd), stringsAsFactors = F))
+                t(s.dist), t(mysd), stringsAsFactors = FALSE))
         }
     }, mc.cores = cores)
     
@@ -646,7 +646,7 @@ ANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prior
         resample <- function(x, set) {
             sss <- x[which(rownames(x) %in% as.character(unlist(genesets[set]))), 
                 ]
-            mysample <- sample(sss, length(sss), replace = T)
+            mysample <- sample(sss, length(sss), replace = TRUE)
             mean(mysample)
         }
         
@@ -659,7 +659,7 @@ ANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prior
             pANOVA <- summary(fit)[[1]][, 5][1]
             NOTINSET <- mean(x[!inset, ])
             s.dist <- (2 * (mean(x[inset, ]) - NOTINSET))/NROW
-            gres <- data.frame(set, setSize = sum(inset), pANOVA, s.dist, stringsAsFactors = F)
+            gres <- data.frame(set, setSize = sum(inset), pANOVA, s.dist, stringsAsFactors = FALSE)
             gres
         }
     }, mc.cores = cores)
@@ -1001,7 +1001,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         hist(res$input_profile[, 1], breaks = 50, main = "Distribution of DE scores", 
             xlab = paste("DE score for ", colnames(res$input_profile)))
         plot(res$input_profile, xlab = paste("DE score for ", colnames(res$input_profile)), 
-            pch = "|", frame.plot = F)
+            pch = "|", frame.plot = FALSE)
         UPS = length(which(res$input_profile > 0))
         DNS = length(which(res$input_profile < 0))
         TOTAL = nrow(res$input_profile)
@@ -1011,7 +1011,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         # histograms of gene set counts
         par(mfrow = c(3, 1))
         geneset_counts <- res$analysis_metrics$geneset_counts
-        boxplot(geneset_counts$count, horizontal = T, frame = F, main = "Gene set size", 
+        boxplot(geneset_counts$count, horizontal = TRUE, frame = FALSE, main = "Gene set size", 
             xlab = "number of member genes included in profile")
         hist(geneset_counts$count, 100, xlab = "geneset size", main = "Histogram of geneset size")
         hist(geneset_counts$count, 100, xlim = c(0, 500), xlab = "geneset size", 
@@ -1041,7 +1041,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
             set <- names(res$detailed_sets[i])
             size <- length(sss)
             
-            beeswarm(sss, vertical = F, cex = 0.75, xlim = c(min(ss), max(ss)), col = "darkgray", 
+            beeswarm(sss, vertical = FALSE, cex = 0.75, xlim = c(min(ss), max(ss)), col = "darkgray", 
                 pch = 19, main = set, cex.main = 1.5, xlab = paste("ranked DE score in:", 
                   colnames(ss)))
             mtext("beeswarm plot", cex = 0.8)
@@ -1052,7 +1052,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
             mtext("histogram", cex = 0.8)
             
             plot(sss, rep(1, length(sss)), type = "n", xlim = c(min(ss), max(ss)), 
-                frame = F, axes = F, ylab = "", xlab = paste("ranked DE score in:", 
+                frame = FALSE, axes = FALSE, ylab = "", xlab = paste("ranked DE score in:", 
                   colnames(ss)))
             rug(sss, ticksize = 0.9)
             axis(1)
@@ -1092,7 +1092,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         
         # histograms of gene set counts
         geneset_counts <- res$analysis_metrics$geneset_counts
-        boxplot(geneset_counts$count, horizontal = T, frame = F, main = "Gene set size", 
+        boxplot(geneset_counts$count, horizontal = TRUE, frame = FALSE, main = "Gene set size", 
             xlab = "number of member genes included in profile")
         hist(geneset_counts$count, 100, xlab = "geneset size", main = "Histogram of geneset size")
         hist(geneset_counts$count, 100, xlim = c(0, 500), xlab = "geneset size", 
@@ -1100,7 +1100,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         
         # barchart of gene set locations by quadrant
         a <- res$analysis_metrics[14]
-        a <- as.data.frame(as.numeric(unlist(strsplit(as.character(a), ","))), stringsAsFactors = F)
+        a <- as.data.frame(as.numeric(unlist(strsplit(as.character(a), ","))), stringsAsFactors = FALSE)
         rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
         colnames(a) = "a"
         barplot(a$a, names.arg = rownames(a), main = "number of genesets FDR<0.05")
@@ -1226,7 +1226,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         # histograms of gene set counts
         par(mfrow = c(3, 1))
         geneset_counts <- res$analysis_metrics$geneset_counts
-        boxplot(geneset_counts$count, horizontal = T, frame = F, main = "Gene set size", 
+        boxplot(geneset_counts$count, horizontal = TRUE, frame = FALSE, main = "Gene set size", 
             xlab = "number of member genes included in profile")
         hist(geneset_counts$count, 100, xlab = "geneset size", main = "Histogram of geneset size")
         hist(geneset_counts$count, 100, xlim = c(0, 500), xlab = "geneset size", 

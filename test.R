@@ -13,7 +13,7 @@ library("mitch")
 download.file("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/rna_LGHGvHGHGV_jn.rnk",destfile="rna_LGHGvHGHGV_jn.rnk")
 
 # Import the rank file
-x<-as.matrix(read.table("rna_LGHGvHGHGV_jn.rnk",header=T))
+x<-as.matrix(read.table("rna_LGHGvHGHGV_jn.rnk",header=TRUE))
 
 # Get Reactome gene sets
 download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip",destfile="ReactomePathways.gmt.zip")

@@ -40,13 +40,13 @@ detected in all contrasts are included, but this behaviour can be modified. The 
 tables called "dge1" and "dge2" Where gene identifiers are coded in the row names.
 
 ```{r,import11,echo=FALSE}
-dge1<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/LGvHG.tsv",header=T,row.names=1)
+dge1<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/LGvHG.tsv",header=TRUE,row.names=1)
 ```
 ```{r,import12,echo=FALSE}
-dge2<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/HGvHGV.tsv",header=T,row.names=1)
+dge2<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/HGvHGV.tsv",header=TRUE,row.names=1)
 ```
 ```{r,import13,echo=FALSE}
-gt<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/gt.tsv",header=T,row.names=1)
+gt<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/gt.tsv",header=TRUE,row.names=1)
 ```
 
 ```{r,import21}
@@ -150,12 +150,12 @@ download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip",d
 unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
 head(genesets,3)
-dge1<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/LGvHG.tsv",header=T,row.names=1)
-dge2<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/HGvHGV.tsv",header=T,row.names=1)
+dge1<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/LGvHG.tsv",header=TRUE,row.names=1)
+dge2<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/HGvHGV.tsv",header=TRUE,row.names=1)
 x<-list("dge1"=dge1,"dge2"=dge2)
 str(x)
 # note that the gene IDs are ensembl accessions and the reactomes are gene symbols
-gt<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/gt.tsv",header=T,row.names=1)
+gt<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/gt.tsv",header=TRUE,row.names=1)
 y<-mitch_import(x,DEtype="deseq2",geneTable=gt)
 head(y)
 res<-mitch_calc(y,genesets,priority="significance")

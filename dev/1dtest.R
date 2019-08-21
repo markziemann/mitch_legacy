@@ -25,7 +25,7 @@ samplesheet$HG<-as.factor(as.numeric(grepl("high",samplesheet$experiment_title))
 samplesheet$VPA<-as.factor(as.numeric(grepl("VPA",samplesheet$experiment_title)))
 
 # samplesheets for the 2 contrasts
-s1<-samplesheet[grep("VPA",samplesheet$experiment_title,invert=T),]
+s1<-samplesheet[grep("VPA",samplesheet$experiment_title,invert=TRUE),]
 s2<-samplesheet[grep("high",samplesheet$experiment_title),]
 
 w<-getDEE2("hsapiens",samplesheet$SRR_accession)

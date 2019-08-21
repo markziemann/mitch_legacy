@@ -66,7 +66,7 @@ if ( d==1 ) {
   par(mfrow=c(2,1))
   hist(res$input_profile[,1],breaks=50,main="Distribution of DE scores",xlab=paste("DE score for ",colnames(res$input_profile)))
   plot(res$input_profile,xlab=paste("DE score for ",colnames(res$input_profile)),
-   pch="|",frame.plot=F)
+   pch="|",frame.plot=FALSE)
   UPS=length(which(res$input_profile>0))
   DNS=length(which(res$input_profile<0))
   TOTAL=nrow(res$input_profile)
@@ -163,7 +163,7 @@ kable( formatted , col.names = "Gene sets metrics" ,caption = "Gene sets metrics
 ```{r,input_geneset_metrics2,results="asis",echo=FALSE ,fig.height = 7, fig.width = 7 ,fig.show="all"}
 par(mfrow=c(3,1))
 geneset_counts<-res$analysis_metrics$geneset_counts
-boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+boxplot(geneset_counts$count,horizontal=TRUE,frame=FALSE,main="Gene set size",xlab="number of member genes included in profile")
 hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
 hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
@@ -182,7 +182,7 @@ if ( d==2 ) {
   sig<-sign(ss)
   sector_count<-aggregate(seq_len(nrow(sig)) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Count"
-  kable(sector_count ,caption = "Genes by sector" ,row.names=T)
+  kable(sector_count ,caption = "Genes by sector" ,row.names=TRUE)
 }
 ```
 
@@ -213,7 +213,7 @@ if (d==2) {
   cat("<h2>Gene sets by quadrant</h2><br>")
   cat(paste("Number of significant gene sets (FDR<0.05)=", res$analysis_metrics$num_sets_significant,"<br>" ))
   a<-res$analysis_metrics[14]
-  a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
+  a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=FALSE)
   rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
   colnames(a)="a"
   xx<-barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
@@ -226,13 +226,13 @@ if ( nsig > 0 ) {
     sig<-sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA<0.05),4:(4+d-1)])
     sector_count<-aggregate(seq_len(nrow(sig)) ~ ., sig, FUN = length)
     colnames(sector_count)[ncol(sector_count)]<-"Count"
-    kable(sector_count ,caption = "Gene sets by sector" ,row.names=T)
+    kable(sector_count ,caption = "Gene sets by sector" ,row.names=TRUE)
   }
 }
 ```
 
 ## Enrichment scatterplot with taucharts
-```{r,tauchart1d,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=D1}
+```{r,tauchart1d,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=D1}
 #1D tauchart
 library("taucharts")
 library(dplyr)
@@ -268,7 +268,7 @@ tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
 cat("Significance is calculated by -log10(p-value). All points shown are FDR<0.05")
 ```
 
-```{r,tauchart2,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE, eval=!D1}
+```{r,tauchart2,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE, eval=!D1}
 library("taucharts")
 library(dplyr)
 library(gtools)
@@ -338,7 +338,7 @@ if ( d<3 ) {
 htmltools::tagList(p)
 ```
 
-```{r,heatmap,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=!D1}
+```{r,heatmap,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=!D1}
 cat("<h2> A heatmap of S values for top results</h2><br>")
 library(gplots)
 hmapx<-head( res$enrichment_result[,4:(4+d-1)] ,resrows)
@@ -348,7 +348,7 @@ my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
 heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
 ```
 
-```{r,effectsize,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=!D1}
+```{r,effectsize,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE,eval=!D1}
 cat('<h2> A plot of effect size versus significance</h2><br>')
 myres<-res$enrichment_result
 myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
@@ -375,7 +375,7 @@ if ( d==1 ) {
 }
 formatted<-myres
 formatted[,1]<-gsub("_"," ",myres[,1])
-kable( formatted , col.names = colnames(formatted) , row.names=F, caption = cat(paste("Top N=",resrows,"gene sets")) ,digits=100)
+kable( formatted , col.names = colnames(formatted) , row.names=FALSE, caption = cat(paste("Top N=",resrows,"gene sets")) ,digits=100)
 cat("<hr><br>")
 ```
 
@@ -396,7 +396,7 @@ if ( d==1 ) {
 }
 HEADER=paste("<br><details><summary><b>","Click HERE to show results for all gene sets","</b></summary><br><p>",sep=" " )
 cat(HEADER)
-kable(formatted, col.names=colnames(formatted),row.names=F,caption = "Complete results",digits=100)
+kable(formatted, col.names=colnames(formatted),row.names=FALSE,caption = "Complete results",digits=100)
 cat("<br></p></details>")
 cat("<hr><br>")
 ```
@@ -429,7 +429,7 @@ for ( i in seq_len(resrows) ) {
    border="black",xlab=paste("ranked DE score in:",colnames(ss)))
    mtext("histogram",cex=0.8)
   plot(sss,rep(1,length(sss)),type="n",xlim=c(min(ss),max(ss)),
-   frame=F,axes=F,ylab="",
+   frame=FALSE,axes=FALSE,ylab="",
    xlab=paste("ranked DE score in:",colnames(ss)))
   rug(sss, ticksize = 0.9)
   axis(1)
@@ -449,12 +449,12 @@ tops$GeneID<-rownames(tops)
 tops<-tops[,c(2,1)]
 colnames(tops)=c("GeneID","Gene Rank")
 cat("<br>")
-print(kable(head(tops,n=20L),col.names=colnames(tops),format="markdown",row.names=F,caption="Top 20 genes",digits=100))
+print(kable(head(tops,n=20L),col.names=colnames(tops),format="markdown",row.names=FALSE,caption="Top 20 genes",digits=100))
 cat('\n')
 
 HEADER=paste("<br><details><summary><b>","Click HERE to show all gene set members","</b></summary><br><p>",sep=" " )
 cat(HEADER)
-print(kable(tops,col.names=colnames(tops),format="markdown",row.names=F,caption="All member genes",digits=100))
+print(kable(tops,col.names=colnames(tops),format="markdown",row.names=FALSE,caption="All member genes",digits=100))
 cat('\n')
 cat("<br></p></details>")
 cat("<br><hr>")
@@ -613,12 +613,12 @@ topgenelist<-function(i) {
   topgenes<-as.data.frame(topgenes)
   topgenes$Gene<-as.character(rownames(topgenes))
   topgenes<-topgenes[,c(3,1,2)]
-  print(kable(head(topgenes,n=20L),col.names=colnames(topgenes),format="markdown",row.names=F,caption="Top 20 genes",digits=100))
+  print(kable(head(topgenes,n=20L),col.names=colnames(topgenes),format="markdown",row.names=FALSE,caption="Top 20 genes",digits=100))
   cat('\n')
   HEADER=paste("<br><details><summary><b>","Click HERE to show all gene set members","</b></summary><br><p>",sep=" " )
   cat(HEADER)
   sss<-res$detailed_sets[[i]]
-  print(kable(sss,format="markdown",row.names=T,caption="All member genes",digits=100))
+  print(kable(sss,format="markdown",row.names=TRUE,caption="All member genes",digits=100))
   cat('\n')
   cat("<br></p></details>")
   cat("<br><hr>")
