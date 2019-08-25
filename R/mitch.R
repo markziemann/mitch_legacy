@@ -1026,7 +1026,7 @@ mitch_calc <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, 
 
 #' plot1d_profile_dist
 #'
-#' This function creates a number of plots for unidimensional enrichment analysis
+#' This function creates plots to describe input profile data for unidimensional enrichment analysis
 #' @param res a mitch results object
 #' @returns a plot of input profile distributions
 #' @keywords mitch plots unidimensional
@@ -1034,7 +1034,6 @@ mitch_calc <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, 
 #' @examples
 #' #This function is not designed to be used directly
 plot1d_profile_dist<-function(res){
-        pl<-list()
         par(mfrow = c(2, 1))
         hist(res$input_profile[, 1], breaks = 50, main = "Distribution of DE scores",
             xlab = paste("DE score for ", colnames(res$input_profile)))
@@ -1101,8 +1100,8 @@ plot1d_volcano<-function(res){
 #'
 #' This function creates geneset histograms
 #' @param res a mitch results object
-#' @returns a plot of geneset histograms
-#' @keywords mitch plots histogram     
+#' @returns 1D enrichment plots
+#' @keywords mitch plots unidimensional enrichment     
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
@@ -1132,6 +1131,282 @@ plot1d_detailed<-function(res,i){
             mtext("rugplot", cex = 0.8)
         pl <- recordPlot()
         pl
+}
+
+#' plot2d_profile_dist
+#'
+#' This function creates a scatterplot of input profile data for bidimensional enrichment analysis
+#' @param res a mitch results object
+#' @returns a plot of input profile distributions
+#' @keywords mitch plots bidimensional scatterplot
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_profile_dist<-function(res){
+    plot(res$input_profile, pch = 19, col = rgb(red = 0, green = 0, blue = 0,
+            alpha = 0.2), main = "Scatterplot of all genes")
+        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+        pl<-recordPlot()
+        pl
+}
+
+
+#' plot2d_profile_density
+#'
+#' This function creates a kernal density plot for bidimensional enrichment analysis
+#' @param res a mitch results object
+#' @returns a kernal density plot of input profile distributions after ranking
+#' @keywords mitch plots bidimensional density
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_profile_density<-function(res){
+  palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+        "black"))
+
+        ss<-res$ranked_profile
+        xmin = min(ss[, 1])
+        xmax = max(ss[, 1])
+        ymin = min(ss[, 2])
+        ymax = max(ss[, 2])
+
+        k <- MASS::kde2d(ss[, 1], ss[, 2])
+        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+
+        filled.contour(k, xlim = c(xmin, xmax), ylim = c(ymin, ymax), color.palette = palette,
+            plot.title = {
+                abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+                title(main = "Rank-rank plot of all genes", xlab = X_AXIS, ylab = Y_AXIS)
+            })
+        pl<-recordPlot()
+        pl
+}
+
+#' plot2d_gene_quadrant_barchart
+#'
+#' This function creates a barchart of gene quadrants for bidimensional enrichment analysis
+#' @param res a mitch results object
+#' @returns a bar plot of gene quadrant distributions
+#' @keywords mitch plots bidimensional barplot barchart
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_gene_quadrant_barchart<-function(res){
+        uu = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] > 0))
+        ud = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] < 0))
+        dd = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] < 0))
+        du = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] > 0))
+        a <- as.data.frame(c(uu, ud, dd, du))
+        rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
+        colnames(a) = "a"
+        barplot(a$a, names.arg = rownames(a), main = "number of genes in each quadrant")
+        pl<-recordPlot()
+        pl
+}
+
+#' plot2d_set_quadrant_barchart
+#'
+#' This function creates a barchart of genesets quadrants for bidimensional enrichment analysis
+#' @param res a mitch results object
+#' @returns a bar plot of geneset quadrant
+#' @keywords mitch plots bidimensional barplot barchart
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_set_quadrant_barchart<-function(res){
+            par(mfrow = c(1, 1))
+        a <- res$analysis_metrics[14]
+        a <- as.data.frame(as.numeric(unlist(strsplit(as.character(a), ","))), stringsAsFactors = FALSE)
+        rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
+        colnames(a) = "a"
+        barplot(a$a, names.arg = rownames(a), main = "number of genesets FDR<0.05")
+        pl<-recordPlot()
+        pl
+}
+
+
+#' plot2d_set_scatter
+#'
+#' This function creates a scatterplot of geneset enrichments
+#' @param res a mitch results object
+#' @returns a scatterplot of geneset enrichments
+#' @keywords mitch plots bidimensional scatter
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_set_scatter<-function(res){
+        sig <- subset(res$enrichment_result, p.adjustMANOVA < 0.05)
+        plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0,
+            blue = 0, alpha = 0.2), main = "Scatterplot of all gene sets; FDR<0.05 in red")
+        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+        points(sig[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+        pl<-recordPlot()
+        pl
+}
+
+#' plot2d_set_scatter_top
+#'
+#' This function creates a scatterplot of geneset enrichments for the N top ranked sets
+#' @param res a mitch results object
+#' @returns a scatterplot of geneset enrichments
+#' @keywords mitch plots bidimensional scatter
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_set_scatter_top<-function(res){
+    resrows = length(res$detailed_sets)
+      top <- head(res$enrichment_result, resrows)
+        plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0,
+            blue = 0, alpha = 0.2), main = paste("Scatterplot of all gene sets; top",
+            resrows, "in red"))
+        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+        points(top[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+        pl<-recordPlot()
+        pl
+}
+
+#' plot2d_heatmap
+#'
+#' This function creates a scatterplot of geneset enrichments for the N top ranked sets
+#' @param res a mitch results object
+#' @returns a scatterplot of geneset enrichments
+#' @keywords mitch plots bidimensional scatter
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @importFrom  gplots heatmap.2
+plot2d_heatmap<-function(res){
+    d=ncol(res$input_profile)
+    resrows = length(res$detailed_sets)
+        hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
+        rownames(hmapx) <- head(res$enrichment_result$set, resrows)
+        colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
+        my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+        heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8,
+            trace = "none", cexCol = 0.8, col = my_palette)
+        pl<-recordPlot()
+        pl
+}
+
+
+#' plot_effect_vs_significance
+#'
+#' This function creates a scatterplot of ES (effect) vs -log10(p.adjustMANOVA) (significance).
+#' @param res a mitch results object
+#' @returns a scatterplot of effect versus significance
+#' @keywords mitch plots significance effect
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot_effect_vs_significance<-function(res){
+        plot(res$enrichment_result$s.dist, -log(res$enrichment_result$p.adjustMANOVA),
+            xlab = "s.dist (effect size)", ylab = "-log(p.adjustMANOVA) (significance)",
+            pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), main = "effect size versus statistical significance")
+        pl<-recordPlot()
+        pl
+}
+
+
+#' plot2d_detailed_density
+#'
+#' This function creates a 2D kernal density plot of genesetst
+#' @param res a mitch results object
+#' @returns 2D enrichment plots
+#' @keywords mitch plots bidimensional enrichment     
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_detailed_density<-function(res,i){
+    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+        "black"))
+        ss<-res$ranked_profile
+        xmin = min(ss[, 1])
+        xmax = max(ss[, 1])
+        ymin = min(ss[, 2])
+        ymax = max(ss[, 2])
+            ll <- res$enrichment_result[i, ]
+            size <- ll$setSize
+            sss <- res$detailed_sets[[i]]
+        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+           par(mar=c(5,4,4,2))
+            k <- MASS::kde2d(sss[, 1], sss[, 2])
+            filled.contour(k, color.palette = palette, xlim = c(xmin, xmax), ylim = c(ymin,
+                ymax), plot.title = {
+                abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+                title(main = ll$set, xlab = X_AXIS, ylab = Y_AXIS)
+            })
+            pl <- recordPlot()
+   pl
+}
+
+
+#' plot2d_detailed_scatter
+#'
+#' This function creates a 2D kernal density plot of genesetst
+#' @param res a mitch results object
+#' @returns 2D enrichment plots
+#' @keywords mitch plots bidimensional enrichment     
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+plot2d_detailed_scatter<-function(res,i){
+        ss<-res$ranked_profile
+        xmin = min(ss[, 1])
+        xmax = max(ss[, 1])
+        ymin = min(ss[, 2])
+        ymax = max(ss[, 2])
+            sss <- res$detailed_sets[[i]]
+        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+            ll <- res$enrichment_result[i, ]
+            plot(sss, pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
+                main = ll$set, xlim = c(xmin, xmax), ylim = c(ymin, ymax), xlab = X_AXIS,
+                ylab = Y_AXIS)
+            abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+            pl <- recordPlot()
+   pl
+}
+
+
+#' plot2d_detailed_violin
+#'
+#' This function creates violin plots
+#' @param res a mitch results object
+#' @returns violin plot
+#' @keywords mitch plots biidimensional enrichment violin
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import ggplot2
+plot2d_detailed_violin<-function(res,i){
+   pl<-list()
+
+        ss<-res$ranked_profile
+        xmin = min(ss[, 1])
+        xmax = max(ss[, 1])
+        ymin = min(ss[, 2])
+        ymax = max(ss[, 2])
+            ll <- res$enrichment_result[i, ]
+            size <- ll$setSize
+            sss <- res$detailed_sets[[i]]
+        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+        ss_long <- melt(ss)
+            sss_long <- melt(sss)
+
+            p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long,
+                fill = "grey", colour = "grey") + geom_boxplot(data = ss_long, width = 0.9,
+                fill = "grey", outlier.shape = NA, coef = 0) + geom_violin(data = sss_long,
+                fill = "black", colour = "black") + geom_boxplot(data = sss_long,
+                width = 0.1, outlier.shape = NA) + labs(y = "Position in rank", title = ll[,
+                1])
+
+            print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15),
+                plot.title = element_text(size = 20)))
+   pl <- recordPlot()
+   pl
 }
 
 
@@ -1169,133 +1444,38 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         colhead = list(fg_params = list(cex = 0.7)), rowhead = list(fg_params = list(cex = 0.7)))
     
     resrows = length(res$detailed_sets)
-    
-    # d is the number of dimensions 
     ss <- res$ranked_profile
     d = ncol(ss)
-    
     pdf(outfile)
     
-    # unidimensional plots
     if (d == 1) {
         
         plot1d_profile_dist(res)
         plot_geneset_hist(res)
         plot1d_volcano(res)
         ss_long <- melt(ss)
-        
-        for (i in seq_len(resrows)) {
-            plot1d_detailed(res,i)
-        }
-        
+        lapply(seq_len(resrows) , function(i) {plot1d_detailed(res,i)} )
+       
     } else if (d == 2) {
         
-        xmin = min(ss[, 1])
-        xmax = max(ss[, 1])
-        ymin = min(ss[, 2])
-        ymax = max(ss[, 2])
-        
-        k <- MASS::kde2d(ss[, 1], ss[, 2])
-        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
-        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
-        
-        plot(res$input_profile, pch = 19, col = rgb(red = 0, green = 0, blue = 0, 
-            alpha = 0.2), main = "Scatterplot of all genes")
-        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-        
-        filled.contour(k, xlim = c(xmin, xmax), ylim = c(ymin, ymax), color.palette = palette, 
-            plot.title = {
-                abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-                title(main = "Rank-rank plot of all genes", xlab = X_AXIS, ylab = Y_AXIS)
-            })
-        
-        # barchart of gene locations by quadrant
-        uu = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] > 0))
-        ud = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] < 0))
-        dd = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] < 0))
-        du = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] > 0))
-        a <- as.data.frame(c(uu, ud, dd, du))
-        rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
-        colnames(a) = "a"
-        barplot(a$a, names.arg = rownames(a), main = "number of genes in each quadrant")
-        
-        # histograms of gene set counts
-        geneset_counts <- res$analysis_metrics$geneset_counts
-        boxplot(geneset_counts$count, horizontal = TRUE, frame = FALSE, main = "Gene set size", 
-            xlab = "number of member genes included in profile")
-        hist(geneset_counts$count, 100, xlab = "geneset size", main = "Histogram of geneset size")
-        hist(geneset_counts$count, 100, xlim = c(0, 500), xlab = "geneset size", 
-            main = "Trimmed histogram of geneset size")
-        
-        # barchart of gene set locations by quadrant
-        a <- res$analysis_metrics[14]
-        a <- as.data.frame(as.numeric(unlist(strsplit(as.character(a), ","))), stringsAsFactors = FALSE)
-        rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
-        colnames(a) = "a"
-        barplot(a$a, names.arg = rownames(a), main = "number of genesets FDR<0.05")
-        
-        sig <- subset(res$enrichment_result, p.adjustMANOVA < 0.05)
-        plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0, 
-            blue = 0, alpha = 0.2), main = "Scatterplot of all gene sets; FDR<0.05 in red")
-        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-        points(sig[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
-        
-        top <- head(res$enrichment_result, resrows)
-        plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0, 
-            blue = 0, alpha = 0.2), main = paste("Scatterplot of all gene sets; top", 
-            resrows, "in red"))
-        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-        points(top[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
-        
-        # A heatmap of s values for the resrows sets
-        hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
-        rownames(hmapx) <- head(res$enrichment_result$set, resrows)
-        colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
-        my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
-        heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8, 
-            trace = "none", cexCol = 0.8, col = my_palette)
-        
-        # plot effect size versus significance
-        plot(res$enrichment_result$s.dist, -log(res$enrichment_result$p.adjustMANOVA), 
-            xlab = "s.dist (effect size)", ylab = "-log(p.adjustMANOVA) (significance)", 
-            pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), main = "effect size versus statistical significance")
-        
-        ss_long <- melt(ss)
-        
-        for (i in seq_len(resrows)) {
-            ll <- res$enrichment_result[i, ]
-            size <- ll$setSize
-            sss <- res$detailed_sets[[i]]
-            
-            k <- MASS::kde2d(sss[, 1], sss[, 2])
-            filled.contour(k, color.palette = palette, xlim = c(xmin, xmax), ylim = c(ymin, 
-                ymax), plot.title = {
-                abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-                title(main = ll$set, xlab = X_AXIS, ylab = Y_AXIS)
-            })
-            
-            plot(sss, pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
-                main = ll$set, xlim = c(xmin, xmax), ylim = c(ymin, ymax), xlab = X_AXIS, 
-                ylab = Y_AXIS)
-            abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-            
-            sss_long <- melt(sss)
-            
-            p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long, 
-                fill = "grey", colour = "grey") + geom_boxplot(data = ss_long, width = 0.9, 
-                fill = "grey", outlier.shape = NA, coef = 0) + geom_violin(data = sss_long, 
-                fill = "black", colour = "black") + geom_boxplot(data = sss_long, 
-                width = 0.1, outlier.shape = NA) + labs(y = "Position in rank", title = ll[, 
-                1])
-            
-            print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15), 
-                plot.title = element_text(size = 20)))
-            
-        }
+        plot2d_profile_dist(res)        
+        plot2d_profile_density(res)
+        plot2d_gene_quadrant_barchart(res)
+        plot_geneset_hist(res)
+        plot2d_set_quadrant_barchart(res)
+        plot2d_set_scatter(res)
+        plot2d_set_scatter_top(res)
+        plot2d_heatmap(res)
+        plot_effect_vs_significance(res)
+
+        lapply(seq_len(resrows) , function(i) {
+            plot2d_detailed_density(res,i)
+            plot2d_detailed_scatter(res,i)
+            plot2d_detailed_violin(res,i)
+        } )
     } else if (d > 2) {
         
-        # if working with >5 dimensions, then substitute the dimension (colnames) names
-        # with a number
+        # if d>5, then substitute colnames with a number
         if (d > 5) {
             mydims <- data.frame(attributes(res)$profile_dimensions)
             colnames(mydims) <- "dimensions"
