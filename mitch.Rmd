@@ -737,15 +737,15 @@ topgenelist<-function(i) {
     topgenes<-myquad[order(-rank(myquad[,1]*myquad[,2])),]
   }
   if (tr==2) {
-    myquad<-sss[which(sss[,1]>0 & sss[,2]>0),,drop=FALSE]]
+    myquad<-sss[which(sss[,1]>0 & sss[,2]>0),,drop=FALSE]
     topgenes<-myquad[order(-rank(myquad[,1]*myquad[,2])),]
   }
   if (br==2) {
-    myquad<-sss[which(sss[,1]>0 & sss[,2]<0),,drop=FALSE]]
+    myquad<-sss[which(sss[,1]>0 & sss[,2]<0),,drop=FALSE]
     topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),]
   }
   if (tl==2) {
-    myquad<-sss[which(sss[,1]<0 & sss[,2]>0),,drop=FALSE]]
+    myquad<-sss[which(sss[,1]<0 & sss[,2]>0),,drop=FALSE]
     topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),]
   }
   cat("<br>")
