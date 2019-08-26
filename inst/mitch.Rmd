@@ -601,20 +601,20 @@ topgenelist<-function(i) {
   if ( mysy>0 ) { tl=tl+1 ; tr=tr+1  } else { bl=bl+1 ; br=br+1 }
   if ( mysx>0 ) { tr=tr+1 ; br=br+1  } else { tl=tl+1 ; bl=bl+1 }
   if (bl==2) {
-    myquad<-sss[which(sss[,1]<0 & sss[,2]<0),]
-    topgenes<-myquad[order(-rank(myquad[,1]*myquad[,2])),]
+    myquad<-sss[which(sss[,1]<0 & sss[,2]<0),,drop=FALSE]
+    topgenes<-myquad[order(-rank(myquad[,1]*myquad[,2])),,drop=FALSE]
   }
   if (tr==2) {
-    myquad<-sss[which(sss[,1]>0 & sss[,2]>0),]
-    topgenes<-myquad[order(-rank(myquad[,1]*myquad[,2])),]
+    myquad<-sss[which(sss[,1]>0 & sss[,2]>0),,drop=FALSE]
+    topgenes<-myquad[order(-rank(myquad[,1]*myquad[,2])),,drop=FALSE]
   }
   if (br==2) {
-    myquad<-sss[which(sss[,1]>0 & sss[,2]<0),]
-    topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),]
+    myquad<-sss[which(sss[,1]>0 & sss[,2]<0),,drop=FALSE]
+    topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),,drop=FALSE]
   }
   if (tl==2) {
-    myquad<-sss[which(sss[,1]<0 & sss[,2]>0),]
-    topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),]
+    myquad<-sss[which(sss[,1]<0 & sss[,2]>0),,drop=FALSE]
+    topgenes<-myquad[order(rank(myquad[,1]*myquad[,2])),,drop=FALSE]
   }
   cat("<br>")
   topgenes<-as.data.frame(topgenes)
