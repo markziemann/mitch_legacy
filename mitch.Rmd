@@ -548,7 +548,7 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 ```
 ## A heatmap of S values for top results
 ```{r,heatmap,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
-
+    library(heatmap.2)
     hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
     rownames(hmapx)<-head(res$manova_result$set,resrows)
     colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
