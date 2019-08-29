@@ -377,7 +377,6 @@ seurat_score <- function(y) {
     
     z$y[is.infinite(z$y) & z$y < 0] <- min(z$y[!is.infinite(z$y)]) - 0.01
     z$y[is.infinite(z$y) & z$y > 0] <- max(z$y[!is.infinite(z$y)]) + 0.01
-    z <- z[, c(2, 1)]
     z
 }
 
