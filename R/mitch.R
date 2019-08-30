@@ -1299,6 +1299,7 @@ plot2d_heatmap<-function(res){
 #' @examples
 #' #This function is not designed to be used directly
 plot_effect_vs_significance<-function(res){
+            par(mfrow = c(1, 1))
         plot(res$enrichment_result$s.dist, -log(res$enrichment_result$p.adjustMANOVA),
             xlab = "s.dist (effect size)", ylab = "-log(p.adjustMANOVA) (significance)",
             pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), main = "effect size versus statistical significance")
@@ -1409,6 +1410,294 @@ plot2d_detailed_violin<-function(res,i){
 }
 
 
+#' ggpairs_points
+#'
+#' This function creates a pairs plot of gene profiles
+#' @param res a mitch results object
+#' @returns ggpairs plot
+#' @keywords mitch plots multidimensional enrichment scattter
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import ggplot2
+ggpairs_points<-function(res){
+        ggpairs_points_plot <- function(data, mapping, ...) {
+            p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) +
+                geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0,
+                linetype = "dashed")
+        }
+
+        p <- ggpairs(as.data.frame(res$input_profile), title = "Scatterplot of all genes",
+            lower = list(continuous = ggpairs_points_plot))
+        print(p + theme_bw())
+}
+
+
+#' ggpairs_points_subset
+#'
+#' This function creates a pairs plot of gene profile
+#' @param res a mitch results object
+#' @returns ggpairs plot of a subset of genes
+#' @keywords mitch plots multidimensional enrichment scattter
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import ggplot2
+ggpairs_points_subset<-function(res){
+      d<-ncol(res$ranked_profile)
+        ggpairs_points_plot <- function(data, mapping, ...) {
+            p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) +
+                geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0,
+                linetype = "dashed")
+        }
+        enrichment_result_clipped <- res$enrichment_result[, 4:(3 + d)]
+        colnames(enrichment_result_clipped) <- colnames(res$input_profile)
+        p <- ggpairs(enrichment_result_clipped, title = "Scatterplot of all genessets; FDR<0.05 in red",
+            lower = list(continuous = ggpairs_points_plot))
+        print(p + theme_bw())
+}
+
+
+#' ggpairs_contour
+#'
+#' This function creates a pairs contour plot of gene profiles
+#' @param res a mitch results object
+#' @returns ggpairs contour plot
+#' @keywords mitch plots multidimensional enrichment contour density
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import ggplot2
+ggpairs_contour<-function(res){
+    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+        "black"))
+        ggpairs_func <- function(data, mapping, ...) {
+            p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..),
+                geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") +
+                geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25))
+            p
+        }
+        ss<-res$ranked_profile
+        p <- ggpairs(as.data.frame(ss), title = "Contour plot of all genes after ranking",
+            lower = list(continuous = ggpairs_func), diag = list(continuous = wrap("barDiag",
+                binwidth = nrow(ss)/100)))
+        print(p + theme_bw())
+}
+
+
+#' colname_substitute
+#'
+#' This function substitutes colnames names in high dimensional data
+#' @param res a mitch results object
+#' @returns mitch results object with colnames substituted
+#' @keywords mitch colnames
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+colname_substitute<-function(res){
+      d<-ncol(res$ranked_profile)
+        if (d > 5) {
+            mydims <- data.frame(attributes(res)$profile_dimensions)
+            colnames(mydims) <- "dimensions"
+            grid.newpage()
+            grid.table(mydims, theme = mytheme)
+            colnames(res$input_profile) <- paste("d", seq_len(ncol(res$input_profile)),
+                sep = "")
+            colnames(res$ranked_profile) <- paste("d", seq_len(ncol(res$ranked_profile)),
+                sep = "")
+        }
+        res
+}
+
+
+#' gene_sector_table
+#'
+#' This function creates a table of gene sector counts
+#' @param res a mitch results object
+#' @returns a table of gene sector counts
+#' @keywords mitch table sector
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import grid
+#' @import gridExtra
+gene_sector_table<-function(res){
+    mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)),
+        colhead = list(fg_params = list(cex = 0.7)), rowhead = list(fg_params = list(cex = 0.7)))
+
+      d<-ncol(res$ranked_profile)
+        ss<-res$ranked_profile
+        sig <- sign(ss)
+        if (d < 6) {
+            sig <- sign(ss)
+            sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
+            colnames(sector_count)[ncol(sector_count)] <- "Number of genes in each sector"
+            grid.newpage()
+            grid.table(sector_count, theme = mytheme)
+        }
+}
+
+
+#' geneset_sector_table
+#'
+#' This function creates a table of gene sector counts
+#' @param res a mitch results object
+#' @returns a table of gene sector counts
+#' @keywords mitch table sector
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import grid
+#' @import gridExtra
+geneset_sector_table<-function(res){
+      d<-ncol(res$ranked_profile)
+    mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)),
+        colhead = list(fg_params = list(cex = 0.7)), rowhead = list(fg_params = list(cex = 0.7)))
+
+        sig <- sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA <
+            0.05), 4:(4 + d - 1)])
+        sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
+        colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
+        grid.newpage()
+        grid.table(sector_count, theme = mytheme)
+}
+
+#' heatmapx
+#'
+#' This function creates a pairs contour plot of gene profiles
+#' @param res a mitch results object
+#' @returns ggpairs contour plot
+#' @keywords mitch plots multidimensional enrichment contour density
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @importFrom  gplots heatmap.2
+heatmapx<-function(res){
+      d<-ncol(res$ranked_profile)
+    resrows = length(res$detailed_sets)
+        hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
+        rownames(hmapx) <- head(res$enrichment_result$set, resrows)
+        colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
+        my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+        heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8,
+            trace = "none", cexCol = 0.8, col = my_palette)
+   pl <- recordPlot()
+   pl
+}
+
+#' plot3d_detailed_density
+#'
+#' This function creates a pairs contour plot of gene profiles
+#' @param res a mitch results object
+#' @returns ggpairs contour plot for a gene subset
+#' @keywords mitch plots multidimensional enrichment contour density
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import ggplot2
+plot3d_detailed_density<-function(res,i){
+    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+        "black"))
+    d<-ncol(res$ranked_profile)
+    ss<-res$ranked_profile
+    ll <- res$enrichment_result[i, ]
+    size <- ll$setSize
+    sss <- res$detailed_sets[[i]]
+
+    if (d > 5) {
+        colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
+    }
+
+    ggpairs_contour_limit_range <- function(data, mapping, ...) {
+        p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..),
+            geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") +
+            geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25)) +
+            scale_x_continuous(limits = range(min(ss[, gsub("~", "", as.character(mapping[1]))]),
+            max(ss[, gsub("~", "", as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[,
+            gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "",
+            as.character(mapping[2]))])))
+        p
+    }
+
+    p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_contour_limit_range),
+        diag = list(continuous = wrap("barDiag", binwidth = nrow(ss)/10)))
+        print(p + theme_bw())
+}
+
+
+#' plot3d_detailed_points
+#'
+#' This function creates a pairs plot of gene profiles of a subset of genes
+#' @param res a mitch results object
+#' @returns ggpairs plot for a gene subset
+#' @keywords mitch plots multidimensional enrichment scatter pairs
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import ggplot2
+plot3d_detailed_points<-function(res,i){
+    d<-ncol(res$ranked_profile)
+    ss<-res$ranked_profile
+    ll <- res$enrichment_result[i, ]
+    size <- ll$setSize
+    sss <- res$detailed_sets[[i]]
+
+    if (d > 5) {
+        colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
+    }
+
+    ggpairs_points_limit_range <- function(data, mapping, ...) {
+        p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.1) +
+            geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0,
+            linetype = "dashed") + scale_x_continuous(limits = range(min(ss[,
+            gsub("~", "", as.character(mapping[1]))]), max(ss[, gsub("~", "",
+            as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[,
+            gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "",
+            as.character(mapping[2]))])))
+        p
+    }
+
+    p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_points_limit_range),
+        diag = list(continuous = wrap("barDiag", binwidth = nrow(ss)/10)))
+    print(p + theme_bw())
+}
+
+
+#' plot2d_detailed_violin
+#'
+#' This function creates violin plots
+#' @param res a mitch results object
+#' @returns violin plot
+#' @keywords mitch plots biidimensional enrichment violin
+#' @export
+#' @examples
+#' #This function is not designed to be used directly
+#' @import ggplot2
+plot3d_detailed_violin<-function(res,i){
+    d<-ncol(res$ranked_profile)
+    ss<-res$ranked_profile
+    ll <- res$enrichment_result[i, ]
+    sss <- res$detailed_sets[[i]]
+
+    if (d > 5) {
+        colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
+    }
+    ss_long <- melt(ss)
+    sss_long <- melt(sss)
+    p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long,
+        fill = "grey", colour = "grey") + geom_boxplot(data = ss_long, width = 0.9,
+        fill = "grey", outlier.shape = NA, coef = 0) + geom_violin(data = sss_long,
+        fill = "black", colour = "black") + geom_boxplot(data = sss_long,
+        width = 0.1, outlier.shape = NA) + labs(y = "Position in rank", title = ll[,
+        1])
+
+        print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15),
+            plot.title = element_text(size = 20)))
+}
+
+
+
+
 #' mitch_plots
 #'
 #' This function generates several plots of multivariate gene set enrichment in high resolution PDF format.
@@ -1416,6 +1705,7 @@ plot2d_detailed_violin<-function(res,i){
 #' @param res a mitch results object.
 #' @param outfile the destination file for the plots in PDF format. should contain 'pdf' suffix. Defaults to 
 #' 'Rplots.pdf'
+#' @param cores number of parallel cores for plotting 
 #' @return generates a PDF file containing enrichment plots.
 #' @keywords mitch plot plots pdf 
 #' @export
@@ -1435,16 +1725,11 @@ plot2d_detailed_violin<-function(res,i){
 #' @importFrom  gplots heatmap.2
 #' @import reshape2
 #' @import ggplot2
-mitch_plots <- function(res, outfile = "Rplots.pdf") {
-    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
-        "black"))
-    
-    mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)), 
-        colhead = list(fg_params = list(cex = 0.7)), rowhead = list(fg_params = list(cex = 0.7)))
+#' @import parallel
+mitch_plots <- function(res, outfile = "Rplots.pdf" , cores = detectCores() - 1) {
     
     resrows = length(res$detailed_sets)
-    ss <- res$ranked_profile
-    d = ncol(ss)
+    d = ncol(res$ranked_profile)
     pdf(outfile)
     
     if (d == 1) {
@@ -1452,8 +1737,9 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         plot1d_profile_dist(res)
         plot_geneset_hist(res)
         plot1d_volcano(res)
-        ss_long <- melt(ss)
-        lapply(seq_len(resrows) , function(i) {plot1d_detailed(res,i)} )
+        lapply(seq_len(resrows) , function(i) {
+            plot1d_detailed(res,i)
+        } , mc.cores=cores)
        
     } else if (d == 2) {
         
@@ -1467,152 +1753,28 @@ mitch_plots <- function(res, outfile = "Rplots.pdf") {
         plot2d_heatmap(res)
         plot_effect_vs_significance(res)
 
-        lapply(seq_len(resrows) , function(i) {
+        mclapply(seq_len(resrows) , function(i) {
             plot2d_detailed_density(res,i)
             plot2d_detailed_scatter(res,i)
             plot2d_detailed_violin(res,i)
-        } )
+        } , mc.cores=cores)
     } else if (d > 2) {
         
-        # if d>5, then substitute colnames with a number
-        if (d > 5) {
-            mydims <- data.frame(attributes(res)$profile_dimensions)
-            colnames(mydims) <- "dimensions"
-            grid.newpage()
-            grid.table(mydims, theme = mytheme)
-            colnames(res$input_profile) <- paste("d", seq_len(ncol(res$input_profile)), 
-                sep = "")
-            colnames(res$ranked_profile) <- paste("d", seq_len(ncol(res$ranked_profile)), 
-                sep = "")
-            ss <- res$ranked_profile
-        }
+        res<-colname_substitute(res)
+        ggpairs_points(res)
+        ggpairs_contour(res)
+        gene_sector_table(res)
+        plot_geneset_hist(res)
+        geneset_sector_table(res)
+        ggpairs_points_subset(res)        
+        heatmapx(res)
+        plot_effect_vs_significance(res)
         
-        # pairs points plot for genes
-        ggpairs_points_plot <- function(data, mapping, ...) {
-            p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) + 
-                geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0, 
-                linetype = "dashed")
-        }
-        
-        p <- ggpairs(as.data.frame(res$input_profile), title = "Scatterplot of all genes", 
-            lower = list(continuous = ggpairs_points_plot))
-        print(p + theme_bw())
-        
-        # pairs contour plot function
-        ggpairs_func <- function(data, mapping, ...) {
-            p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..), 
-                geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") + 
-                geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25))
-            p
-        }
-        
-        # pairs contour plot
-        p <- ggpairs(as.data.frame(ss), title = "Contour plot of all genes after ranking", 
-            lower = list(continuous = ggpairs_func), diag = list(continuous = wrap("barDiag", 
-                binwidth = nrow(ss)/100)))
-        print(p + theme_bw())
-        
-        # subset contour plot
-        ggpairs_contour_limit_range <- function(data, mapping, ...) {
-            p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..), 
-                geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") + 
-                geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25)) + 
-                scale_x_continuous(limits = range(min(ss[, gsub("~", "", as.character(mapping[1]))]), 
-                  max(ss[, gsub("~", "", as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[, 
-                gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "", 
-                as.character(mapping[2]))])))
-            p
-        }
-        
-        # a table of gene location by sector
-        sig <- sign(ss)
-        sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
-        colnames(sector_count)[ncol(sector_count)] <- "Number of genes in each sector"
-        grid.newpage()
-        grid.table(sector_count, theme = mytheme)
-        
-        # histograms of gene set counts
-        par(mfrow = c(3, 1))
-        geneset_counts <- res$analysis_metrics$geneset_counts
-        boxplot(geneset_counts$count, horizontal = TRUE, frame = FALSE, main = "Gene set size", 
-            xlab = "number of member genes included in profile")
-        hist(geneset_counts$count, 100, xlab = "geneset size", main = "Histogram of geneset size")
-        hist(geneset_counts$count, 100, xlim = c(0, 500), xlab = "geneset size", 
-            main = "Trimmed histogram of geneset size")
-        
-        # a table of geneset location by sector
-        sig <- sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA < 
-            0.05), 4:(4 + d - 1)])
-        sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
-        colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
-        grid.newpage()
-        grid.table(sector_count, theme = mytheme)
-        
-        # pairs points plot for gene sets
-        enrichment_result_clipped <- res$enrichment_result[, 4:(3 + d)]
-        colnames(enrichment_result_clipped) <- colnames(res$input_profile)
-        p <- ggpairs(enrichment_result_clipped, title = "Scatterplot of all genessets; FDR<0.05 in red", 
-            lower = list(continuous = ggpairs_points_plot))
-        print(p + theme_bw())
-        
-        # subset points plot function
-        ggpairs_points_limit_range <- function(data, mapping, ...) {
-            p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.1) + 
-                geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0, 
-                linetype = "dashed") + scale_x_continuous(limits = range(min(ss[, 
-                gsub("~", "", as.character(mapping[1]))]), max(ss[, gsub("~", "", 
-                as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[, 
-                gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "", 
-                as.character(mapping[2]))])))
-            p
-        }
-        
-        # A heatmap of s values for the resrows sets
-        hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
-        rownames(hmapx) <- head(res$enrichment_result$set, resrows)
-        colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
-        my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
-        heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8, 
-            trace = "none", cexCol = 0.8, col = my_palette)
-        
-        # plot effect size versus significance
-        par(mfrow = c(1, 1))
-        plot(res$enrichment_result$s.dist, -log(res$enrichment_result$p.adjustMANOVA), 
-            xlab = "s.dist (effect size)", ylab = "-log(p.adjustMANOVA) (significance)", 
-            pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), main = "effect size versus statistical significance")
-        
-        ss_long <- melt(ss)
-        
-        for (i in seq_len(resrows)) {
-            ll <- res$enrichment_result[i, ]
-            size <- ll$setSize
-            sss <- res$detailed_sets[[i]]
-            
-            if (d > 5) {
-                colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
-            }
-            
-            p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_contour_limit_range), 
-                diag = list(continuous = wrap("barDiag", binwidth = nrow(ss)/10)))
-            print(p + theme_bw())
-            
-            p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_points_limit_range), 
-                diag = list(continuous = wrap("barDiag", binwidth = nrow(ss)/10)))
-            print(p + theme_bw())
-            
-            sss_long <- melt(sss)
-            
-            p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long, 
-                fill = "grey", colour = "grey") + geom_boxplot(data = ss_long, width = 0.9, 
-                fill = "grey", outlier.shape = NA, coef = 0) + geom_violin(data = sss_long, 
-                fill = "black", colour = "black") + geom_boxplot(data = sss_long, 
-                width = 0.1, outlier.shape = NA) + labs(y = "Position in rank", title = ll[, 
-                1])
-            
-            print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15), 
-                plot.title = element_text(size = 20)))
-            
-        }
+        mclapply(seq_len(resrows) , function(i) {
+            plot3d_detailed_density(res,i)
+            plot3d_detailed_points(res,i)
+            plot3d_detailed_violin(res,i)
+        } , mc.cores=cores)
     }
     dev.off()
 }
