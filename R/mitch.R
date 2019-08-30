@@ -1696,8 +1696,6 @@ plot3d_detailed_violin<-function(res,i){
 }
 
 
-
-
 #' mitch_plots
 #'
 #' This function generates several plots of multivariate gene set enrichment in high resolution PDF format.
@@ -1737,7 +1735,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf" , cores = detectCores() - 1)
         plot1d_profile_dist(res)
         plot_geneset_hist(res)
         plot1d_volcano(res)
-        lapply(seq_len(resrows) , function(i) {
+        mclapply(seq_len(resrows) , function(i) {
             plot1d_detailed(res,i)
         } , mc.cores=cores)
        
