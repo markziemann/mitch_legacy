@@ -1032,19 +1032,18 @@ mitch_calc <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, 
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot1d_profile_dist<-function(res){
-        par(mfrow = c(2, 1))
-        hist(res$input_profile[, 1], breaks = 50, main = "Distribution of DE scores",
-            xlab = paste("DE score for ", colnames(res$input_profile)))
-        plot(res$input_profile, xlab = paste("DE score for ", colnames(res$input_profile)),
-            pch = "|", frame.plot = FALSE)
-        UPS = length(which(res$input_profile > 0))
-        DNS = length(which(res$input_profile < 0))
-        TOTAL = nrow(res$input_profile)
-        mtext(paste(TOTAL, "genes in total,", UPS, "trending up-regulated,", DNS,
-            "trending down-regulated"))
-        pl<-recordPlot()
-        pl
+plot1d_profile_dist <- function(res) {
+    par(mfrow = c(2, 1))
+    hist(res$input_profile[, 1], breaks = 50, main = "Distribution of DE scores", 
+        xlab = paste("DE score for ", colnames(res$input_profile)))
+    plot(res$input_profile, xlab = paste("DE score for ", colnames(res$input_profile)), 
+        pch = "|", frame.plot = FALSE)
+    UPS = length(which(res$input_profile > 0))
+    DNS = length(which(res$input_profile < 0))
+    TOTAL = nrow(res$input_profile)
+    mtext(paste(TOTAL, "genes in total,", UPS, "trending up-regulated,", DNS, "trending down-regulated"))
+    pl <- recordPlot()
+    pl
 }
 
 #' plot_geneset_hist
@@ -1056,16 +1055,15 @@ plot1d_profile_dist<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot_geneset_hist<-function(res){
-        par(mfrow = c(3, 1))
-        geneset_counts <- res$analysis_metrics$geneset_counts
-        boxplot(geneset_counts$count, horizontal = TRUE, frame = FALSE, main = "Gene set size",
-            xlab = "number of member genes included in profile")
-        hist(geneset_counts$count, 100, xlab = "geneset size", main = "Histogram of geneset size")
-        hist(geneset_counts$count, 100, xlim = c(0, 500), xlab = "geneset size",
-            main = "Trimmed histogram of geneset size")
-        pl <- recordPlot()
-        pl
+plot_geneset_hist <- function(res) {
+    par(mfrow = c(3, 1))
+    geneset_counts <- res$analysis_metrics$geneset_counts
+    boxplot(geneset_counts$count, horizontal = TRUE, frame = FALSE, main = "Gene set size", 
+        xlab = "number of member genes included in profile")
+    hist(geneset_counts$count, 100, xlab = "geneset size", main = "Histogram of geneset size")
+    hist(geneset_counts$count, 100, xlim = c(0, 500), xlab = "geneset size", main = "Trimmed histogram of geneset size")
+    pl <- recordPlot()
+    pl
 }
 
 #' plot1d_volcano
@@ -1077,22 +1075,21 @@ plot_geneset_hist<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot1d_volcano<-function(res){
-        par(mfrow = c(1, 1))
-        sig <- subset(res$enrichment_result, p.adjustANOVA <= 0.05)
-        plot(res$enrichment_result$s.dist, -log10(res$enrichment_result$pANOVA),
-            xlab = "s score", ylab = "-log10(p-value)", main = "volcano plot of gene set enrichments",
-            pch = 19, cex = 0.8)
-        points(sig$s.dist, -log10(sig$pANOVA), pch = 19, cex = 0.85, col = "red")
-        TOTAL = nrow(res$enrichment_result)
-        SIG = nrow(sig)
-        UP = length(which(sig$s.dist > 0))
-        DN = length(which(sig$s.dist < 0))
-        SUBHEADER = paste(TOTAL, "gene sets in total,", UP, "upregulated and ", DN,
-            "downregulated (FDR<=0.05)")
-        mtext(SUBHEADER)
-        pl <- recordPlot()
-	pl
+plot1d_volcano <- function(res) {
+    par(mfrow = c(1, 1))
+    sig <- subset(res$enrichment_result, p.adjustANOVA <= 0.05)
+    plot(res$enrichment_result$s.dist, -log10(res$enrichment_result$pANOVA), xlab = "s score", 
+        ylab = "-log10(p-value)", main = "volcano plot of gene set enrichments", 
+        pch = 19, cex = 0.8)
+    points(sig$s.dist, -log10(sig$pANOVA), pch = 19, cex = 0.85, col = "red")
+    TOTAL = nrow(res$enrichment_result)
+    SIG = nrow(sig)
+    UP = length(which(sig$s.dist > 0))
+    DN = length(which(sig$s.dist < 0))
+    SUBHEADER = paste(TOTAL, "gene sets in total,", UP, "upregulated and ", DN, "downregulated (FDR<=0.05)")
+    mtext(SUBHEADER)
+    pl <- recordPlot()
+    pl
 }
 
 #' plot1d_detailed
@@ -1105,31 +1102,29 @@ plot1d_volcano<-function(res){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import beeswarm
-plot1d_detailed<-function(res,i){
-            par(mfrow = c(3, 1))
-            ss<-res$ranked_profile
-            sss <- res$detailed_sets[[i]]
-            set <- names(res$detailed_sets[i])
-            size <- length(sss)
-
-            beeswarm(sss, vertical = FALSE, cex = 0.75, xlim = c(min(ss), max(ss)),
-                col = "darkgray", pch = 19, main = set, cex.main = 1.5, xlab = paste("ranked DE score in:",
-                  colnames(ss)))
-            mtext("beeswarm plot", cex = 0.8)
-
-            hist(sss, xlim = c(min(ss), max(ss)), breaks = 15, col = "darkgray",
-                main = NULL, border = "black", xlab = paste("ranked DE score in:",
-                  colnames(ss)))
-            mtext("histogram", cex = 0.8)
-
-            plot(sss, rep(1, length(sss)), type = "n", xlim = c(min(ss), max(ss)),
-                frame = FALSE, axes = FALSE, ylab = "", xlab = paste("ranked DE score in:",
-                  colnames(ss)))
-            rug(sss, ticksize = 0.9)
-            axis(1)
-            mtext("rugplot", cex = 0.8)
-        pl <- recordPlot()
-        pl
+plot1d_detailed <- function(res, i) {
+    par(mfrow = c(3, 1))
+    ss <- res$ranked_profile
+    sss <- res$detailed_sets[[i]]
+    set <- names(res$detailed_sets[i])
+    size <- length(sss)
+    
+    beeswarm(sss, vertical = FALSE, cex = 0.75, xlim = c(min(ss), max(ss)), col = "darkgray", 
+        pch = 19, main = set, cex.main = 1.5, xlab = paste("ranked DE score in:", 
+            colnames(ss)))
+    mtext("beeswarm plot", cex = 0.8)
+    
+    hist(sss, xlim = c(min(ss), max(ss)), breaks = 15, col = "darkgray", main = NULL, 
+        border = "black", xlab = paste("ranked DE score in:", colnames(ss)))
+    mtext("histogram", cex = 0.8)
+    
+    plot(sss, rep(1, length(sss)), type = "n", xlim = c(min(ss), max(ss)), frame = FALSE, 
+        axes = FALSE, ylab = "", xlab = paste("ranked DE score in:", colnames(ss)))
+    rug(sss, ticksize = 0.9)
+    axis(1)
+    mtext("rugplot", cex = 0.8)
+    pl <- recordPlot()
+    pl
 }
 
 #' plot2d_profile_dist
@@ -1141,12 +1136,12 @@ plot1d_detailed<-function(res,i){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_profile_dist<-function(res){
-    plot(res$input_profile, pch = 19, col = rgb(red = 0, green = 0, blue = 0,
-            alpha = 0.2), main = "Scatterplot of all genes")
-        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-        pl<-recordPlot()
-        pl
+plot2d_profile_dist <- function(res) {
+    plot(res$input_profile, pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
+        main = "Scatterplot of all genes")
+    abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+    pl <- recordPlot()
+    pl
 }
 
 
@@ -1159,27 +1154,27 @@ plot2d_profile_dist<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_profile_density<-function(res){
-  palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+plot2d_profile_density <- function(res) {
+    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
-
-        ss<-res$ranked_profile
-        xmin = min(ss[, 1])
-        xmax = max(ss[, 1])
-        ymin = min(ss[, 2])
-        ymax = max(ss[, 2])
-
-        k <- MASS::kde2d(ss[, 1], ss[, 2])
-        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
-        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
-
-        filled.contour(k, xlim = c(xmin, xmax), ylim = c(ymin, ymax), color.palette = palette,
-            plot.title = {
-                abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-                title(main = "Rank-rank plot of all genes", xlab = X_AXIS, ylab = Y_AXIS)
-            })
-        pl<-recordPlot()
-        pl
+    
+    ss <- res$ranked_profile
+    xmin = min(ss[, 1])
+    xmax = max(ss[, 1])
+    ymin = min(ss[, 2])
+    ymax = max(ss[, 2])
+    
+    k <- MASS::kde2d(ss[, 1], ss[, 2])
+    X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+    Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+    
+    filled.contour(k, xlim = c(xmin, xmax), ylim = c(ymin, ymax), color.palette = palette, 
+        plot.title = {
+            abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+            title(main = "Rank-rank plot of all genes", xlab = X_AXIS, ylab = Y_AXIS)
+        })
+    pl <- recordPlot()
+    pl
 }
 
 #' plot2d_gene_quadrant_barchart
@@ -1191,17 +1186,17 @@ plot2d_profile_density<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_gene_quadrant_barchart<-function(res){
-        uu = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] > 0))
-        ud = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] < 0))
-        dd = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] < 0))
-        du = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] > 0))
-        a <- as.data.frame(c(uu, ud, dd, du))
-        rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
-        colnames(a) = "a"
-        barplot(a$a, names.arg = rownames(a), main = "number of genes in each quadrant")
-        pl<-recordPlot()
-        pl
+plot2d_gene_quadrant_barchart <- function(res) {
+    uu = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] > 0))
+    ud = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] < 0))
+    dd = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] < 0))
+    du = length(which(res$input_profile[, 1] < 0 & res$input_profile[, 2] > 0))
+    a <- as.data.frame(c(uu, ud, dd, du))
+    rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
+    colnames(a) = "a"
+    barplot(a$a, names.arg = rownames(a), main = "number of genes in each quadrant")
+    pl <- recordPlot()
+    pl
 }
 
 #' plot2d_set_quadrant_barchart
@@ -1213,15 +1208,15 @@ plot2d_gene_quadrant_barchart<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_set_quadrant_barchart<-function(res){
-            par(mfrow = c(1, 1))
-        a <- res$analysis_metrics[14]
-        a <- as.data.frame(as.numeric(unlist(strsplit(as.character(a), ","))), stringsAsFactors = FALSE)
-        rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
-        colnames(a) = "a"
-        barplot(a$a, names.arg = rownames(a), main = "number of genesets FDR<0.05")
-        pl<-recordPlot()
-        pl
+plot2d_set_quadrant_barchart <- function(res) {
+    par(mfrow = c(1, 1))
+    a <- res$analysis_metrics[14]
+    a <- as.data.frame(as.numeric(unlist(strsplit(as.character(a), ","))), stringsAsFactors = FALSE)
+    rownames(a) = c("top-right", "bottom-right", "bottom-left", "top-left")
+    colnames(a) = "a"
+    barplot(a$a, names.arg = rownames(a), main = "number of genesets FDR<0.05")
+    pl <- recordPlot()
+    pl
 }
 
 
@@ -1234,14 +1229,14 @@ plot2d_set_quadrant_barchart<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_set_scatter<-function(res){
-        sig <- subset(res$enrichment_result, p.adjustMANOVA < 0.05)
-        plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0,
-            blue = 0, alpha = 0.2), main = "Scatterplot of all gene sets; FDR<0.05 in red")
-        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-        points(sig[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
-        pl<-recordPlot()
-        pl
+plot2d_set_scatter <- function(res) {
+    sig <- subset(res$enrichment_result, p.adjustMANOVA < 0.05)
+    plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0, blue = 0, 
+        alpha = 0.2), main = "Scatterplot of all gene sets; FDR<0.05 in red")
+    abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+    points(sig[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+    pl <- recordPlot()
+    pl
 }
 
 #' plot2d_set_scatter_top
@@ -1253,16 +1248,16 @@ plot2d_set_scatter<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_set_scatter_top<-function(res){
+plot2d_set_scatter_top <- function(res) {
     resrows = length(res$detailed_sets)
-      top <- head(res$enrichment_result, resrows)
-        plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0,
-            blue = 0, alpha = 0.2), main = paste("Scatterplot of all gene sets; top",
-            resrows, "in red"))
-        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-        points(top[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
-        pl<-recordPlot()
-        pl
+    top <- head(res$enrichment_result, resrows)
+    plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0, blue = 0, 
+        alpha = 0.2), main = paste("Scatterplot of all gene sets; top", resrows, 
+        "in red"))
+    abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+    points(top[, 4:5], pch = 19, col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+    pl <- recordPlot()
+    pl
 }
 
 #' plot2d_heatmap
@@ -1275,17 +1270,17 @@ plot2d_set_scatter_top<-function(res){
 #' @examples
 #' #This function is not designed to be used directly
 #' @importFrom  gplots heatmap.2
-plot2d_heatmap<-function(res){
-    d=ncol(res$input_profile)
+plot2d_heatmap <- function(res) {
+    d = ncol(res$input_profile)
     resrows = length(res$detailed_sets)
-        hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
-        rownames(hmapx) <- head(res$enrichment_result$set, resrows)
-        colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
-        my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
-        heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8,
-            trace = "none", cexCol = 0.8, col = my_palette)
-        pl<-recordPlot()
-        pl
+    hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
+    rownames(hmapx) <- head(res$enrichment_result$set, resrows)
+    colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
+    my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+    heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8, 
+        trace = "none", cexCol = 0.8, col = my_palette)
+    pl <- recordPlot()
+    pl
 }
 
 
@@ -1298,13 +1293,13 @@ plot2d_heatmap<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot_effect_vs_significance<-function(res){
-            par(mfrow = c(1, 1))
-        plot(res$enrichment_result$s.dist, -log(res$enrichment_result$p.adjustMANOVA),
-            xlab = "s.dist (effect size)", ylab = "-log(p.adjustMANOVA) (significance)",
-            pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), main = "effect size versus statistical significance")
-        pl<-recordPlot()
-        pl
+plot_effect_vs_significance <- function(res) {
+    par(mfrow = c(1, 1))
+    plot(res$enrichment_result$s.dist, -log(res$enrichment_result$p.adjustMANOVA), 
+        xlab = "s.dist (effect size)", ylab = "-log(p.adjustMANOVA) (significance)", 
+        pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), main = "effect size versus statistical significance")
+    pl <- recordPlot()
+    pl
 }
 
 
@@ -1317,28 +1312,28 @@ plot_effect_vs_significance<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_detailed_density<-function(res,i){
-    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+plot2d_detailed_density <- function(res, i) {
+    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
-        ss<-res$ranked_profile
-        xmin = min(ss[, 1])
-        xmax = max(ss[, 1])
-        ymin = min(ss[, 2])
-        ymax = max(ss[, 2])
-            ll <- res$enrichment_result[i, ]
-            size <- ll$setSize
-            sss <- res$detailed_sets[[i]]
-        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
-        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
-           par(mar=c(5,4,4,2))
-            k <- MASS::kde2d(sss[, 1], sss[, 2])
-            filled.contour(k, color.palette = palette, xlim = c(xmin, xmax), ylim = c(ymin,
-                ymax), plot.title = {
-                abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-                title(main = ll$set, xlab = X_AXIS, ylab = Y_AXIS)
-            })
-            pl <- recordPlot()
-   pl
+    ss <- res$ranked_profile
+    xmin = min(ss[, 1])
+    xmax = max(ss[, 1])
+    ymin = min(ss[, 2])
+    ymax = max(ss[, 2])
+    ll <- res$enrichment_result[i, ]
+    size <- ll$setSize
+    sss <- res$detailed_sets[[i]]
+    X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+    Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+    par(mar = c(5, 4, 4, 2))
+    k <- MASS::kde2d(sss[, 1], sss[, 2])
+    filled.contour(k, color.palette = palette, xlim = c(xmin, xmax), ylim = c(ymin, 
+        ymax), plot.title = {
+        abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+        title(main = ll$set, xlab = X_AXIS, ylab = Y_AXIS)
+    })
+    pl <- recordPlot()
+    pl
 }
 
 
@@ -1351,22 +1346,21 @@ plot2d_detailed_density<-function(res,i){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-plot2d_detailed_scatter<-function(res,i){
-        ss<-res$ranked_profile
-        xmin = min(ss[, 1])
-        xmax = max(ss[, 1])
-        ymin = min(ss[, 2])
-        ymax = max(ss[, 2])
-            sss <- res$detailed_sets[[i]]
-        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
-        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
-            ll <- res$enrichment_result[i, ]
-            plot(sss, pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2),
-                main = ll$set, xlim = c(xmin, xmax), ylim = c(ymin, ymax), xlab = X_AXIS,
-                ylab = Y_AXIS)
-            abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
-            pl <- recordPlot()
-   pl
+plot2d_detailed_scatter <- function(res, i) {
+    ss <- res$ranked_profile
+    xmin = min(ss[, 1])
+    xmax = max(ss[, 1])
+    ymin = min(ss[, 2])
+    ymax = max(ss[, 2])
+    sss <- res$detailed_sets[[i]]
+    X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+    Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+    ll <- res$enrichment_result[i, ]
+    plot(sss, pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), main = ll$set, 
+        xlim = c(xmin, xmax), ylim = c(ymin, ymax), xlab = X_AXIS, ylab = Y_AXIS)
+    abline(v = 0, h = 0, lty = 2, lwd = 2, col = "blue")
+    pl <- recordPlot()
+    pl
 }
 
 
@@ -1380,33 +1374,32 @@ plot2d_detailed_scatter<-function(res,i){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import ggplot2
-plot2d_detailed_violin<-function(res,i){
-   pl<-list()
-
-        ss<-res$ranked_profile
-        xmin = min(ss[, 1])
-        xmax = max(ss[, 1])
-        ymin = min(ss[, 2])
-        ymax = max(ss[, 2])
-            ll <- res$enrichment_result[i, ]
-            size <- ll$setSize
-            sss <- res$detailed_sets[[i]]
-        X_AXIS = paste("Rank in contrast", colnames(ss)[1])
-        Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
-        ss_long <- melt(ss)
-            sss_long <- melt(sss)
-
-            p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long,
-                fill = "grey", colour = "grey") + geom_boxplot(data = ss_long, width = 0.9,
-                fill = "grey", outlier.shape = NA, coef = 0) + geom_violin(data = sss_long,
-                fill = "black", colour = "black") + geom_boxplot(data = sss_long,
-                width = 0.1, outlier.shape = NA) + labs(y = "Position in rank", title = ll[,
-                1])
-
-            print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15),
-                plot.title = element_text(size = 20)))
-   pl <- recordPlot()
-   pl
+plot2d_detailed_violin <- function(res, i) {
+    pl <- list()
+    
+    ss <- res$ranked_profile
+    xmin = min(ss[, 1])
+    xmax = max(ss[, 1])
+    ymin = min(ss[, 2])
+    ymax = max(ss[, 2])
+    ll <- res$enrichment_result[i, ]
+    size <- ll$setSize
+    sss <- res$detailed_sets[[i]]
+    X_AXIS = paste("Rank in contrast", colnames(ss)[1])
+    Y_AXIS = paste("Rank in contrast", colnames(ss)[2])
+    ss_long <- melt(ss)
+    sss_long <- melt(sss)
+    
+    p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long, fill = "grey", 
+        colour = "grey") + geom_boxplot(data = ss_long, width = 0.9, fill = "grey", 
+        outlier.shape = NA, coef = 0) + geom_violin(data = sss_long, fill = "black", 
+        colour = "black") + geom_boxplot(data = sss_long, width = 0.1, outlier.shape = NA) + 
+        labs(y = "Position in rank", title = ll[, 1])
+    
+    print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15), 
+        plot.title = element_text(size = 20)))
+    pl <- recordPlot()
+    pl
 }
 
 
@@ -1420,16 +1413,16 @@ plot2d_detailed_violin<-function(res,i){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import ggplot2
-ggpairs_points<-function(res){
-        ggpairs_points_plot <- function(data, mapping, ...) {
-            p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) +
-                geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0,
-                linetype = "dashed")
-        }
-
-        p <- ggpairs(as.data.frame(res$input_profile), title = "Scatterplot of all genes",
-            lower = list(continuous = ggpairs_points_plot))
-        print(p + theme_bw())
+ggpairs_points <- function(res) {
+    ggpairs_points_plot <- function(data, mapping, ...) {
+        p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) + 
+            geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0, 
+            linetype = "dashed")
+    }
+    
+    p <- ggpairs(as.data.frame(res$input_profile), title = "Scatterplot of all genes", 
+        lower = list(continuous = ggpairs_points_plot))
+    print(p + theme_bw())
 }
 
 
@@ -1443,18 +1436,18 @@ ggpairs_points<-function(res){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import ggplot2
-ggpairs_points_subset<-function(res){
-      d<-ncol(res$ranked_profile)
-        ggpairs_points_plot <- function(data, mapping, ...) {
-            p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) +
-                geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0,
-                linetype = "dashed")
-        }
-        enrichment_result_clipped <- res$enrichment_result[, 4:(3 + d)]
-        colnames(enrichment_result_clipped) <- colnames(res$input_profile)
-        p <- ggpairs(enrichment_result_clipped, title = "Scatterplot of all genessets; FDR<0.05 in red",
-            lower = list(continuous = ggpairs_points_plot))
-        print(p + theme_bw())
+ggpairs_points_subset <- function(res) {
+    d <- ncol(res$ranked_profile)
+    ggpairs_points_plot <- function(data, mapping, ...) {
+        p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) + 
+            geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0, 
+            linetype = "dashed")
+    }
+    enrichment_result_clipped <- res$enrichment_result[, 4:(3 + d)]
+    colnames(enrichment_result_clipped) <- colnames(res$input_profile)
+    p <- ggpairs(enrichment_result_clipped, title = "Scatterplot of all genessets; FDR<0.05 in red", 
+        lower = list(continuous = ggpairs_points_plot))
+    print(p + theme_bw())
 }
 
 
@@ -1468,20 +1461,20 @@ ggpairs_points_subset<-function(res){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import ggplot2
-ggpairs_contour<-function(res){
-    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+ggpairs_contour <- function(res) {
+    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
-        ggpairs_func <- function(data, mapping, ...) {
-            p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..),
-                geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") +
-                geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25))
-            p
-        }
-        ss<-res$ranked_profile
-        p <- ggpairs(as.data.frame(ss), title = "Contour plot of all genes after ranking",
-            lower = list(continuous = ggpairs_func), diag = list(continuous = wrap("barDiag",
-                binwidth = nrow(ss)/100)))
-        print(p + theme_bw())
+    ggpairs_func <- function(data, mapping, ...) {
+        p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..), 
+            geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") + 
+            geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25))
+        p
+    }
+    ss <- res$ranked_profile
+    p <- ggpairs(as.data.frame(ss), title = "Contour plot of all genes after ranking", 
+        lower = list(continuous = ggpairs_func), diag = list(continuous = wrap("barDiag", 
+            binwidth = nrow(ss)/100)))
+    print(p + theme_bw())
 }
 
 
@@ -1494,19 +1487,19 @@ ggpairs_contour<-function(res){
 #' @export
 #' @examples
 #' #This function is not designed to be used directly
-colname_substitute<-function(res){
-      d<-ncol(res$ranked_profile)
-        if (d > 5) {
-            mydims <- data.frame(attributes(res)$profile_dimensions)
-            colnames(mydims) <- "dimensions"
-            grid.newpage()
-            grid.table(mydims, theme = mytheme)
-            colnames(res$input_profile) <- paste("d", seq_len(ncol(res$input_profile)),
-                sep = "")
-            colnames(res$ranked_profile) <- paste("d", seq_len(ncol(res$ranked_profile)),
-                sep = "")
-        }
-        res
+colname_substitute <- function(res) {
+    d <- ncol(res$ranked_profile)
+    if (d > 5) {
+        mydims <- data.frame(attributes(res)$profile_dimensions)
+        colnames(mydims) <- "dimensions"
+        grid.newpage()
+        grid.table(mydims, theme = mytheme)
+        colnames(res$input_profile) <- paste("d", seq_len(ncol(res$input_profile)), 
+            sep = "")
+        colnames(res$ranked_profile) <- paste("d", seq_len(ncol(res$ranked_profile)), 
+            sep = "")
+    }
+    res
 }
 
 
@@ -1521,20 +1514,20 @@ colname_substitute<-function(res){
 #' #This function is not designed to be used directly
 #' @import grid
 #' @import gridExtra
-gene_sector_table<-function(res){
-    mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)),
+gene_sector_table <- function(res) {
+    mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)), 
         colhead = list(fg_params = list(cex = 0.7)), rowhead = list(fg_params = list(cex = 0.7)))
-
-      d<-ncol(res$ranked_profile)
-        ss<-res$ranked_profile
+    
+    d <- ncol(res$ranked_profile)
+    ss <- res$ranked_profile
+    sig <- sign(ss)
+    if (d < 6) {
         sig <- sign(ss)
-        if (d < 6) {
-            sig <- sign(ss)
-            sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
-            colnames(sector_count)[ncol(sector_count)] <- "Number of genes in each sector"
-            grid.newpage()
-            grid.table(sector_count, theme = mytheme)
-        }
+        sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
+        colnames(sector_count)[ncol(sector_count)] <- "Number of genes in each sector"
+        grid.newpage()
+        grid.table(sector_count, theme = mytheme)
+    }
 }
 
 
@@ -1549,17 +1542,17 @@ gene_sector_table<-function(res){
 #' #This function is not designed to be used directly
 #' @import grid
 #' @import gridExtra
-geneset_sector_table<-function(res){
-      d<-ncol(res$ranked_profile)
-    mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)),
+geneset_sector_table <- function(res) {
+    d <- ncol(res$ranked_profile)
+    mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)), 
         colhead = list(fg_params = list(cex = 0.7)), rowhead = list(fg_params = list(cex = 0.7)))
-
-        sig <- sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA <
-            0.05), 4:(4 + d - 1)])
-        sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
-        colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
-        grid.newpage()
-        grid.table(sector_count, theme = mytheme)
+    
+    sig <- sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA < 
+        0.05), 4:(4 + d - 1)])
+    sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
+    colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
+    grid.newpage()
+    grid.table(sector_count, theme = mytheme)
 }
 
 #' heatmapx
@@ -1572,17 +1565,17 @@ geneset_sector_table<-function(res){
 #' @examples
 #' #This function is not designed to be used directly
 #' @importFrom  gplots heatmap.2
-heatmapx<-function(res){
-      d<-ncol(res$ranked_profile)
+heatmapx <- function(res) {
+    d <- ncol(res$ranked_profile)
     resrows = length(res$detailed_sets)
-        hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
-        rownames(hmapx) <- head(res$enrichment_result$set, resrows)
-        colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
-        my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
-        heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8,
-            trace = "none", cexCol = 0.8, col = my_palette)
-   pl <- recordPlot()
-   pl
+    hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
+    rownames(hmapx) <- head(res$enrichment_result$set, resrows)
+    colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
+    my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+    heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8, 
+        trace = "none", cexCol = 0.8, col = my_palette)
+    pl <- recordPlot()
+    pl
 }
 
 #' plot3d_detailed_density
@@ -1595,33 +1588,32 @@ heatmapx<-function(res){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import ggplot2
-plot3d_detailed_density<-function(res,i){
-    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred",
+plot3d_detailed_density <- function(res, i) {
+    palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
-    d<-ncol(res$ranked_profile)
-    ss<-res$ranked_profile
+    d <- ncol(res$ranked_profile)
+    ss <- res$ranked_profile
     ll <- res$enrichment_result[i, ]
     size <- ll$setSize
     sss <- res$detailed_sets[[i]]
-
+    
     if (d > 5) {
         colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
     }
-
+    
     ggpairs_contour_limit_range <- function(data, mapping, ...) {
-        p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..),
-            geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") +
-            geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25)) +
-            scale_x_continuous(limits = range(min(ss[, gsub("~", "", as.character(mapping[1]))]),
-            max(ss[, gsub("~", "", as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[,
-            gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "",
-            as.character(mapping[2]))])))
+        p <- ggplot(data = data, mapping = mapping) + stat_density2d(aes(fill = ..density..), 
+            geom = "tile", contour = FALSE) + geom_vline(xintercept = 0, linetype = "dashed") + 
+            geom_hline(yintercept = 0, linetype = "dashed") + scale_fill_gradientn(colours = palette(25)) + 
+            scale_x_continuous(limits = range(min(ss[, gsub("~", "", as.character(mapping[1]))]), 
+                max(ss[, gsub("~", "", as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[, 
+            gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "", as.character(mapping[2]))])))
         p
     }
-
-    p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_contour_limit_range),
+    
+    p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_contour_limit_range), 
         diag = list(continuous = wrap("barDiag", binwidth = nrow(ss)/10)))
-        print(p + theme_bw())
+    print(p + theme_bw())
 }
 
 
@@ -1635,29 +1627,27 @@ plot3d_detailed_density<-function(res,i){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import ggplot2
-plot3d_detailed_points<-function(res,i){
-    d<-ncol(res$ranked_profile)
-    ss<-res$ranked_profile
+plot3d_detailed_points <- function(res, i) {
+    d <- ncol(res$ranked_profile)
+    ss <- res$ranked_profile
     ll <- res$enrichment_result[i, ]
     size <- ll$setSize
     sss <- res$detailed_sets[[i]]
-
+    
     if (d > 5) {
         colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
     }
-
+    
     ggpairs_points_limit_range <- function(data, mapping, ...) {
-        p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.1) +
-            geom_vline(xintercept = 0, linetype = "dashed") + geom_hline(yintercept = 0,
-            linetype = "dashed") + scale_x_continuous(limits = range(min(ss[,
-            gsub("~", "", as.character(mapping[1]))]), max(ss[, gsub("~", "",
-            as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[,
-            gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "",
-            as.character(mapping[2]))])))
+        p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.1) + geom_vline(xintercept = 0, 
+            linetype = "dashed") + geom_hline(yintercept = 0, linetype = "dashed") + 
+            scale_x_continuous(limits = range(min(ss[, gsub("~", "", as.character(mapping[1]))]), 
+                max(ss[, gsub("~", "", as.character(mapping[1]))]))) + scale_y_continuous(limits = range(min(ss[, 
+            gsub("~", "", as.character(mapping[2]))]), max(ss[, gsub("~", "", as.character(mapping[2]))])))
         p
     }
-
-    p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_points_limit_range),
+    
+    p <- ggpairs(as.data.frame(sss), title = ll[, 1], lower = list(continuous = ggpairs_points_limit_range), 
         diag = list(continuous = wrap("barDiag", binwidth = nrow(ss)/10)))
     print(p + theme_bw())
 }
@@ -1673,26 +1663,25 @@ plot3d_detailed_points<-function(res,i){
 #' @examples
 #' #This function is not designed to be used directly
 #' @import ggplot2
-plot3d_detailed_violin<-function(res,i){
-    d<-ncol(res$ranked_profile)
-    ss<-res$ranked_profile
+plot3d_detailed_violin <- function(res, i) {
+    d <- ncol(res$ranked_profile)
+    ss <- res$ranked_profile
     ll <- res$enrichment_result[i, ]
     sss <- res$detailed_sets[[i]]
-
+    
     if (d > 5) {
         colnames(sss) <- paste("d", seq_len(ncol(res$input_profile)), sep = "")
     }
     ss_long <- melt(ss)
     sss_long <- melt(sss)
-    p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long,
-        fill = "grey", colour = "grey") + geom_boxplot(data = ss_long, width = 0.9,
-        fill = "grey", outlier.shape = NA, coef = 0) + geom_violin(data = sss_long,
-        fill = "black", colour = "black") + geom_boxplot(data = sss_long,
-        width = 0.1, outlier.shape = NA) + labs(y = "Position in rank", title = ll[,
-        1])
-
-        print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15),
-            plot.title = element_text(size = 20)))
+    p <- ggplot(ss_long, aes(Var2, value)) + geom_violin(data = ss_long, fill = "grey", 
+        colour = "grey") + geom_boxplot(data = ss_long, width = 0.9, fill = "grey", 
+        outlier.shape = NA, coef = 0) + geom_violin(data = sss_long, fill = "black", 
+        colour = "black") + geom_boxplot(data = sss_long, width = 0.1, outlier.shape = NA) + 
+        labs(y = "Position in rank", title = ll[, 1])
+    
+    print(p + theme_bw() + theme(axis.text = element_text(size = 14), axis.title = element_text(size = 15), 
+        plot.title = element_text(size = 20)))
 }
 
 
@@ -1724,7 +1713,7 @@ plot3d_detailed_violin<-function(res,i){
 #' @import reshape2
 #' @import ggplot2
 #' @import parallel
-mitch_plots <- function(res, outfile = "Rplots.pdf" , cores = detectCores() - 1) {
+mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) {
     
     resrows = length(res$detailed_sets)
     d = ncol(res$ranked_profile)
@@ -1735,13 +1724,13 @@ mitch_plots <- function(res, outfile = "Rplots.pdf" , cores = detectCores() - 1)
         plot1d_profile_dist(res)
         plot_geneset_hist(res)
         plot1d_volcano(res)
-        mclapply(seq_len(resrows) , function(i) {
-            plot1d_detailed(res,i)
-        } , mc.cores=cores)
-       
+        mclapply(seq_len(resrows), function(i) {
+            plot1d_detailed(res, i)
+        }, mc.cores = cores)
+        
     } else if (d == 2) {
         
-        plot2d_profile_dist(res)        
+        plot2d_profile_dist(res)
         plot2d_profile_density(res)
         plot2d_gene_quadrant_barchart(res)
         plot_geneset_hist(res)
@@ -1750,29 +1739,29 @@ mitch_plots <- function(res, outfile = "Rplots.pdf" , cores = detectCores() - 1)
         plot2d_set_scatter_top(res)
         plot2d_heatmap(res)
         plot_effect_vs_significance(res)
-
-        mclapply(seq_len(resrows) , function(i) {
-            plot2d_detailed_density(res,i)
-            plot2d_detailed_scatter(res,i)
-            plot2d_detailed_violin(res,i)
-        } , mc.cores=cores)
+        
+        mclapply(seq_len(resrows), function(i) {
+            plot2d_detailed_density(res, i)
+            plot2d_detailed_scatter(res, i)
+            plot2d_detailed_violin(res, i)
+        }, mc.cores = cores)
     } else if (d > 2) {
         
-        res<-colname_substitute(res)
+        res <- colname_substitute(res)
         ggpairs_points(res)
         ggpairs_contour(res)
         gene_sector_table(res)
         plot_geneset_hist(res)
         geneset_sector_table(res)
-        ggpairs_points_subset(res)        
+        ggpairs_points_subset(res)
         heatmapx(res)
         plot_effect_vs_significance(res)
         
-        mclapply(seq_len(resrows) , function(i) {
-            plot3d_detailed_density(res,i)
-            plot3d_detailed_points(res,i)
-            plot3d_detailed_violin(res,i)
-        } , mc.cores=cores)
+        mclapply(seq_len(resrows), function(i) {
+            plot3d_detailed_density(res, i)
+            plot3d_detailed_points(res, i)
+            plot3d_detailed_violin(res, i)
+        }, mc.cores = cores)
     }
     dev.off()
 }
