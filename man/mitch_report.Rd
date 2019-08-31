@@ -23,7 +23,7 @@ function. The number of detailed sets to generate is dictated by the resrows set
 \examples{
 gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
 x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=1)
+res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=2)
 # render mitch results in the form of a HTML report
 mitch_report(res,'outres.html')
 }

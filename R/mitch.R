@@ -1096,6 +1096,7 @@ plot1d_volcano <- function(res) {
 #'
 #' This function creates geneset histograms
 #' @param res a mitch results object
+#' @param i the index of the geneset in the res$enrichment_result for plotting
 #' @returns 1D enrichment plots
 #' @keywords mitch plots unidimensional enrichment     
 #' @export
@@ -1307,6 +1308,7 @@ plot_effect_vs_significance <- function(res) {
 #'
 #' This function creates a 2D kernal density plot of genesetst
 #' @param res a mitch results object
+#' @param i the index of the geneset in the res$enrichment_result for plotting
 #' @returns 2D enrichment plots
 #' @keywords mitch plots bidimensional enrichment     
 #' @export
@@ -1341,6 +1343,7 @@ plot2d_detailed_density <- function(res, i) {
 #'
 #' This function creates a 2D kernal density plot of genesetst
 #' @param res a mitch results object
+#' @param i the index of the geneset in the res$enrichment_result for plotting
 #' @returns 2D enrichment plots
 #' @keywords mitch plots bidimensional enrichment     
 #' @export
@@ -1368,6 +1371,7 @@ plot2d_detailed_scatter <- function(res, i) {
 #'
 #' This function creates violin plots
 #' @param res a mitch results object
+#' @param i the index of the geneset in the res$enrichment_result for plotting
 #' @returns violin plot
 #' @keywords mitch plots biidimensional enrichment violin
 #' @export
@@ -1492,8 +1496,6 @@ colname_substitute <- function(res) {
     if (d > 5) {
         mydims <- data.frame(attributes(res)$profile_dimensions)
         colnames(mydims) <- "dimensions"
-        grid.newpage()
-        grid.table(mydims, theme = mytheme)
         colnames(res$input_profile) <- paste("d", seq_len(ncol(res$input_profile)), 
             sep = "")
         colnames(res$ranked_profile) <- paste("d", seq_len(ncol(res$ranked_profile)), 
@@ -1582,6 +1584,7 @@ heatmapx <- function(res) {
 #'
 #' This function creates a pairs contour plot of gene profiles
 #' @param res a mitch results object
+#' @param i the index of the geneset in the res$enrichment_result for plotting
 #' @returns ggpairs contour plot for a gene subset
 #' @keywords mitch plots multidimensional enrichment contour density
 #' @export
@@ -1621,6 +1624,7 @@ plot3d_detailed_density <- function(res, i) {
 #'
 #' This function creates a pairs plot of gene profiles of a subset of genes
 #' @param res a mitch results object
+#' @param i the index of the geneset in the res$enrichment_result for plotting
 #' @returns ggpairs plot for a gene subset
 #' @keywords mitch plots multidimensional enrichment scatter pairs
 #' @export
@@ -1657,6 +1661,7 @@ plot3d_detailed_points <- function(res, i) {
 #'
 #' This function creates violin plots
 #' @param res a mitch results object
+#' @param i the index of the geneset in the res$enrichment_result for plotting
 #' @returns violin plot
 #' @keywords mitch plots biidimensional enrichment violin
 #' @export
@@ -1700,8 +1705,8 @@ plot3d_detailed_violin <- function(res, i) {
 #' # render enrichment plots in high res pdf
 #' gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
 #' x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-#' res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=2)
-#' mitch_plots(res,outfile='outres.pdf')
+#' res<-mitch_calc(x,gsets,priority='effect',resrows=6,minsetsize=5,cores=2)
+#' mitch_plots(res,outfile='outres.pdf',cores=2)
 #' @import grDevices
 #' @import graphics
 #' @import grDevices
@@ -1785,8 +1790,11 @@ mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) 
 #' # render mitch results in the form of a HTML report
 #' mitch_report(res,'outres.html')
 #' @import knitr
-#' @import rmarkdown
-
+#' @importFrom rmarkdown render
+#' @import tidyselect
+#' @import processx
+#' @import remotes
+#' @import fs
 mitch_report <- function(res, outfile) {
     # library('plyr') library('knitr') library('markdown') library('rmarkdown')
     

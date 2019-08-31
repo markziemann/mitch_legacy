@@ -25,12 +25,13 @@ library("mitch")
 ## Workflow overview
 Importing gene sets
 Mitch has a function to import GMT files to R lists (adapted from Yu et al, 2012 in the clusterProfiler package). 
-For example:
+For example we can grab some gene sets from Reactome.org:
 
 ```{r,gsets}
 download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip",destfile="ReactomePathways.gmt.zip")
 unzip("ReactomePathways.gmt.zip")
 genesets<-gmt_import("ReactomePathways.gmt")
+genesets<-head(genesets,20)
 ```
 
 ## Importing profiling data
@@ -94,14 +95,15 @@ head(y,3)
 The mitch_calc function performs multivariate enrichment analysis of the supplied gene sets in the scored 
 profiling data. At its simpest form mitch_calc function accepts the scored data as the first argument and the 
 genesets as the second argument. Users can prioritise enrichments based on small adjusted p-values, or by the 
-observed effect size (magnitude of the enrichment score).
+observed effect size (magnitude of the enrichment score). Note that the number of parallel cores is set here 
+with cores=2 here but the default is to use all but one available cores.
 
 ```{r,calc1,eval=FALSE}
-res<-mitch_calc(y,genesets,priority="significance")
+res<-mitch_calc(y,genesets,priority="significance",cores=2)
 ```
 
 ```{r,calc2,eval=TRUE}
-res<-mitch_calc(y,genesets,priority="effect")
+res<-mitch_calc(y,genesets,priority="effect",cores=2)
 ```
 
 You can peek at the top results with head like this:
@@ -110,23 +112,17 @@ You can peek at the top results with head like this:
 head(res$enrichment_result)
 ```
 
-By default, mitch_calc uses mclapply to speed up calculations on all but one available CPU threads. This 
-behaviour can be modified by setting the cores to a desred number.
-
-```{r,calc3,eval=TRUE}
-res<-mitch_calc(y,genesets,priority="significance",cores=4)
-```
 By default, gene sets with fewer than 10 members present in the profiling data are discarded. This threshold can 
 be modified using the minsetsize option. There is no upper limit of gene set size.
 
 ```{r,calc4,eval=TRUE}
-res<-mitch_calc(y,genesets,priority="significance",minsetsize=20)
+res<-mitch_calc(y,genesets,priority="significance",minsetsize=20,cores=2)
 ```
 By default, in downstream visualisation steps, charts are made from the top 50 gene sets, but this can be 
 modified using the resrows option.
 
 ```{r,calc5,eval=TRUE}
-res<-mitch_calc(y,genesets,priority="significance",resrows=100)
+res<-mitch_calc(y,genesets,priority="significance",resrows=6,cores=2)
 ```
 
 ## Generate a HTML report
@@ -141,7 +137,7 @@ If you receive an error here, ensure that Taucharts is installed properly. Take 
 In case you want the charts in PDF format, these can be generated as such:
 
 ```{r,plots,eval=TRUE,message=FALSE}
-mitch_plots(res,outfile="mycharts.pdf")
+mitch_plots(res,outfile="mycharts.pdf",cores=2)
 ```
 
 ## Condensed full example
@@ -158,9 +154,9 @@ str(x)
 gt<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/gt.tsv",header=TRUE,row.names=1)
 y<-mitch_import(x,DEtype="deseq2",geneTable=gt)
 head(y)
-res<-mitch_calc(y,genesets,priority="significance")
+res<-mitch_calc(y,genesets,priority="significance",cores=2,resrows=6)
 head(res$enrichment_result)
 mitch_report(res,"myreport2.html")
-mitch_plots(res,outfile="mycharts.pdf")
+mitch_plots(res,outfile="mycharts.pdf",cores=2)
 ```
 

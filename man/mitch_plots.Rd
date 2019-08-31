@@ -4,13 +4,15 @@
 \alias{mitch_plots}
 \title{mitch_plots}
 \usage{
-mitch_plots(res, outfile = "Rplots.pdf")
+mitch_plots(res, outfile = "Rplots.pdf", cores = detectCores() - 1)
 }
 \arguments{
 \item{res}{a mitch results object.}
 
 \item{outfile}{the destination file for the plots in PDF format. should contain 'pdf' suffix. Defaults to 
 'Rplots.pdf'}
+
+\item{cores}{number of parallel cores for plotting}
 }
 \value{
 generates a PDF file containing enrichment plots.
@@ -23,8 +25,8 @@ The number of detailed sets to generate is dictated by the resrows set in the mi
 # render enrichment plots in high res pdf
 gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
 x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=1)
-mitch_plots(res,outfile='outres.pdf')
+res<-mitch_calc(x,gsets,priority='effect',resrows=6,minsetsize=5,cores=2)
+mitch_plots(res,outfile='outres.pdf',cores=2)
 }
 \keyword{mitch}
 \keyword{pdf}
