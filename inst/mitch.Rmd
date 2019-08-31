@@ -341,6 +341,7 @@ htmltools::tagList(p)
 
 ```{r,heatmap,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
 if (d!=1) {
+if (resrows>2) {
 cat("<h2> A heatmap of S values for top results</h2><br>")
 library(gplots)
 hmapx<-head( res$enrichment_result[,4:(4+d-1)] ,resrows)
@@ -348,6 +349,7 @@ rownames(hmapx)<-head(res$enrichment_result$set,resrows)
 colnames(hmapx)<-gsub("^s.","",colnames(hmapx))
 my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
 heatmap.2(as.matrix(hmapx),scale="none",margin=c(10, 25),cexRow=0.8,trace="none",cexCol=0.8,col=my_palette)
+}
 }
 ```
 

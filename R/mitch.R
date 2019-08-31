@@ -1274,13 +1274,16 @@ plot2d_set_scatter_top <- function(res) {
 plot2d_heatmap <- function(res) {
     d = ncol(res$input_profile)
     resrows = length(res$detailed_sets)
-    hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
-    rownames(hmapx) <- head(res$enrichment_result$set, resrows)
-    colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
-    my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
-    heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8, 
-        trace = "none", cexCol = 0.8, col = my_palette)
-    pl <- recordPlot()
+    pl = NULL
+    if ( resrows > 2 ) {
+        hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
+        rownames(hmapx) <- head(res$enrichment_result$set, resrows)
+        colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
+        my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 25)
+        heatmap.2(as.matrix(hmapx), scale = "none", margins = c(10, 25), cexRow = 0.8, 
+            trace = "none", cexCol = 0.8, col = my_palette)
+        pl <- recordPlot()
+    }
     pl
 }
 
