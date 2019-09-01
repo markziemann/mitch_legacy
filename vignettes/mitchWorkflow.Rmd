@@ -122,7 +122,7 @@ By default, in downstream visualisation steps, charts are made from the top 50 g
 modified using the resrows option.
 
 ```{r,calc5,eval=TRUE}
-res<-mitch_calc(y,genesets,priority="significance",resrows=6,cores=2)
+res<-mitch_calc(y,genesets,priority="significance",resrows=3,cores=2)
 ```
 
 ## Generate a HTML report
@@ -154,7 +154,7 @@ str(x)
 gt<-read.table("https://raw.githubusercontent.com/markziemann/Mitch/master/ex/gt.tsv",header=TRUE,row.names=1)
 y<-mitch_import(x,DEtype="deseq2",geneTable=gt)
 head(y)
-res<-mitch_calc(y,genesets,priority="significance",cores=2,resrows=6)
+res<-mitch_calc(y,genesets,priority="significance",cores=2,resrows=3)
 head(res$enrichment_result)
 mitch_report(res,"myreport2.html")
 mitch_plots(res,outfile="mycharts.pdf",cores=2)

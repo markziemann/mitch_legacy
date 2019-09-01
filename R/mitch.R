@@ -1554,10 +1554,14 @@ geneset_sector_table <- function(res) {
     
     sig <- sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA < 
         0.05), 4:(4 + d - 1)])
-    sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
-    colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
-    grid.newpage()
-    grid.table(sector_count, theme = mytheme)
+    if (d < 6) {
+        if (nrow(sig)>0) {
+            sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
+            colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
+            grid.newpage()
+            grid.table(sector_count, theme = mytheme)
+        }
+    }
 }
 
 #' heatmapx
@@ -1827,3 +1831,89 @@ mitch_report <- function(res, outfile) {
     rmarkdown::render(rmd, output_file = html_tmp)
     file.copy(html_tmp, HTMLNAME)
 }
+
+
+
+#' Reactome gene sets
+#'
+#' Genesets from Reactome database suitable for enrichment analysis.
+#' Acquired August 2019
+#' @docType data
+#' @usage data(genesets)
+#' @format A list of gene sets
+#' @keywords datasets
+#' @references Fabregat et al. (2017) BMC Bioinformatics volume 18, Article number: 142 
+#' https://www.ncbi.nlm.nih.gov/pubmed/28249561
+#' @source Reactome website: https://reactome.org/
+#' @examples
+#' data(genesets)
+"genesets"
+
+#' H3K36ac profile
+#' 
+#' Example edgeR result of differential H3K36ac.
+#' @docType data
+#' @usage data(k36a)
+#' @format data frame
+#' @keywords datasets
+#' @examples
+#' data(k36a)
+"k36a"
+
+#' H3K9ac profile
+#' 
+#' Example edgeR result of differential H3K9ac.
+#' @docType data
+#' @usage data(k9a)
+#' @format data frame     
+#' @keywords datasets
+#' @examples
+#' data(k9a)
+"k9a"
+
+#' RNA profile
+#' 
+#' Example edgeR result of differential RNA expression.
+#' @docType data
+#' @usage data(rna)
+#' @format data frame     
+#' @keywords datasets
+#' @examples
+#' data(rna)
+"rna"
+
+
+#' myList: A list of three edgeR results 
+#' 
+#' Example edgeR results of differential RNA, H3K9ac and H3K36ac                 
+#' @docType data
+#' @usage data(myList)
+#' @format data frame     
+#' @keywords datasets
+#' @examples
+#' data(myList)
+"myList"
+
+
+#' myImportedData: Example imported profiles
+#' 
+#' Example of three profiles imported using mitch
+#' @docType data
+#' @usage data(myImportedData)
+#' @format data frame     
+#' @keywords datasets
+#' @examples
+#' data(myImportedData)
+"myImportedData"
+
+#' resExample: Example mitch result
+#' 
+#' Example of mitch results. Enrichment of the Reactome gene sets in the RNA,
+#' H3K9ac and H3K36ac datasets.
+#' @docType data
+#' @usage data(resExample)
+#' @format list of mixed data types
+#' @keywords datasets
+#' @examples
+#' data(resExample)
+"resExample"

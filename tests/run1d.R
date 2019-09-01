@@ -1,19 +1,14 @@
-detach("package:mitch", unload=TRUE)
-remove.packages("mitch")
-install.packages("pkg/mitch/",repos = NULL, type="source")
 library(mitch)
 
-rna<-read.table("Galaxy121-edgeR_STAR_f.xls",header=T)
+rna<-read.table(system.file("rna.tsv", package = "mitch"),header=T)
 
 y<-mitch_import(rna,"edger",geneIDcol="Name")
 
-#download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip", destfile="ReactomePathways.gmt.zip")
-#unzip("ReactomePathways.gmt.zip")
-genesets<-gmt_import("ReactomePathways.gmt")
+genesets<-gmt_import(system.file("sample_genesets.gmt", package = "mitch"))
 
-res<-mitch_calc(y,genesets,resrows=50,priority="significance")
+res<-mitch_calc(y,genesets,resrows=5,priority="effect",cores=2)
 
-system.time(mitch_plots(res,outfile="1dcharts.pdf"))
+mitch_plots(res,outfile="1dcharts.pdf",cores=2)
 
 unlink("1dreport.html")
 
