@@ -15,10 +15,25 @@
 #'  (4) And generate plots and reports with mitch_plots() and mitch_report()
 #' 
 #'  More documentation on the github page https://github.com/markziemann/Mitch or 
-#'  with ?function, eg ?mitch_import
+#'  with ?<function>, eg: ?mitch_import
 #'
 #' @docType package
 #' @name mitch
+#' @examples
+#' # Example workflow
+#' # Import some gene sets
+#' genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', package = 'mitch'))
+#' # Say you have some edgeR tables (rna, k9a, k36a). The first step
+#' # is to create a list of differential profiles
+#' myList<-list('rna'=rna,'k9a'=k9a,'k36a'=k36a)
+#' # Import as edgeR table 
+#' myImportedData<-mitch_import(myList,DEtype='edger',geneID="Name")
+#' # Calculate enrichment using MANOVA
+#' resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',resrows=5,cores=2)
+#' # Generate some high res plots in PDF format
+#' mitch_plots(resExample,outfile='outres.pdf',cores=2)
+#' #' Generate a report of the analysis in HTML format
+#' mitch_report(resExample,'outres.html')
 NULL
 
 #' @import utils
@@ -439,11 +454,7 @@ muscat_score <- function(y) {
 #' @keywords import mitch
 #' @export
 #' @examples
-#' # first step is to create a list of differential 
-#' rna<-read.table(system.file('rna.tsv', package = 'mitch'),header=TRUE,row.names=1)
-#' k9a<-read.table(system.file('k9a.tsv', package = 'mitch'),header=TRUE,row.names=1)
-#' k36a<-read.table(system.file('k36a.tsv', package = 'mitch'),header=TRUE,row.names=1)
-#' # create a list of differential profiles 
+#' # first step is to create a list of differential profiles
 #' x<-list('rna'=rna,'k9a'=k9a,'k36a'=k36a)
 #' # import as edgeR table 
 #' y<-mitch_import(x,DEtype='edger')
@@ -562,7 +573,7 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
 #' @export
 #' @examples
 #' # Import some gene sets
-#' gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
+#' genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', package = 'mitch'))
 #' @import utils
 gmt_import <- function(gmtfile) {
     genesetLines <- strsplit(readLines(gmtfile), "\t")
@@ -887,8 +898,7 @@ mitch_metrics_calc1d <- function(x, genesets, anova_result, minsetsize = 10) {
 
 #' mitch_rank
 #'
-#' This function performs zero-centred ranking of differential contrast omics data. This function is not meant to 
-#' be used directly.
+#' This function performs zero-centred ranking of differential contrast omics data.
 #' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
 #' @return a ranked table differential expression data.
 #' @keywords mitch rank ranking
@@ -973,9 +983,7 @@ detailed_sets <- function(res, resrows = 50) {
 #' @examples
 #' # An example of using mitch to calculate multivariate enrichments and prioritise based on 
 #' # effect size 
-#' gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
-#' x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-#' res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=2)
+#' resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',minsetsize=5,cores=2)
 
 mitch_calc <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, resrows = 50, 
     priority = NULL) {
@@ -1709,11 +1717,7 @@ plot3d_detailed_violin <- function(res, i) {
 #' @keywords mitch plot plots pdf 
 #' @export
 #' @examples
-#' # render enrichment plots in high res pdf
-#' gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
-#' x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-#' res<-mitch_calc(x,gsets,priority='effect',resrows=6,minsetsize=5,cores=2)
-#' mitch_plots(res,outfile='outres.pdf',cores=2)
+#' mitch_plots(resExample,outfile='outres.pdf',cores=2)
 #' @import grDevices
 #' @import graphics
 #' @import grDevices
@@ -1791,11 +1795,7 @@ mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) 
 #' @keywords mitch report html markdown knitr
 #' @export
 #' @examples
-#' gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
-#' x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-#' res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=2)
-#' # render mitch results in the form of a HTML report
-#' mitch_report(res,'outres.html')
+#' mitch_report(resExample,'outres2.html')
 #' @import knitr
 #' @importFrom rmarkdown render
 #' @import tidyselect
@@ -1839,19 +1839,19 @@ mitch_report <- function(res, outfile) {
 #' Genesets from Reactome database suitable for enrichment analysis.
 #' Acquired August 2019
 #' @docType data
-#' @usage data(genesets)
+#' @usage data(genesetsExample)
 #' @format A list of gene sets
 #' @keywords datasets
 #' @references Fabregat et al. (2017) BMC Bioinformatics volume 18, Article number: 142 
 #' https://www.ncbi.nlm.nih.gov/pubmed/28249561
 #' @source Reactome website: https://reactome.org/
 #' @examples
-#' data(genesets)
-"genesets"
+#' data(genesetsExample)
+"genesetsExample"
 
 #' H3K36ac profile
 #' 
-#' Example edgeR result of differential H3K36ac.
+#' Example edgeR result of differential ChIP-seq H3K36ac.
 #' @docType data
 #' @usage data(k36a)
 #' @format data frame
@@ -1862,7 +1862,7 @@ mitch_report <- function(res, outfile) {
 
 #' H3K9ac profile
 #' 
-#' Example edgeR result of differential H3K9ac.
+#' Example edgeR result of differential ChIP-seq H3K9ac.
 #' @docType data
 #' @usage data(k9a)
 #' @format data frame     
@@ -1897,7 +1897,7 @@ mitch_report <- function(res, outfile) {
 
 #' myImportedData: Example imported profiles
 #' 
-#' Example of three profiles imported using mitch
+#' Example of three edgeR profiles imported using mitch
 #' @docType data
 #' @usage data(myImportedData)
 #' @format data frame     

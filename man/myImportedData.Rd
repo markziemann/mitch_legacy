@@ -9,7 +9,7 @@
 data(myImportedData)
 }
 \description{
-Example of three profiles imported using mitch
+Example of three edgeR profiles imported using mitch
 }
 \examples{
 data(myImportedData)

@@ -39,9 +39,7 @@ This function performs multivariate gene set enrichment analysis.
 \examples{
 # An example of using mitch to calculate multivariate enrichments and prioritise based on 
 # effect size 
-gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
-x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-res<-mitch_calc(x,gsets,priority='effect',minsetsize=5,cores=2)
+resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',minsetsize=5,cores=2)
 }
 \keyword{calc}
 \keyword{calculate}

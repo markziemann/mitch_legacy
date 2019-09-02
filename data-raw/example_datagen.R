@@ -13,13 +13,15 @@ k36a<-k36a[,1:6]
 myList<-list("rna"=rna,"k9a"=k9a,"k36a"=k36a)
 
 myImportedData<-mitch_import(myList,"edger",geneIDcol="Name")
-myImportedData<-head(myImportedData,2000)
+myImportedData<-head(myImportedData,1000)
 
 rna<-rna[rna$Name %in% rownames(myImportedData),]
 k9a<-k9a[k9a$Name %in% rownames(myImportedData),]
 k36a<-k36a[k36a$Name %in% rownames(myImportedData),]
 
-genesetsExample<-gmt_import("ReactomePathways.gmt")
+myList<-list("rna"=rna,"k9a"=k9a,"k36a"=k36a)
+
+genesetsExample<-head(gmt_import("ReactomePathways.gmt"),200)
 
 resExample<-mitch_calc(myImportedData,genesetsExample,resrows=5,priority="significance")
 
@@ -35,4 +37,22 @@ write.table(rna,file="../inst/extdata/rna.tsv",sep="\t",quote=F)
 write.table(k9a,file="../inst/extdata/k9a.tsv",sep="\t",quote=F)
 write.table(k36a,file="../inst/extdata/k36a.tsv",sep="\t",quote=F)
 
-system("head -100 ReactomePathways.gmt > ../inst/extdata/sample_genesets.gmt")
+system("head -200 ReactomePathways.gmt > ../inst/extdata/sample_genesets.gmt")
+
+message("1d")
+myImportedData<-mitch_import(rna,"edger",geneIDcol="Name")
+resExample<-mitch_calc(myImportedData,genesetsExample,resrows=5,priority="significance")
+nrow(resExample$enrichment_result)
+
+message("2d")
+myList<-list("rna"=rna,"k9a"=k9a)
+myImportedData<-mitch_import(myList,"edger",geneIDcol="Name")
+resExample<-mitch_calc(myImportedData,genesetsExample,resrows=5,priority="significance")
+nrow(resExample$enrichment_result)
+
+message("3d")
+myList<-list("rna"=rna,"k9a"=k9a,"k36a"=k36a)
+myImportedData<-mitch_import(myList,"edger",geneIDcol="Name")
+resExample<-mitch_calc(myImportedData,genesetsExample,resrows=5,priority="significance")
+head(resExample$enrichment_result)
+

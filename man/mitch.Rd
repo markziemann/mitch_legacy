@@ -22,5 +22,21 @@ A typical Mitch workflow consists of:
  (4) And generate plots and reports with mitch_plots() and mitch_report()
 
 More documentation on the github page https://github.com/markziemann/Mitch or 
- with ?function, eg ?mitch_import
+ with ?<function>, eg: ?mitch_import
+}
+\examples{
+# Example workflow
+# Import some gene sets
+genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', package = 'mitch'))
+# Say you have some edgeR tables (rna, k9a, k36a). The first step
+# is to create a list of differential profiles
+myList<-list('rna'=rna,'k9a'=k9a,'k36a'=k36a)
+# Import as edgeR table 
+myImportedData<-mitch_import(myList,DEtype='edger',geneID="Name")
+# Calculate enrichment using MANOVA
+resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',resrows=5,cores=2)
+# Generate some high res plots in PDF format
+mitch_plots(resExample,outfile='outres.pdf',cores=2)
+#' Generate a report of the analysis in HTML format
+mitch_report(resExample,'outres.html')
 }

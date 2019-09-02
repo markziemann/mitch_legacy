@@ -22,11 +22,7 @@ This function generates several plots of multivariate gene set enrichment in hig
 The number of detailed sets to generate is dictated by the resrows set in the mitch_calc command.
 }
 \examples{
-# render enrichment plots in high res pdf
-gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
-x<-read.table(system.file('rna.rnk', package = 'mitch'),header=TRUE,row.names=1)
-res<-mitch_calc(x,gsets,priority='effect',resrows=6,minsetsize=5,cores=2)
-mitch_plots(res,outfile='outres.pdf',cores=2)
+mitch_plots(resExample,outfile='outres.pdf',cores=2)
 }
 \keyword{mitch}
 \keyword{pdf}

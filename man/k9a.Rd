@@ -9,7 +9,7 @@
 data(k9a)
 }
 \description{
-Example edgeR result of differential H3K9ac.
+Example edgeR result of differential ChIP-seq H3K9ac.
 }
 \examples{
 data(k9a)

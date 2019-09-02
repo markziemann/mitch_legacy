@@ -13,8 +13,7 @@ mitch_rank(x)
 a ranked table differential expression data.
 }
 \description{
-This function performs zero-centred ranking of differential contrast omics data. This function is not meant to 
-be used directly.
+This function performs zero-centred ranking of differential contrast omics data.
 }
 \examples{
 #This function is not designed to be used directly

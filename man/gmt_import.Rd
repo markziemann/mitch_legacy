@@ -18,7 +18,7 @@ format for lists of genes used in pathway enrichment analysis. GMT files can be 
 }
 \examples{
 # Import some gene sets
-gsets<-gmt_import(system.file('sample_genesets.gmt', package = 'mitch'))
+genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', package = 'mitch'))
 }
 \keyword{genesets}
 \keyword{import}

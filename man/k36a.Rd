@@ -9,7 +9,7 @@
 data(k36a)
 }
 \description{
-Example edgeR result of differential H3K36ac.
+Example edgeR result of differential ChIP-seq H3K36ac.
 }
 \examples{
 data(k36a)
