@@ -369,6 +369,37 @@ muscat_score <- function(y) {
     z
 }
 
+
+preranked_score <- function(y, joinType ) {
+
+    if (!is.null(attributes(y)$geneIDcol)) {
+        NCOL = ncol(y)
+        if (NCOL > 2) {
+            stop("Error: there are >2 columns in the input. Your files need to have only the gene ID and rank stat ")
+        }
+        g <- y[, attributes(y)$geneIDcol]
+        s <- y[ , !(names(y) %in% geneIDcol)]
+    } else {
+        NCOL = ncol(y)
+        if (NCOL > 1) {
+            stop("Error: there are >1 columns in the input. Should only contain the gene ID and rank stat ")
+        }
+        g <- rownames(y)
+        s <- y[,1]
+    }
+    z <- data.frame(g, s, stringsAsFactors = FALSE)
+    colnames(z) <- c("geneidentifiers", "y")
+    if ( is.null(joinType) ) {
+        joinType <- "inner" 
+    }
+    if ( joinType == "inner" ) {
+        z <- na.omit(z)
+    }
+    z <- mapGeneIds(y, z)
+    z
+}
+
+
 #' mitch_import
 #'
 #' This function imports differential omics data from common differential tools 
@@ -378,7 +409,10 @@ muscat_score <- function(y) {
 #' mitch_import can be bypassed in favour of another scoring metric.
 #' @param x a list of differential expression tables
 #' @param DEtype the program that generated the differential expression table
-#' Valid options are 'edgeR', 'DESeq2', 'limma', 'ABSSeq', 'Seurat', and 'muscat'.
+#' Valid options are 'edgeR', 'DESeq2', 'limma', 'ABSSeq', 'Seurat', 'muscat'
+#' and 'preranked'. Where 'preranked' is a dataframe containing the rank
+#' statistic and gene ID (either in rowname or separate column) and nothing
+#' else.
 #' @param geneIDcol the column containing gene names. If gene names are 
 #' @param joinType the type of join to perform, either 'inner' or 'full'.
 #' By default, joins are 'inner' except for Seurat and muscat where full is used.
@@ -460,6 +494,8 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL, joinType
         xx <- lapply(x, topconfect_score)
     } else if (DEtype == "muscat") {
         xx <- lapply(x, muscat_score)
+    } else if (DEtype == "preranked") {
+        xx <- lapply(x, preranked_score, joinType = joinType)
     } else {
         stop("Specified DEtype does not match one of the following: \"deseq2\", \"limma\", \"absseq\", \"sleuth\", \"seurat\", \"topconfects\".")
     }
