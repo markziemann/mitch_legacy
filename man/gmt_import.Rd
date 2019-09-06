@@ -13,12 +13,15 @@ gmt_import(gmtfile)
 a list of gene sets.
 }
 \description{
-This function imports GMT files into a list of character vectors for mitch analysis. GMT files are a commonly used
-format for lists of genes used in pathway enrichment analysis. GMT files can be obtained from Reactome, MSigDB, etc.
+This function imports GMT files into a list of character vectors for mitch 
+analysis. GMT files are a commonly used
+format for lists of genes used in pathway enrichment analysis. GMT files can
+be obtained from Reactome, MSigDB, etc.
 }
 \examples{
 # Import some gene sets
-genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', package = 'mitch'))
+genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', 
+package = 'mitch'))
 }
 \keyword{genesets}
 \keyword{import}

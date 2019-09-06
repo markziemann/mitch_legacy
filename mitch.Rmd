@@ -137,7 +137,7 @@ if ( d<3 ) {
   sig<-sign(ss)
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Count"
-  kable(sector_count ,caption = "Genes by sector" ,row.names=T)
+  kable(sector_count ,caption = "Genes by sector" ,row.names=TRUE)
 }
 
 ```
@@ -158,7 +158,7 @@ kable( formatted , col.names = "Gene sets metrics" ,caption = "Gene sets metrics
 ```{r,input_geneset_metrics2,results="asis",echo=FALSE ,fig.height = 7, fig.width = 7 ,fig.show="all"}
 par(mfrow=c(3,1))
 geneset_counts<-res$manova_analysis_metrics$geneset_counts
-boxplot(geneset_counts$count,horizontal=T,frame=F,main="Gene set size",xlab="number of member genes included in profile")
+boxplot(geneset_counts$count,horizontal=TRUE,frame=FALSE,main="Gene set size",xlab="number of member genes included in profile")
 hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset size")
 hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
@@ -167,7 +167,7 @@ hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed hi
 ```{r,input_geneset_metrics3,results="asis",echo=FALSE}
 if ( d<3 ) {
   a<-res$manova_analysis_metrics[14]
-  a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=F)
+  a<-as.data.frame(as.numeric(unlist(strsplit(as.character(a),','))),stringsAsFactors=FALSE)
   rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
   colnames(a)="a"
   barplot(a$a,names.arg=rownames(a),main="number of genesets FDR<0.05")
@@ -177,14 +177,14 @@ if ( nsig > 0 ) {
   sig<-sign(res$manova_result[which(res$manova_result$p.adjustMANOVA<0.05),4:(4+d-1)])
   sector_count<-aggregate(1:nrow(sig) ~ ., sig, FUN = length)
   colnames(sector_count)[ncol(sector_count)]<-"Count"
-  kable(sector_count ,caption = "Gene sets by sector" ,row.names=T)
+  kable(sector_count ,caption = "Gene sets by sector" ,row.names=TRUE)
   dev.off()
 }
 ```
 
 ## Enrichment scatterplot with taucharts
 All sets with p.adjustMANOVA<0.05. Try hovering over the points.
-```{r,tauchart1q,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+```{r,tauchart1q,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
 library("taucharts")
 library(dplyr)
 library(gtools)
@@ -379,7 +379,7 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 
 ## Enrichment scatterplot with taucharts
 Top N sets irrespective of FDR. Try hovering over the points.
-```{r,tauchart2,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=T}
+```{r,tauchart2,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=TRUE}
 library("taucharts")
 library(dplyr)
 library(gtools)
@@ -547,7 +547,7 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 
 ```
 ## A heatmap of S values for top results
-```{r,heatmap,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+```{r,heatmap,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
     library(gplots)
     hmapx<-head( res$manova_result[,4:(4+d-1)] ,resrows)
     rownames(hmapx)<-head(res$manova_result$set,resrows)
@@ -558,7 +558,7 @@ if ( length(p)>0 ) { pp<-p[[1]] ; p[[1]]=NULL ; pp }
 
 # A plot of effect size versus significance
 Significance is the -log2(p.adjustMANOVA) and effect size is the s.dist which is the hypotenuse of the s scores.
-```{r,effectsize,results="asis",echo=F, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+```{r,effectsize,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
   library(gplots)
   myres<-res$manova_result
   myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
@@ -579,7 +579,7 @@ myres<-myres[,c(1:3, which(names(myres) %in% "p.adjustMANOVA"), which(names(myre
 myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
 formatted<-myres
 formatted[,1]<-gsub("_"," ",myres[,1])
-kable( formatted , col.names = colnames(formatted) , row.names=F, caption = "Top gene sets" ,digits=100)
+kable( formatted , col.names = colnames(formatted) , row.names=FALSE, caption = "Top gene sets" ,digits=100)
 cat("<hr><br>")
 ```
 
@@ -593,7 +593,7 @@ formatted[,1]<-gsub("_"," ",myres[,1])
 formatted[,3:ncol(myres)]<-format(myres[,3:ncol(myres)],digits=3)
 HEADER=paste("<br><details><summary><b>","Click HERE to show results for all gene sets","</b></summary><br><p>",sep=" " )
 cat(HEADER)
-kable(formatted, col.names=colnames(formatted),row.names=F,caption = "Complete results",digits=100)
+kable(formatted, col.names=colnames(formatted),row.names=FALSE,caption = "Complete results",digits=100)
 cat("<br></p></details>")
 cat("<hr><br>")
 ```
@@ -752,12 +752,12 @@ topgenelist<-function(i) {
   topgenes<-as.data.frame(topgenes)
   topgenes$Gene<-as.character(rownames(topgenes))
   topgenes<-topgenes[,c(3,1,2)]
-  print(kable(head(topgenes,n=20L),col.names=colnames(topgenes),format="markdown",row.names=F,caption="Top 20 genes",digits=100))
+  print(kable(head(topgenes,n=20L),col.names=colnames(topgenes),format="markdown",row.names=FALSE,caption="Top 20 genes",digits=100))
   cat('\n')
   HEADER=paste("<br><details><summary><b>","Click HERE to show all gene set members","</b></summary><br><p>",sep=" " )
   cat(HEADER)
   sss<-res$detailed_sets[[i]]
-  print(kable(sss,format="markdown",row.names=T,caption="All member genes",digits=100))
+  print(kable(sss,format="markdown",row.names=TRUE,caption="All member genes",digits=100))
   cat('\n')
   cat("<br></p></details>")
   cat("<br><hr>")

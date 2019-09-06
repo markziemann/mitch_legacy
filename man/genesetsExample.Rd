@@ -19,7 +19,7 @@ Acquired August 2019
 data(genesetsExample)
 }
 \references{
-Fabregat et al. (2017) BMC Bioinformatics volume 18, Article number: 142 
-https://www.ncbi.nlm.nih.gov/pubmed/28249561
+Fabregat et al. (2017) BMC Bioinformatics volume 18, 
+Article number: 142, https://www.ncbi.nlm.nih.gov/pubmed/28249561
 }
 \keyword{datasets}

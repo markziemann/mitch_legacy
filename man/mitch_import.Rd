@@ -11,18 +11,21 @@ mitch_import(x, DEtype, geneIDcol = NULL, geneTable = NULL)
 
 \item{DEtype}{the program that generated the differential expression table}
 
-\item{geneIDcol}{the column containing gene names. If gene names are specified as row names, then geneIDcol=NULL.}
+\item{geneIDcol}{the column containing gene names. If gene names are 
+specified as row names, then geneIDcol=NULL.}
 
-\item{geneTable}{a 2 column table mapping gene identifiers in the profile to gene identifiers in the gene sets.}
+\item{geneTable}{a 2 column table mapping gene identifiers in the profile to
+gene identifiers in the gene sets.}
 }
 \value{
 a multi-column table compatible with mitch_calc analysis.
 }
 \description{
-This function imports differential omics data from common differential tools like edgeR, limma, DESeq2, Sleuth, 
-ABSSeq and Seurat. It calculates a summarised differential expression metric by multiplying the sign of the log
-fold change by the -log10 of the p-value. If this behaviour is not desired, mitch_import can be bypassed in 
-favour of another scoring metric.
+This function imports differential omics data from common differential tools 
+like edgeR, limma, DESeq2, Sleuth, ABSSeq and Seurat. It calculates a 
+summarised differential expression metric by multiplying the sign of the log
+fold change by the -log10 of the p-value. If this behaviour is not desired, 
+mitch_import can be bypassed in favour of another scoring metric.
 }
 \examples{
 # first step is to create a list of differential profiles

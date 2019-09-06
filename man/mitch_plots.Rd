@@ -9,7 +9,8 @@ mitch_plots(res, outfile = "Rplots.pdf", cores = detectCores() - 1)
 \arguments{
 \item{res}{a mitch results object.}
 
-\item{outfile}{the destination file for the plots in PDF format. should contain 'pdf' suffix. Defaults to 
+\item{outfile}{the destination file for the plots in PDF format. should
+contain 'pdf' suffix. Defaults to 
 'Rplots.pdf'}
 
 \item{cores}{number of parallel cores for plotting}
@@ -18,8 +19,10 @@ mitch_plots(res, outfile = "Rplots.pdf", cores = detectCores() - 1)
 generates a PDF file containing enrichment plots.
 }
 \description{
-This function generates several plots of multivariate gene set enrichment in high resolution PDF format.
-The number of detailed sets to generate is dictated by the resrows set in the mitch_calc command.
+This function generates several plots of multivariate gene set enrichment in
+high resolution PDF format.
+The number of detailed sets to generate is dictated by the resrows set in the
+mitch_calc command.
 }
 \examples{
 mitch_plots(resExample,outfile='outres.pdf',cores=2)

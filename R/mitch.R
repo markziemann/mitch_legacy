@@ -1,35 +1,38 @@
 #' Mitch: An R package for multi-dimensional pathway enrichment analysis
 #'
-#' Mitch is an R package for multi-dimensional enrichment analysis. At it's heart, it uses 
-#' a rank-MANOVA based statistical approach to detect sets of genes that exhibit 
-#' enrichment in the multidimensional space as compared to the background. Mitch is useful 
-#' for pathway analysis of profiling studies with two to or more contrasts, or in studies 
-#' with multiple omics profiling, for example proteomic, transcriptomic, epigenomic 
-#' analysis of the same samples. Mitch is perfectly suited for pathway level differential 
-#' analysis of scRNA-seq data.
+#' Mitch is an R package for multi-dimensional enrichment analysis. At it's 
+#' heart, it uses a rank-MANOVA based statistical approach to detect sets of 
+#' genes that exhibit enrichment in the multidimensional space as compared to 
+#' the background. Mitch is useful for pathway analysis of profiling studies 
+#' with two to or more contrasts, or in studies with multiple omics profiling, 
+#' for example proteomic, transcriptomic, epigenomic analysis of the same 
+#' samples. Mitch is perfectly suited for pathway level differential analysis of
+#'  scRNA-seq data.
 #'
 #' A typical Mitch workflow consists of:
-#'  (1) Import gene sets with gmt_import()
-#'  (2) Import profiling data with mitch_import()
-#'  (3) Calculate enrichments with mitch_calc()
-#'  (4) And generate plots and reports with mitch_plots() and mitch_report()
+#' 1) Import gene sets with gmt_import()
+#' 2) Import profiling data with mitch_import()
+#' 3) Calculate enrichments with mitch_calc()
+#' 4) And generate plots and reports with mitch_plots() and mitch_report()
 #' 
-#'  More documentation on the github page https://github.com/markziemann/Mitch or 
-#'  with ?<function>, eg: ?mitch_import
+#' More documentation on the github page https://github.com/markziemann/Mitch
+#' or with ?<function>, eg: ?mitch_import
 #'
 #' @docType package
 #' @name mitch
 #' @examples
 #' # Example workflow
 #' # Import some gene sets
-#' genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', package = 'mitch'))
+#' genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', 
+#' package = 'mitch'))
 #' # Say you have some edgeR tables (rna, k9a, k36a). The first step
 #' # is to create a list of differential profiles
 #' myList<-list('rna'=rna,'k9a'=k9a,'k36a'=k36a)
 #' # Import as edgeR table 
-#' myImportedData<-mitch_import(myList,DEtype='edger',geneID="Name")
+#' myImportedData<-mitch_import(myList,DEtype='edger',geneID='Name')
 #' # Calculate enrichment using MANOVA
-#' resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',resrows=5,cores=2)
+#' resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',
+#' resrows=5,cores=2)
 #' # Generate some high res plots in PDF format
 #' mitch_plots(resExample,outfile='outres.pdf',cores=2)
 #' #' Generate a report of the analysis in HTML format
@@ -41,15 +44,6 @@ utils::globalVariables(c("p.adjustMANOVA", "effect", "p.adjustANOVA", "Var2", "v
     "..density.."))
 
 
-#' mapGeneIds
-#'
-#' This function maps gene IDs present in the profiling data with those in the gene sets.
-#' @param y DGE df
-#' @param z a 2 column df of gene IDs
-#' @return a DGE df with mapped IDs
-#' @keywords import mitch gene ID mapping
-#' @export
-#' @examples
 mapGeneIds <- function(y, z) {
     if (!is.null(attributes(y)$geneTable)) {
         gt <- attributes(y)$geneTable
@@ -75,14 +69,6 @@ mapGeneIds <- function(y, z) {
     z
 }
 
-#' edger_score
-#'
-#' This function imports an edgeR df for use by mitch
-#' @param y edgeR df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch edgeR
-#' @export
-#' @examples
 edger_score <- function(y) {
     
     NCOL = ncol(y)
@@ -120,14 +106,6 @@ edger_score <- function(y) {
 }
 
 
-#' deseq2_score
-#'
-#' This function imports a DESeq2 df for use by mitch
-#' @param y DESeq2 df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch deseq2
-#' @export
-#' @examples
 deseq2_score <- function(y) {
     
     NCOL = ncol(y)
@@ -164,14 +142,6 @@ deseq2_score <- function(y) {
     z
 }
 
-#' limma_score
-#'
-#' This function imports a limma df for use by mitch
-#' @param y limma df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch limma
-#' @export
-#' @examples
 limma_score <- function(y) {
     
     NCOL = ncol(y)
@@ -208,15 +178,6 @@ limma_score <- function(y) {
     z
 }
 
-
-#' absseq_score
-#'
-#' This function imports an ABSSeq df for use by mitch
-#' @param y ABSSeq df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch ABSSeq
-#' @export
-#' @examples
 absseq_score <- function(y) {
     
     NCOL = ncol(y)
@@ -254,14 +215,6 @@ absseq_score <- function(y) {
 }
 
 
-#' sleuth_score
-#'
-#' This function imports a sleuth df for use by mitch
-#' @param y sleuth df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch sleuth
-#' @export
-#' @examples
 sleuth_score <- function(y) {
     
     NCOL = ncol(y)
@@ -299,14 +252,6 @@ sleuth_score <- function(y) {
 }
 
 
-#' topconfect_score
-#'
-#' This function imports a topconfect df for use by mitch
-#' @param y topconfect df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch topconfect
-#' @export
-#' @examples
 topconfect_score <- function(y) {
     
     FCCOL = length(which(names(y) == "confect"))
@@ -348,14 +293,6 @@ topconfect_score <- function(y) {
 }
 
 
-#' seurat_score
-#'
-#' This function imports a seurat df for use by mitch
-#' @param y seurat df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch seurat
-#' @export
-#' @examples
 seurat_score <- function(y) {
     
     NCOL = ncol(y)
@@ -396,14 +333,6 @@ seurat_score <- function(y) {
 }
 
 
-#' muscat_score
-#'
-#' This function imports a muscat df for use by mitch
-#' @param y muscat df
-#' @return a single column df of ranked DE values
-#' @keywords import mitch muscat
-#' @export
-#' @examples
 muscat_score <- function(y) {
     
     NCOL = ncol(y)
@@ -442,14 +371,17 @@ muscat_score <- function(y) {
 
 #' mitch_import
 #'
-#' This function imports differential omics data from common differential tools like edgeR, limma, DESeq2, Sleuth, 
-#' ABSSeq and Seurat. It calculates a summarised differential expression metric by multiplying the sign of the log
-#' fold change by the -log10 of the p-value. If this behaviour is not desired, mitch_import can be bypassed in 
-#' favour of another scoring metric.
+#' This function imports differential omics data from common differential tools 
+#' like edgeR, limma, DESeq2, Sleuth, ABSSeq and Seurat. It calculates a 
+#' summarised differential expression metric by multiplying the sign of the log
+#' fold change by the -log10 of the p-value. If this behaviour is not desired, 
+#' mitch_import can be bypassed in favour of another scoring metric.
 #' @param x a list of differential expression tables
 #' @param DEtype the program that generated the differential expression table
-#' @param geneIDcol the column containing gene names. If gene names are specified as row names, then geneIDcol=NULL.
-#' @param geneTable a 2 column table mapping gene identifiers in the profile to gene identifiers in the gene sets. 
+#' @param geneIDcol the column containing gene names. If gene names are 
+#' specified as row names, then geneIDcol=NULL.
+#' @param geneTable a 2 column table mapping gene identifiers in the profile to
+#' gene identifiers in the gene sets. 
 #' @return a multi-column table compatible with mitch_calc analysis.
 #' @keywords import mitch
 #' @export
@@ -565,15 +497,18 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
 
 #' gmt_import
 #'
-#' This function imports GMT files into a list of character vectors for mitch analysis. GMT files are a commonly used
-#' format for lists of genes used in pathway enrichment analysis. GMT files can be obtained from Reactome, MSigDB, etc.
+#' This function imports GMT files into a list of character vectors for mitch 
+#' analysis. GMT files are a commonly used
+#' format for lists of genes used in pathway enrichment analysis. GMT files can
+#' be obtained from Reactome, MSigDB, etc.
 #' @param gmtfile a gmt file.
 #' @return a list of gene sets.
 #' @keywords import genesets
 #' @export
 #' @examples
 #' # Import some gene sets
-#' genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', package = 'mitch'))
+#' genesetsExample<-gmt_import(system.file('extdata/sample_genesets.gmt', 
+#' package = 'mitch'))
 #' @import utils
 gmt_import <- function(gmtfile) {
     genesetLines <- strsplit(readLines(gmtfile), "\t")
@@ -583,26 +518,6 @@ gmt_import <- function(gmtfile) {
     genesets
 }
 
-#' MANOVA
-#'
-#' This function performs the multivariate analysis of variance for each set of genes. It wraps around the existing
-#' manova function in R. This function is not meant to be used directly.
-#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
-#' Rownames must match genesets.
-#' @param genesets lists of genes imported by the gmt_imprt function or similar.
-#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
-#' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
-#' @param priority the prioritisation metric to selecting top gene sets. Valid options are 'significance', 
-#' 'effect' and 'SD'
-#' @return a mitch results object 
-#' @keywords mitch MANOVA
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import parallel
-#' @import pbmcapply
-#' @import stats
-#' @import plyr
 MANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, priority = NULL) {
     
     STARTSWITHNUM = length(grep("^[0-9]", colnames(x)))
@@ -689,26 +604,6 @@ MANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prio
 }
 
 
-#' ANOVA
-#'
-#' This function performs the univariate analysis of variance for each set of genes. It wraps around the existing
-#' aov function in R. This function is not meant to be used directly.
-#' @param x a single column numerical table with each column containing differential expression scores for a contrast.
-#' Rownames must match genesets.
-#' @param genesets lists of genes imported by the gmt_imprt function or similar.
-#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
-#' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
-#' @param priority the prioritisation metric to selecting top gene sets. Valid options are 'significance' and 
-#' 'effect'.
-#' @return a mitch results object 
-#' @keywords mitch MANOVA
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import parallel
-#' @import pbmcapply
-#' @import stats
-#' @import plyr
 ANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, priority = NULL) {
     
     STARTSWITHNUM = length(grep("^[0-9]", colnames(x)))
@@ -771,19 +666,6 @@ ANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prior
     }
 }
 
-#' mitch_metrics_calc
-#'
-#' This function collects some metrics from the enrichment analysis. This function is not meant to be used directly.
-#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
-#' Rownames must match genesets.
-#' @param genesets lists of genes imported by the gmt_imprt function or similar.
-#' @param enrichment_result a valid result of the MANOVA function
-#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
-#' @return a list of metrics
-#' @keywords mitch metrics
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 mitch_metrics_calc <- function(x, genesets, enrichment_result, minsetsize = 10) {
     
     if (!is.null(enrichment_result)) {
@@ -838,19 +720,6 @@ mitch_metrics_calc <- function(x, genesets, enrichment_result, minsetsize = 10) 
     }
 }
 
-#' mitch_metrics_calc1d
-#'
-#' This function collects some metrics from the anova analysis. This function is not meant to be used directly.
-#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
-#' Rownames must match genesets.
-#' @param genesets lists of genes imported by the gmt_imprt function or similar.
-#' @param anova_result a valid result of the ANOVA function
-#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
-#' @return a list of metrics
-#' @keywords mitch metrics
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 mitch_metrics_calc1d <- function(x, genesets, anova_result, minsetsize = 10) {
     
     if (!is.null(anova_result)) {
@@ -896,15 +765,6 @@ mitch_metrics_calc1d <- function(x, genesets, anova_result, minsetsize = 10) {
 }
 
 
-#' mitch_rank
-#'
-#' This function performs zero-centred ranking of differential contrast omics data.
-#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
-#' @return a ranked table differential expression data.
-#' @keywords mitch rank ranking
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 mitch_rank <- function(x) {
     
     for (i in seq_len(ncol(x))) {
@@ -930,18 +790,6 @@ mitch_rank <- function(x) {
 }
 
 
-#' detailed_sets
-#'
-#' This function fetches differential expression scores for members of sets of genes that were top ranked. This 
-#' function is not meant to be used directly.
-#' @param res a mitch results object
-#' @param resrows an integer representing the number of top genesets for which a detailed report is to be generated.
-#' Default is 50.
-#' @return mitch res object with dataframes of the high priority gene sets attached.
-#' @keywords mitch detailed sets
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 detailed_sets <- function(res, resrows = 50) {
     # collect ranked genelist of each genest
     genesets <- res$input_genesets
@@ -961,29 +809,42 @@ detailed_sets <- function(res, resrows = 50) {
 #' mitch_calc
 #'
 #' This function performs multivariate gene set enrichment analysis. 
-#' @param x a multicolumn numerical table with each column containing differential expression scores for a contrast.
+#' @param x a multicolumn numerical table with each column containing 
+#' differential expression scores for a contrast.
 #' Rownames must match genesets.
 #' @param genesets lists of genes imported by the gmt_imprt function or similar.
-#' @param minsetsize the minimum number of genes required in a set for it to be included in the statistical analysis.
+#' @param minsetsize the minimum number of genes required in a set for it to be 
+#' included in the statistical analysis.
 #' Default is 10.
-#' @param cores the number of parallel threads for computation. Defaults to the number of cores present minus 1.
-#' @param resrows an integer value representing the number of top genesets for which a detailed report is to be 
+#' @param cores the number of parallel threads for computation. Defaults to the 
+#' number of cores present minus 1.
+#' @param resrows an integer value representing the number of top genesets for
+#' which a detailed report is to be 
 #' generated. Default is 50.
-#' @param priority the prioritisation metric used to selecting top gene sets. Valid options are 'significance', 
+#' @param priority the prioritisation metric used to selecting top gene sets. 
+#' Valid options are 'significance', 
 #' 'effect' and 'SD'. 
 #' @return mitch res object with the following parts:
-#'  $input_profile: the supplied input differential profile
-#'  $input_genesets: the supplied input gene sets
-#'  $ranked_profile: the differential profile after ranking
-#'  $enrichment_result: the table of MANOVA/ANOVA enrichment results for each gene set
-#'  $analysis_metrics:  several metrics that are important to the interpretation of the results
-#'  $detailed_sets: a list of dataframes containing ranks of members of prioritised gene sets.
+#' $input_profile: the supplied input differential profile
+#' $input_genesets: the supplied input gene sets
+#' $ranked_profile: the differential profile after ranking
+#' $enrichment_result: the table of MANOVA/ANOVA enrichment results for each
+#' gene set
+#' $analysis_metrics:  several metrics that are important to the interpretation
+#' of the results
+#' $detailed_sets: a list of dataframes containing ranks of members of
+#' prioritised gene sets.
 #' @keywords mitch calc calculate manova 
+#' @import parallel
+#' @import pbmcapply
+#' @import stats
+#' @import plyr
 #' @export
 #' @examples
-#' # An example of using mitch to calculate multivariate enrichments and prioritise based on 
-#' # effect size 
-#' resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',minsetsize=5,cores=2)
+#' # Example using mitch to calculate multivariate enrichments and
+#' # prioritise based on effect size 
+#' resExample<-mitch_calc(myImportedData,genesetsExample,priority='effect',
+#' minsetsize=5,cores=2)
 
 mitch_calc <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, resrows = 50, 
     priority = NULL) {
@@ -1031,15 +892,6 @@ mitch_calc <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, 
     }
 }
 
-#' plot1d_profile_dist
-#'
-#' This function creates plots to describe input profile data for unidimensional enrichment analysis
-#' @param res a mitch results object
-#' @returns a plot of input profile distributions
-#' @keywords mitch plots unidimensional
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot1d_profile_dist <- function(res) {
     par(mfrow = c(2, 1))
     hist(res$input_profile[, 1], breaks = 50, main = "Distribution of DE scores", 
@@ -1054,15 +906,6 @@ plot1d_profile_dist <- function(res) {
     pl
 }
 
-#' plot_geneset_hist
-#'
-#' This function creates geneset histograms
-#' @param res a mitch results object
-#' @returns a plot of geneset histograms
-#' @keywords mitch plots histogram
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot_geneset_hist <- function(res) {
     par(mfrow = c(3, 1))
     geneset_counts <- res$analysis_metrics$geneset_counts
@@ -1074,15 +917,6 @@ plot_geneset_hist <- function(res) {
     pl
 }
 
-#' plot1d_volcano
-#'
-#' This function creates geneset histograms
-#' @param res a mitch results object
-#' @returns a volcano plot of genesets
-#' @keywords mitch plots volcano 
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot1d_volcano <- function(res) {
     par(mfrow = c(1, 1))
     sig <- subset(res$enrichment_result, p.adjustANOVA <= 0.05)
@@ -1100,17 +934,6 @@ plot1d_volcano <- function(res) {
     pl
 }
 
-#' plot1d_detailed
-#'
-#' This function creates geneset histograms
-#' @param res a mitch results object
-#' @param i the index of the geneset in the res$enrichment_result for plotting
-#' @returns 1D enrichment plots
-#' @keywords mitch plots unidimensional enrichment     
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import beeswarm
 plot1d_detailed <- function(res, i) {
     par(mfrow = c(3, 1))
     ss <- res$ranked_profile
@@ -1136,15 +959,6 @@ plot1d_detailed <- function(res, i) {
     pl
 }
 
-#' plot2d_profile_dist
-#'
-#' This function creates a scatterplot of input profile data for bidimensional enrichment analysis
-#' @param res a mitch results object
-#' @returns a plot of input profile distributions
-#' @keywords mitch plots bidimensional scatterplot
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_profile_dist <- function(res) {
     plot(res$input_profile, pch = 19, col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), 
         main = "Scatterplot of all genes")
@@ -1154,15 +968,6 @@ plot2d_profile_dist <- function(res) {
 }
 
 
-#' plot2d_profile_density
-#'
-#' This function creates a kernal density plot for bidimensional enrichment analysis
-#' @param res a mitch results object
-#' @returns a kernal density plot of input profile distributions after ranking
-#' @keywords mitch plots bidimensional density
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_profile_density <- function(res) {
     palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
@@ -1186,15 +991,6 @@ plot2d_profile_density <- function(res) {
     pl
 }
 
-#' plot2d_gene_quadrant_barchart
-#'
-#' This function creates a barchart of gene quadrants for bidimensional enrichment analysis
-#' @param res a mitch results object
-#' @returns a bar plot of gene quadrant distributions
-#' @keywords mitch plots bidimensional barplot barchart
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_gene_quadrant_barchart <- function(res) {
     uu = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] > 0))
     ud = length(which(res$input_profile[, 1] > 0 & res$input_profile[, 2] < 0))
@@ -1208,15 +1004,6 @@ plot2d_gene_quadrant_barchart <- function(res) {
     pl
 }
 
-#' plot2d_set_quadrant_barchart
-#'
-#' This function creates a barchart of genesets quadrants for bidimensional enrichment analysis
-#' @param res a mitch results object
-#' @returns a bar plot of geneset quadrant
-#' @keywords mitch plots bidimensional barplot barchart
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_set_quadrant_barchart <- function(res) {
     par(mfrow = c(1, 1))
     a <- res$analysis_metrics[14]
@@ -1229,15 +1016,6 @@ plot2d_set_quadrant_barchart <- function(res) {
 }
 
 
-#' plot2d_set_scatter
-#'
-#' This function creates a scatterplot of geneset enrichments
-#' @param res a mitch results object
-#' @returns a scatterplot of geneset enrichments
-#' @keywords mitch plots bidimensional scatter
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_set_scatter <- function(res) {
     sig <- subset(res$enrichment_result, p.adjustMANOVA < 0.05)
     plot(res$enrichment_result[, 4:5], pch = 19, col = rgb(red = 0, green = 0, blue = 0, 
@@ -1248,15 +1026,6 @@ plot2d_set_scatter <- function(res) {
     pl
 }
 
-#' plot2d_set_scatter_top
-#'
-#' This function creates a scatterplot of geneset enrichments for the N top ranked sets
-#' @param res a mitch results object
-#' @returns a scatterplot of geneset enrichments
-#' @keywords mitch plots bidimensional scatter
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_set_scatter_top <- function(res) {
     resrows = length(res$detailed_sets)
     top <- head(res$enrichment_result, resrows)
@@ -1269,21 +1038,11 @@ plot2d_set_scatter_top <- function(res) {
     pl
 }
 
-#' plot2d_heatmap
-#'
-#' This function creates a scatterplot of geneset enrichments for the N top ranked sets
-#' @param res a mitch results object
-#' @returns a scatterplot of geneset enrichments
-#' @keywords mitch plots bidimensional scatter
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @importFrom  gplots heatmap.2
 plot2d_heatmap <- function(res) {
     d = ncol(res$input_profile)
     resrows = length(res$detailed_sets)
     pl = NULL
-    if ( resrows > 2 ) {
+    if (resrows > 2) {
         hmapx <- head(res$enrichment_result[, 4:(4 + d - 1)], resrows)
         rownames(hmapx) <- head(res$enrichment_result$set, resrows)
         colnames(hmapx) <- gsub("^s.", "", colnames(hmapx))
@@ -1295,16 +1054,6 @@ plot2d_heatmap <- function(res) {
     pl
 }
 
-
-#' plot_effect_vs_significance
-#'
-#' This function creates a scatterplot of ES (effect) vs -log10(p.adjustMANOVA) (significance).
-#' @param res a mitch results object
-#' @returns a scatterplot of effect versus significance
-#' @keywords mitch plots significance effect
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot_effect_vs_significance <- function(res) {
     par(mfrow = c(1, 1))
     plot(res$enrichment_result$s.dist, -log(res$enrichment_result$p.adjustMANOVA), 
@@ -1315,16 +1064,6 @@ plot_effect_vs_significance <- function(res) {
 }
 
 
-#' plot2d_detailed_density
-#'
-#' This function creates a 2D kernal density plot of genesetst
-#' @param res a mitch results object
-#' @param i the index of the geneset in the res$enrichment_result for plotting
-#' @returns 2D enrichment plots
-#' @keywords mitch plots bidimensional enrichment     
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_detailed_density <- function(res, i) {
     palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
@@ -1350,16 +1089,6 @@ plot2d_detailed_density <- function(res, i) {
 }
 
 
-#' plot2d_detailed_scatter
-#'
-#' This function creates a 2D kernal density plot of genesetst
-#' @param res a mitch results object
-#' @param i the index of the geneset in the res$enrichment_result for plotting
-#' @returns 2D enrichment plots
-#' @keywords mitch plots bidimensional enrichment     
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 plot2d_detailed_scatter <- function(res, i) {
     ss <- res$ranked_profile
     xmin = min(ss[, 1])
@@ -1378,17 +1107,6 @@ plot2d_detailed_scatter <- function(res, i) {
 }
 
 
-#' plot2d_detailed_violin
-#'
-#' This function creates violin plots
-#' @param res a mitch results object
-#' @param i the index of the geneset in the res$enrichment_result for plotting
-#' @returns violin plot
-#' @keywords mitch plots biidimensional enrichment violin
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import ggplot2
 plot2d_detailed_violin <- function(res, i) {
     pl <- list()
     
@@ -1418,16 +1136,6 @@ plot2d_detailed_violin <- function(res, i) {
 }
 
 
-#' ggpairs_points
-#'
-#' This function creates a pairs plot of gene profiles
-#' @param res a mitch results object
-#' @returns ggpairs plot
-#' @keywords mitch plots multidimensional enrichment scattter
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import ggplot2
 ggpairs_points <- function(res) {
     ggpairs_points_plot <- function(data, mapping, ...) {
         p <- ggplot(data = data, mapping = mapping) + geom_point(alpha = 0.05) + 
@@ -1441,16 +1149,6 @@ ggpairs_points <- function(res) {
 }
 
 
-#' ggpairs_points_subset
-#'
-#' This function creates a pairs plot of gene profile
-#' @param res a mitch results object
-#' @returns ggpairs plot of a subset of genes
-#' @keywords mitch plots multidimensional enrichment scattter
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import ggplot2
 ggpairs_points_subset <- function(res) {
     d <- ncol(res$ranked_profile)
     ggpairs_points_plot <- function(data, mapping, ...) {
@@ -1466,16 +1164,6 @@ ggpairs_points_subset <- function(res) {
 }
 
 
-#' ggpairs_contour
-#'
-#' This function creates a pairs contour plot of gene profiles
-#' @param res a mitch results object
-#' @returns ggpairs contour plot
-#' @keywords mitch plots multidimensional enrichment contour density
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import ggplot2
 ggpairs_contour <- function(res) {
     palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
@@ -1493,15 +1181,6 @@ ggpairs_contour <- function(res) {
 }
 
 
-#' colname_substitute
-#'
-#' This function substitutes colnames names in high dimensional data
-#' @param res a mitch results object
-#' @returns mitch results object with colnames substituted
-#' @keywords mitch colnames
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
 colname_substitute <- function(res) {
     d <- ncol(res$ranked_profile)
     if (d > 5) {
@@ -1516,17 +1195,6 @@ colname_substitute <- function(res) {
 }
 
 
-#' gene_sector_table
-#'
-#' This function creates a table of gene sector counts
-#' @param res a mitch results object
-#' @returns a table of gene sector counts
-#' @keywords mitch table sector
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import grid
-#' @import gridExtra
 gene_sector_table <- function(res) {
     mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)), 
         colhead = list(fg_params = list(cex = 0.7)), rowhead = list(fg_params = list(cex = 0.7)))
@@ -1544,17 +1212,6 @@ gene_sector_table <- function(res) {
 }
 
 
-#' geneset_sector_table
-#'
-#' This function creates a table of gene sector counts
-#' @param res a mitch results object
-#' @returns a table of gene sector counts
-#' @keywords mitch table sector
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import grid
-#' @import gridExtra
 geneset_sector_table <- function(res) {
     d <- ncol(res$ranked_profile)
     mytheme <- gridExtra::ttheme_default(core = list(fg_params = list(cex = 0.5)), 
@@ -1563,7 +1220,7 @@ geneset_sector_table <- function(res) {
     sig <- sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA < 
         0.05), 4:(4 + d - 1)])
     if (d < 6) {
-        if (nrow(sig)>0) {
+        if (nrow(sig) > 0) {
             sector_count <- aggregate(seq(from = 1, to = nrow(sig)) ~ ., sig, FUN = length)
             colnames(sector_count)[ncol(sector_count)] <- "Number of gene sets in each sector"
             grid.newpage()
@@ -1572,16 +1229,6 @@ geneset_sector_table <- function(res) {
     }
 }
 
-#' heatmapx
-#'
-#' This function creates a pairs contour plot of gene profiles
-#' @param res a mitch results object
-#' @returns ggpairs contour plot
-#' @keywords mitch plots multidimensional enrichment contour density
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @importFrom  gplots heatmap.2
 heatmapx <- function(res) {
     d <- ncol(res$ranked_profile)
     resrows = length(res$detailed_sets)
@@ -1595,17 +1242,6 @@ heatmapx <- function(res) {
     pl
 }
 
-#' plot3d_detailed_density
-#'
-#' This function creates a pairs contour plot of gene profiles
-#' @param res a mitch results object
-#' @param i the index of the geneset in the res$enrichment_result for plotting
-#' @returns ggpairs contour plot for a gene subset
-#' @keywords mitch plots multidimensional enrichment contour density
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import ggplot2
 plot3d_detailed_density <- function(res, i) {
     palette <- colorRampPalette(c("white", "yellow", "orange", "red", "darkred", 
         "black"))
@@ -1635,17 +1271,6 @@ plot3d_detailed_density <- function(res, i) {
 }
 
 
-#' plot3d_detailed_points
-#'
-#' This function creates a pairs plot of gene profiles of a subset of genes
-#' @param res a mitch results object
-#' @param i the index of the geneset in the res$enrichment_result for plotting
-#' @returns ggpairs plot for a gene subset
-#' @keywords mitch plots multidimensional enrichment scatter pairs
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import ggplot2
 plot3d_detailed_points <- function(res, i) {
     d <- ncol(res$ranked_profile)
     ss <- res$ranked_profile
@@ -1672,17 +1297,6 @@ plot3d_detailed_points <- function(res, i) {
 }
 
 
-#' plot2d_detailed_violin
-#'
-#' This function creates violin plots
-#' @param res a mitch results object
-#' @param i the index of the geneset in the res$enrichment_result for plotting
-#' @returns violin plot
-#' @keywords mitch plots biidimensional enrichment violin
-#' @export
-#' @examples
-#' #This function is not designed to be used directly
-#' @import ggplot2
 plot3d_detailed_violin <- function(res, i) {
     d <- ncol(res$ranked_profile)
     ss <- res$ranked_profile
@@ -1707,10 +1321,13 @@ plot3d_detailed_violin <- function(res, i) {
 
 #' mitch_plots
 #'
-#' This function generates several plots of multivariate gene set enrichment in high resolution PDF format.
-#' The number of detailed sets to generate is dictated by the resrows set in the mitch_calc command.
+#' This function generates several plots of multivariate gene set enrichment in
+#' high resolution PDF format.
+#' The number of detailed sets to generate is dictated by the resrows set in the
+#' mitch_calc command.
 #' @param res a mitch results object.
-#' @param outfile the destination file for the plots in PDF format. should contain 'pdf' suffix. Defaults to 
+#' @param outfile the destination file for the plots in PDF format. should
+#' contain 'pdf' suffix. Defaults to 
 #' 'Rplots.pdf'
 #' @param cores number of parallel cores for plotting 
 #' @return generates a PDF file containing enrichment plots.
@@ -1785,11 +1402,15 @@ mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) 
 
 #' mitch_report
 #'
-#' This function generates an R markdown based html report containing tables and several plots of mitch results 
-#' The plots are in png format, so are not as high in resolution as compared to the PDF generated by mitch_plots 
-#' function. The number of detailed sets to generate is dictated by the resrows set in the mitch_calc command.
+#' This function generates an R markdown based html report containing tables and
+#' several plots of mitch results 
+#' The plots are in png format, so are not as high in resolution as compared to
+#' the PDF generated by mitch_plots 
+#' function. The number of detailed sets to generate is dictated by the resrows
+#' set in the mitch_calc command.
 #' @param res a mitch results object.
-#' @param outfile the destination file for the html report. should contain 'html' suffix. Defaults to 
+#' @param outfile the destination file for the html report. should contain
+#' 'html' suffix. Defaults to 
 #' 'Rplots.pdf'
 #' @return generates a HTML file containing enrichment plots.
 #' @keywords mitch report html markdown knitr
@@ -1803,7 +1424,6 @@ mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) 
 #' @import remotes
 #' @import fs
 mitch_report <- function(res, outfile) {
-    # library('plyr') library('knitr') library('markdown') library('rmarkdown')
     
     HTMLNAME <- paste(outfile, ".html", sep = "")
     HTMLNAME <- gsub(".html.html", ".html", HTMLNAME)
@@ -1842,8 +1462,8 @@ mitch_report <- function(res, outfile) {
 #' @usage data(genesetsExample)
 #' @format A list of gene sets
 #' @keywords datasets
-#' @references Fabregat et al. (2017) BMC Bioinformatics volume 18, Article number: 142 
-#' https://www.ncbi.nlm.nih.gov/pubmed/28249561
+#' @references Fabregat et al. (2017) BMC Bioinformatics volume 18, 
+#' Article number: 142, https://www.ncbi.nlm.nih.gov/pubmed/28249561
 #' @source Reactome website: https://reactome.org/
 #' @examples
 #' data(genesetsExample)
