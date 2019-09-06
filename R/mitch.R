@@ -783,7 +783,7 @@ mitch_rank <- function(x) {
     }
     
     rank_adj <- function(x) {
-        xx <- rank(x)
+        xx <- rank(x,na.last = "keep")
         num_neg = length(which(x < 0))
         num_zero = length(which(x == 0))
         num_adj = num_neg + (num_zero/2)
