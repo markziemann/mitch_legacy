@@ -378,7 +378,10 @@ muscat_score <- function(y) {
 #' mitch_import can be bypassed in favour of another scoring metric.
 #' @param x a list of differential expression tables
 #' @param DEtype the program that generated the differential expression table
+#' Valid options are 'edgeR', 'DESeq2', 'limma', 'ABSSeq', 'Seurat', and 'muscat'.
 #' @param geneIDcol the column containing gene names. If gene names are 
+#' @param joinType the type of join to perform, either 'inner' or 'full'.
+#' By default, joins are 'inner' except for Seurat and muscat where full is used.
 #' specified as row names, then geneIDcol=NULL.
 #' @param geneTable a 2 column table mapping gene identifiers in the profile to
 #' gene identifiers in the gene sets. 
@@ -390,12 +393,10 @@ muscat_score <- function(y) {
 #' x<-list('rna'=rna,'k9a'=k9a,'k36a'=k36a)
 #' # import as edgeR table 
 #' y<-mitch_import(x,DEtype='edger')
-mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
-    
-    # library('plyr')
+mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL, joinType = NULL) {
     
     if (is.data.frame(x)) {
-        warning("The input is a single dataframe; one contrast only. Converting it to a list for you.")
+        message("The input is a single dataframe; one contrast only. Converting it to a list for you.")
         NAME = deparse(substitute(x))
         x <- list(x = x)
     }
@@ -468,10 +469,14 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL) {
         colnames(xx[[i]]) <- c("geneidentifiers", paste("y", i, sep = ""))
     }
     
-    if (DEtype == "seurat" || DEtype == "muscat") {
-        xxx <- join_all(xx, by = "geneidentifiers", type = "full")
+    if (is.null(joinType)) {
+        if (DEtype == "seurat" || DEtype == "muscat") {
+            xxx <- join_all(xx, by = "geneidentifiers", type = "full")
+        } else {
+            xxx <- join_all(xx, by = "geneidentifiers", type = "inner")
+        }
     } else {
-        xxx <- join_all(xx, by = "geneidentifiers", type = "inner")
+        xxx <- join_all(xx, by = "geneidentifiers", type = joinType)
     }
     rownames(xxx) <- xxx$geneidentifiers
     xxx$geneidentifiers = NULL
