@@ -178,6 +178,42 @@ limma_score <- function(y) {
     z
 }
 
+swish_score <- function(y) {
+
+    NCOL = ncol(y)
+    if (NCOL < 2) {
+        stop("Error: there are <2 columns in the input, 'pvalue' and 'log2FC' are required ")
+    }
+
+    PCOL = length(which(names(y) == "pvalue"))
+    if (PCOL > 1) {
+        stop("Error, there is more than 1 column named 'pvalue' in the input")
+    }
+    if (PCOL < 1) {
+        stop("Error, there is no column named 'pvalue' in the input")
+    }
+
+    FCCOL = length(which(names(y) == "log2FC"))
+    if (FCCOL > 1) {
+        stop("Error, there is more than 1 column named 'log2FC' in the input")
+    }
+    if (FCCOL < 1) {
+        stop("Error, there is no column named 'log2FC' in the input")
+    }
+
+    s <- sign(y$log2FC) * -log10(y$pvalue)
+
+    if (!is.null(attributes(y)$geneIDcol)) {
+        g <- y[, attributes(y)$geneIDcol]
+    } else {
+        g <- rownames(y)
+    }
+    z <- data.frame(g, s, stringsAsFactors = FALSE)
+    colnames(z) <- c("geneidentifiers", "y")
+    z <- mapGeneIds(y, z)
+    z
+}
+
 absseq_score <- function(y) {
     
     NCOL = ncol(y)
@@ -409,10 +445,10 @@ preranked_score <- function(y, joinType ) {
 #' mitch_import can be bypassed in favour of another scoring metric.
 #' @param x a list of differential expression tables
 #' @param DEtype the program that generated the differential expression table
-#' Valid options are 'edgeR', 'DESeq2', 'limma', 'ABSSeq', 'Seurat', 'muscat'
-#' and 'preranked'. Where 'preranked' is a dataframe containing the rank
-#' statistic and gene ID (either in rowname or separate column) and nothing
-#' else.
+#' Valid options are 'edgeR', 'DESeq2', 'limma', 'ABSSeq', 'Seurat', 'muscat',
+#' 'swish' and 'preranked'. Where 'preranked' is a dataframe containing the 
+#' rank statistic and gene ID (either in rowname or separate column) and
+#' nothing else.
 #' @param geneIDcol the column containing gene names. If gene names are 
 #' @param joinType the type of join to perform, either 'inner' or 'full'.
 #' By default, joins are 'inner' except for Seurat and muscat where full is used.
@@ -494,6 +530,8 @@ mitch_import <- function(x, DEtype, geneIDcol = NULL, geneTable = NULL, joinType
         xx <- lapply(x, topconfect_score)
     } else if (DEtype == "muscat") {
         xx <- lapply(x, muscat_score)
+    } else if (DEtype == "swish") {
+        xx <- lapply(x, swish_score)
     } else if (DEtype == "preranked") {
         xx <- lapply(x, preranked_score, joinType = joinType)
     } else {
