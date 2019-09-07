@@ -615,9 +615,7 @@ MANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prio
     }
     
     hypotenuse <- function(x) {
-        sqrt(sum(unlist(lapply(x, function(x) {
-            x^2
-        }))))
+        sqrt(sum(unlist(lapply(x, function(x) { x^2 })),na.rm = TRUE ))
     }
     
     # calculate the hypotenuse for downstream use
