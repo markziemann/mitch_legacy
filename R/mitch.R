@@ -640,8 +640,8 @@ MANOVA <- function(x, genesets, minsetsize = 10, cores = detectCores() - 1, prio
             raov <- unlist(raov)
             names(raov) <- gsub("^ Response ", "p.", names(raov))
             # S coordinates
-            NOTINSET <- colMeans(x[!inset, ])
-            scord <- (2 * (colMeans(x[inset, ]) - NOTINSET))/NROW
+            NOTINSET <- colMeans(x[!inset, ], na.rm=TRUE)
+            scord <- (2 * (colMeans(x[inset, ], na.rm=TRUE) - NOTINSET))/NROW
             names(scord) <- paste0("s-", names(scord))
             # calculate the hypotenuse length of s scores
             s.dist <- hypotenuse(scord)
