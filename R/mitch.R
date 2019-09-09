@@ -1525,7 +1525,7 @@ mitch_report <- function(res, outfile) {
     assign("res", res, knitrenv)
     
     rmd = system.file("mitch.Rmd", package = "mitch")
-    rmarkdown::render(rmd, output_file = html_tmp)
+    rmarkdown::render(rmd, intermediates_dir = "." , output_file = html_tmp)
     file.copy(html_tmp, HTMLNAME)
 }
 
