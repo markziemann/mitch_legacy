@@ -164,22 +164,26 @@ hist(geneset_counts$count,100,xlab="geneset size",main="Histogram of geneset siz
 hist(geneset_counts$count,100,xlim=c(0,500),xlab="geneset size",main="Trimmed histogram of geneset size")
 
 if ( d==2 ) {
-  uu=length(which(res$input_profile[,1]>0 & res$input_profile[,2]>0))
-  ud=length(which(res$input_profile[,1]>0 & res$input_profile[,2]<0))
-  dd=length(which(res$input_profile[,1]<0 & res$input_profile[,2]<0))
-  du=length(which(res$input_profile[,1]<0 & res$input_profile[,2]>0))
-  a<-as.data.frame(c(uu,ud,dd,du))
-  rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
-  colnames(a)="a"
-  par(mfrow=c(1,1))
-  xx<-barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
-  text(x = xx, y = a$a, label = a$a , pos = 1, cex = 1)
+    uu=length(which(res$input_profile[,1]>0 & res$input_profile[,2]>0))
+    ud=length(which(res$input_profile[,1]>0 & res$input_profile[,2]<0))
+    dd=length(which(res$input_profile[,1]<0 & res$input_profile[,2]<0))
+    du=length(which(res$input_profile[,1]<0 & res$input_profile[,2]>0))
+    a<-as.data.frame(c(uu,ud,dd,du))
+    rownames(a)=c("top-right","bottom-right","bottom-left","top-left")
+    colnames(a)="a"
+    par(mfrow=c(1,1))
+    xx<-barplot(a$a,names.arg=rownames(a),main="number of genes in each quadrant")
+    text(x = xx, y = a$a, label = a$a , pos = 1, cex = 1)
 } else if (d>2) {
-  sig<-sign(ss)
-  sector_count<-aggregate(seq_len(nrow(sig)) ~ ., sig, FUN = length)
-  colnames(sector_count)[ncol(sector_count)]<-"Count"
-  kable(sector_count ,caption = "Genes by sector" ,row.names=TRUE)
+
+    if (d<6) {
+        sig<-sign(ss)
+        sector_count<-aggregate(seq_len(nrow(sig)) ~ ., sig, FUN = length)
+        colnames(sector_count)[ncol(sector_count)]<-"Count"
+        kable(sector_count ,caption = "Genes by sector" ,row.names=TRUE)
+    }
 }
+
 ```
 
 ```{r,input_geneset_metrics3,results="asis",echo=FALSE,message=FALSE,fig.height = 7, fig.width = 7}
@@ -216,94 +220,95 @@ if (d==2) {
   text(x = xx, y = a$a, label = a$a , pos = 1, cex = 1)
 } 
 if ( nsig > 0 ) {
-  if ( d>2 ) {
-    cat(paste("Number of significant gene sets (FDR<0.05)=", res$analysis_metrics$num_sets_significant,"<br>" ))
-    cat("<h2>Gene sets by sector</h2><br>")
-    sig<-sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA<0.05),4:(4+d-1)])
-    sector_count<-aggregate(seq_len(nrow(sig)) ~ ., sig, FUN = length)
-    colnames(sector_count)[ncol(sector_count)]<-"Count"
-    kable(sector_count ,caption = "Gene sets by sector" ,row.names=TRUE)
-  }
+    if ( d>2 ) {
+        if ( d<6 ) {
+            cat(paste("Number of significant gene sets (FDR<0.05)=", res$analysis_metrics$num_sets_significant,"<br>" ))
+            cat("<h2>Gene sets by sector</h2><br>")
+            sig<-sign(res$enrichment_result[which(res$enrichment_result$p.adjustMANOVA<0.05),4:(4+d-1)])
+            sector_count<-aggregate(seq_len(nrow(sig)) ~ ., sig, FUN = length)
+            colnames(sector_count)[ncol(sector_count)]<-"Count"
+            kable(sector_count ,caption = "Gene sets by sector" ,row.names=TRUE)
+        }
+    }
 }
+
 ```
 
 ## Enrichment scatterplot with taucharts
 ```{r,tauchart1d,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
 if (d==1) {
-
-#1D tauchart
-library("taucharts")
-library(dplyr)
-library(gtools)
-numsets=nrow(subset(res$enrichment_result,p.adjustANOVA<0.05))
-p=NULL
-if (numsets==0){
-  message("No significant enrichments found.")
-} else {
-  # volcano tauchart
-  myres<-subset(res$enrichment_result,p.adjustANOVA<0.05)
-  myres$significance<--log10(myres$pANOVA)
-  myres$set<-gsub("_"," ",as.character(myres$set))
-  myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
-  colnames(myres)=gsub("\\.","_",colnames(myres))
-  my_x=colnames(myres)[4]
-  my_y=colnames(myres)[6]
-  p<-tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
-  cat("Significance is calculated by -log10(p-value). All points shown are FDR<0.05")
-}
-cat("All sets with FDR<0.05. Try hovering over the points.<br>")
-p
-resrows=length(res$detailed_sets)
-cat(paste("Top N=",resrows,"sets irrespective of FDR. Try hovering over the points.<br>"))
-# volcano tauchart
-myres<-head(res$enrichment_result,resrows)
-myres$significance<--log10(myres$pANOVA)
-myres$set<-gsub("_"," ",as.character(myres$set))
-colnames(myres)=gsub("\\.","_",colnames(myres))
-my_x=colnames(myres)[4]
-my_y=colnames(myres)[6]
-tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
-cat("Significance is calculated by -log10(p-value). All points shown are FDR<0.05")
+    #1D tauchart
+    library("taucharts")
+    library(dplyr)
+    library(gtools)
+    numsets=nrow(subset(res$enrichment_result,p.adjustANOVA<0.05))
+    p=NULL
+    if (numsets==0){
+        message("No significant enrichments found.")
+    } else {
+        # volcano tauchart
+        myres<-subset(res$enrichment_result,p.adjustANOVA<0.05)
+        myres$significance<--log10(myres$pANOVA)
+        myres$set<-gsub("_"," ",as.character(myres$set))
+        myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
+        colnames(myres)=gsub("\\.","_",colnames(myres))
+        my_x=colnames(myres)[4]
+        my_y=colnames(myres)[6]
+        p<-tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+        cat("Significance is calculated by -log10(p-value). All points shown are FDR<0.05")
+    }
+    cat("All sets with FDR<0.05. Try hovering over the points.<br>")
+    p
+    resrows=length(res$detailed_sets)
+    cat(paste("Top N=",resrows,"sets irrespective of FDR. Try hovering over the points.<br>"))
+    # volcano tauchart
+    myres<-head(res$enrichment_result,resrows)
+    myres$significance<--log10(myres$pANOVA)
+    myres$set<-gsub("_"," ",as.character(myres$set))
+    colnames(myres)=gsub("\\.","_",colnames(myres))
+    my_x=colnames(myres)[4]
+    my_y=colnames(myres)[6]
+    tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+    cat("Significance is calculated by -log10(p-value). All points shown are FDR<0.05")
 }
 ```
 
 ```{r,tauchart2,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
 if (d!=1) {
-library("taucharts")
-library(dplyr)
-library(gtools)
-cat("All sets with FDR<0.05. Try hovering over the points.<br>")
-numsets=nrow(subset(res$enrichment_result,p.adjustMANOVA<0.05))
-p=NULL
-if (numsets>0){
-  myres<-subset(res$enrichment_result,p.adjustMANOVA<0.05)
-  # myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
-  if ( d<3 ) {
-    myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
-    myres$set<-gsub("_"," ",as.character(myres$set))
-    colnames(myres)=gsub("\\.","_",colnames(myres))
-    my_x=colnames(myres)[4]
-    my_y=colnames(myres)[5]    
-    tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
-  } else {
-    plan<-combinations(n = d, r = 2, v = seq_len(d), repeats.allowed = FALSE)
-    myres<-myres[,c(1, which(names(myres) %in% "p.adjustMANOVA") ,2,4:(4+d-1), which(names(myres) %in% "s.dist") ), which(names(myres) %in% "SD")]
-    p<-list()
-    tauscatter<-function(i){
-      my_x=plan[i,1]
-      my_y=plan[i,2]
-      colnames(myres)=gsub("\\.","_",colnames(myres))
-      my_x=colnames(myres)[3+my_x]
-      my_y=colnames(myres)[3+my_y]
-      myres$set<-gsub("_"," ",as.character(myres$set))
-      tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip() 
+    library("taucharts")
+    library(dplyr)
+    library(gtools)
+    cat("All sets with FDR<0.05. Try hovering over the points.<br>")
+    numsets=nrow(subset(res$enrichment_result,p.adjustMANOVA<0.05))
+    p=NULL
+    if (numsets>0){
+        myres<-subset(res$enrichment_result,p.adjustMANOVA<0.05)
+        # myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
+        if ( d<3 ) {
+            myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
+            myres$set<-gsub("_"," ",as.character(myres$set))
+            colnames(myres)=gsub("\\.","_",colnames(myres))
+            my_x=colnames(myres)[4]
+            my_y=colnames(myres)[5]
+            tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+        } else {
+            plan<-combinations(n = d, r = 2, v = seq_len(d), repeats.allowed = FALSE)
+            myres<-myres[,c(1, which(names(myres) %in% "p.adjustMANOVA") ,2,4:(4+d-1), which(names(myres) %in% "s.dist") ), which(names(myres) %in% "SD")]
+            p<-list()
+            tauscatter<-function(i){
+            my_x=plan[i,1]
+            my_y=plan[i,2]
+            colnames(myres)=gsub("\\.","_",colnames(myres))
+            my_x=colnames(myres)[3+my_x]
+            my_y=colnames(myres)[3+my_y]
+            myres$set<-gsub("_"," ",as.character(myres$set))
+            tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+        }
+        p<-lapply( seq_len(nrow(plan)) , tauscatter)
     }
-    p<-lapply( seq_len(nrow(plan)) , tauscatter)
-  }
 } else {
-  message("No significant enrichments found.")
+    message("No significant enrichments found.")
 }
-
 htmltools::tagList(p)
 
 resrows=length(res$detailed_sets)
