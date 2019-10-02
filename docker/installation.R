@@ -1,4 +1,3 @@
-RUN cat << EOF > installation.R
 # cran install
 install.packages("devtools")
 install.packages("plyr")
