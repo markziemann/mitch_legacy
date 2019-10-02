@@ -1,14 +1,12 @@
 # docker run -d -p 8787:8787 -e USER=rstudio -e PASSWORD=mitch -e ROOT=TRUE rocker/rstudio
+FROM rocker/rstudio
 
 RUN apt update && \
   apt install -y \
     zlib1g-dev \
     libxml2-dev \
-
-apt install libxml2-dev
-
-
-
+    tcl8.6-dev \
+    tk8.6-dev \
 
 # cran install
 install.packages("devtools")
@@ -29,6 +27,9 @@ install.packages("Seurat")
 install.packages("Rmisc")
 install.packages("UpSetR")
 install.packages("vioplot")
+install.packages("rmarkdown")
+install.packages("xfun")
+
                  
 
 # github install
@@ -41,10 +42,14 @@ devtools::install_github("markziemann/Mitch")
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-BiocManager::install("ABSSeq")
-BiocManager::install("edgeR")
-BiocManager::install("DESeq2")
-BiocManager::install("fgsea")
-BiocManager::install("topconfects")
-BiocManager::install("biomaRt")
-BiocManager::install("ExperimentHub")
+BiocManager::install("ABSSeq",update=TRUE)
+BiocManager::install("edgeR",update=TRUE)
+BiocManager::install("DESeq2",update=TRUE)
+BiocManager::install("fgsea",update=TRUE)
+BiocManager::install("topconfects",update=TRUE)
+BiocManager::install("biomaRt",update=TRUE)
+BiocManager::install("ExperimentHub",update=TRUE)
+
+BiocManager::install(version='devel')
+BiocManager::install("muscat",update=FALSE)
+BiocManager::install("scater",update=FALSE)
