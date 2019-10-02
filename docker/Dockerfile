@@ -6,8 +6,9 @@ RUN apt update && \
     zlib1g-dev \
     libxml2-dev \
     tcl8.6-dev \
-    tk8.6-dev \
-
+    tk8.6-dev
+    
+RUN cat << EOF > installation.R
 # cran install
 install.packages("devtools")
 install.packages("plyr")
@@ -30,26 +31,30 @@ install.packages("vioplot")
 install.packages("rmarkdown")
 install.packages("xfun")
 
-                 
-
 # github install
 devtools::install_github("markziemann/dee2/getDEE2")
 devtools::install_github("hrbrmstr/taucharts")
 devtools::install_github("markziemann/Mitch")
 
+# bioc install
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 
 # bioc install
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-BiocManager::install("ABSSeq",update=TRUE)
-BiocManager::install("edgeR",update=TRUE)
-BiocManager::install("DESeq2",update=TRUE)
-BiocManager::install("fgsea",update=TRUE)
-BiocManager::install("topconfects",update=TRUE)
-BiocManager::install("biomaRt",update=TRUE)
-BiocManager::install("ExperimentHub",update=TRUE)
+BiocManager::install(version='devel',ask = FALSE, update=TRUE)
 
-BiocManager::install(version='devel')
-BiocManager::install("muscat",update=FALSE)
-BiocManager::install("scater",update=FALSE)
+BiocManager::install("ABSSeq", ask = FALSE, update=TRUE)
+BiocManager::install("edgeR", ask = FALSE, update=TRUE)
+BiocManager::install("DESeq2", ask = FALSE, update=TRUE)
+BiocManager::install("fgsea", ask = FALSE, update=TRUE)
+BiocManager::install("topconfects", ask = FALSE, update=TRUE)
+BiocManager::install("biomaRt", ask = FALSE, update=TRUE)
+BiocManager::install("ExperimentHub", ask = FALSE, update=TRUE)
+BiocManager::install("muscat", ask = FALSE, update=TRUE)
+BiocManager::install("scater",ask = FALSE , update=TRUE)
+EOF
+
+RUN Rscript installation.R
