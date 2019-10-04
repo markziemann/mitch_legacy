@@ -1434,9 +1434,9 @@ mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) 
         plot1d_profile_dist(res)
         plot_geneset_hist(res)
         plot1d_volcano(res)
-        mclapply(seq_len(resrows), function(i) {
+        lapply(seq_len(resrows), function(i) {
             plot1d_detailed(res, i)
-        }, mc.cores = cores)
+        })
         
     } else if (d == 2) {
         
@@ -1450,11 +1450,11 @@ mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) 
         plot2d_heatmap(res)
         plot_effect_vs_significance(res)
         
-        mclapply(seq_len(resrows), function(i) {
+        lapply(seq_len(resrows), function(i) {
             plot2d_detailed_density(res, i)
             plot2d_detailed_scatter(res, i)
             plot2d_detailed_violin(res, i)
-        }, mc.cores = cores)
+        })
     } else if (d > 2) {
         
         res <- colname_substitute(res)
@@ -1467,11 +1467,11 @@ mitch_plots <- function(res, outfile = "Rplots.pdf", cores = detectCores() - 1) 
         heatmapx(res)
         plot_effect_vs_significance(res)
         
-        mclapply(seq_len(resrows), function(i) {
+        lapply(seq_len(resrows), function(i) {
             plot3d_detailed_density(res, i)
             plot3d_detailed_points(res, i)
             plot3d_detailed_violin(res, i)
-        }, mc.cores = cores)
+        })
     }
     dev.off()
 }
