@@ -429,6 +429,26 @@ if (d==1) {
 }
 
 ```{r,tauchart2,results="asis",echo=FALSE, fig.height = 7, fig.width = 7 ,fig.show="all", message=FALSE}
+
+tauscatter<-function(i){
+
+    my_x=plan[i,1]
+
+    my_y=plan[i,2]
+
+    colnames(myres)=gsub("\\.","_",colnames(myres))
+
+    my_x=colnames(myres)[3+my_x]
+
+    my_y=colnames(myres)[3+my_y]
+
+    myres$set<-gsub("_"," ",as.character(myres$set))
+
+    tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+
+}
+
+
 if (d!=1) {
     library("taucharts")
     library(dplyr)
@@ -440,7 +460,11 @@ if (d!=1) {
 
     p=NULL
 
-    if (numsets>0){
+    if (numsets<1){
+
+        message("No significant enrichments found.")
+
+    } else {
 
         myres<-subset(res$enrichment_result,p.adjustMANOVA<0.05)
 
@@ -456,7 +480,7 @@ if (d!=1) {
 
             my_y=colnames(myres)[5]
 
-            tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+            p<-tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
 
         } else {
 
@@ -466,95 +490,64 @@ if (d!=1) {
 
             p<-list()
 
-            tauscatter<-function(i){
-
-            my_x=plan[i,1]
-
-            my_y=plan[i,2]
-
-            colnames(myres)=gsub("\\.","_",colnames(myres))
-
-            my_x=colnames(myres)[3+my_x]
-
-            my_y=colnames(myres)[3+my_y]
-
-            myres$set<-gsub("_"," ",as.character(myres$set))
-
-            tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+            p<-lapply( seq_len(nrow(plan)) , tauscatter)
 
         }
 
-        p<-lapply( seq_len(nrow(plan)) , tauscatter)
+    }
+
+    htmltools::tagList(p)
+
+}
+
+if (d!=1) {
+
+    cat("Top N sets irrespective of FDR. Try hovering over the points.<br>")
+
+    resrows=length(res$detailed_sets)
+
+    p=NULL
+
+    if (resrows<1){
+
+        message("No results found.")
+
+    } else {
+
+        myres<-head(res$enrichment_result,resrows)
+
+        if ( d<3 ) {
+
+            myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") )]
+
+            myres$set<-gsub("_"," ",as.character(myres$set))
+
+            colnames(myres)=gsub("\\.","_",colnames(myres))
+
+            my_x=colnames(myres)[4]
+
+            my_y=colnames(myres)[5]
+
+            p<-tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
+
+        } else {
+
+            plan<-combinations(n = d, r = 2, v = seq_len(d), repeats.allowed = FALSE)
+
+            myres<-myres[,c(1, which(names(myres) %in% "p.adjustMANOVA") ,2,4:(4+d-1), which(names(myres) %in% "s.dist") ), which(names(myres) %in% "SD")]
+
+            p<-list()
+
+            p<-lapply( seq_len(nrow(plan)) , tauscatter)
+
+        }
 
     }
 
-} else {
-
-    message("No significant enrichments found.")
+    htmltools::tagList(p)
 
 }
 
-htmltools::tagList(p)
-
-resrows=length(res$detailed_sets)
-
-cat(paste("Top N=",resrows,"sets irrespective of FDR. Try hovering over the points.<br>"))
-
-message(paste("Prioritisation done by" , attributes(res$enrichment_result)$priority ))
-
-myres<-head(res$enrichment_result,resrows)
-
-myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
-
-if ( d<3 ) {
-
-    myres[,3:ncol(myres)]<-signif(myres[,3:ncol(myres)],3)
-
-    myres<-myres[,c(1,which(names(myres) %in% "p.adjustMANOVA"),2, 4:(4+d-1) , which(names(myres) %in% "s.dist") ),  which(names(myres) %in% "SD")]
-
-    myres$set<-gsub("_"," ",as.character(myres$set))
-
-    colnames(myres)=gsub("\\.","_",colnames(myres))
-
-    my_x=colnames(myres)[4]
-
-    my_y=colnames(myres)[5]
-
-    tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
-
-} else {
-
-    plan<-combinations(n = d, r = 2, v = seq_len(d), repeats.allowed = FALSE)
-
-    myres<-myres[,c(1, which(names(myres) %in% "p.adjustMANOVA") ,2,4:(4+d-1), which(names(myres) %in% "s.dist") ),  which(names(myres) %in% "SD")]
-
-    p<-list()
-
-    tauscatter<-function(i){
-
-        my_x=plan[i,1]
-
-        my_y=plan[i,2]
-
-        colnames(myres)=gsub("\\.","_",colnames(myres))
-
-        my_x=colnames(myres)[3+my_x]
-
-        my_y=colnames(myres)[3+my_y]
-
-        myres$set<-gsub("_"," ",as.character(myres$set))
-
-        tauchart(myres) %>% tau_point(my_x,my_y) %>% tau_tooltip()
-
-    }
-
-    p<-lapply( seq_len(nrow(plan)) , tauscatter)
-
-}
-
-htmltools::tagList(p)
-
-}
 ```
 
 ```{r,heatmap,results="asis",echo=FALSE, fig.height = 10, fig.width = 7 ,fig.show="all", message=FALSE}
