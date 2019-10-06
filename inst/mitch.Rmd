@@ -1118,7 +1118,8 @@ if (d!=1) {
 Here is the session info with all the versions of packages used.
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
-devtools::session_info()
+library(pkgload)
+sessionInfo()
 ```
 
 END of report

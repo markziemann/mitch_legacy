@@ -22,7 +22,7 @@ Default is 10.}
 number of cores present minus 1.}
 
 \item{resrows}{an integer value representing the number of top genesets for
- which a detailed report is to be 
+which a detailed report is to be 
 generated. Default is 50.}
 
 \item{priority}{the prioritisation metric used to selecting top gene sets. 

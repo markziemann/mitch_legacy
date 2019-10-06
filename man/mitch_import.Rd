@@ -4,18 +4,26 @@
 \alias{mitch_import}
 \title{mitch_import}
 \usage{
-mitch_import(x, DEtype, geneIDcol = NULL, geneTable = NULL)
+mitch_import(x, DEtype, geneIDcol = NULL, geneTable = NULL,
+  joinType = NULL)
 }
 \arguments{
 \item{x}{a list of differential expression tables}
 
-\item{DEtype}{the program that generated the differential expression table}
+\item{DEtype}{the program that generated the differential expression table
+Valid options are 'edgeR', 'DESeq2', 'limma', 'ABSSeq', 'Seurat', 'muscat',
+'swish' and 'preranked'. Where 'preranked' is a dataframe containing the 
+rank statistic and gene ID (either in rowname or separate column) and
+nothing else.}
 
-\item{geneIDcol}{the column containing gene names. If gene names are 
-specified as row names, then geneIDcol=NULL.}
+\item{geneIDcol}{the column containing gene names. If gene names are}
 
 \item{geneTable}{a 2 column table mapping gene identifiers in the profile to
 gene identifiers in the gene sets.}
+
+\item{joinType}{the type of join to perform, either 'inner' or 'full'.
+By default, joins are 'inner' except for Seurat and muscat where full is used.
+specified as row names, then geneIDcol=NULL.}
 }
 \value{
 a multi-column table compatible with mitch_calc analysis.

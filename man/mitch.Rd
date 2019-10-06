@@ -17,13 +17,13 @@ samples. Mitch is perfectly suited for pathway level differential analysis of
 }
 \details{
 A typical Mitch workflow consists of:
- (1) Import gene sets with gmt_import()
- (2) Import profiling data with mitch_import()
- (3) Calculate enrichments with mitch_calc()
- (4) And generate plots and reports with mitch_plots() and mitch_report()
+1) Import gene sets with gmt_import()
+2) Import profiling data with mitch_import()
+3) Calculate enrichments with mitch_calc()
+4) And generate plots and reports with mitch_plots() and mitch_report()
 
-More documentation on the github page https://github.com/markziemann/Mitch or 
- with ?<function>, eg: ?mitch_import
+More documentation on the github page https://github.com/markziemann/Mitch
+or with ?<function>, eg: ?mitch_import
 }
 \examples{
 # Example workflow
